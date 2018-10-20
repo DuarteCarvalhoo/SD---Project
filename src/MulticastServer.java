@@ -38,12 +38,8 @@ public class MulticastServer extends Thread implements Serializable {
             InetAddress group = InetAddress.getByName(MULTICAST_ADDRESS);
             socket.joinGroup(group);
             usersList = readFiles();
-            for(User user : usersList) {
-                if (user == null) {
-                    System.out.println("rip");
-                } else {
-                    System.out.println(user);
-                }
+            if(usersList.isEmpty()){
+                System.out.println("Arraylist empty!");
             }
             while(true){
                 System.out.println("INICIO");
@@ -89,7 +85,7 @@ public class MulticastServer extends Thread implements Serializable {
                         }
                         else {
                             User newUser = new User(username, password);
-                            usersList.add(newUser);
+                            usersList = writeFiles(usersList,newUser);
                             System.out.println("SUCESSO: Adicionou ao arraylist com user '" + username + "' e password '" + password +"'");
                             sendMsg(socket, "type|registComplete");
                         }
@@ -142,18 +138,19 @@ public class MulticastServer extends Thread implements Serializable {
     }
 
     private ArrayList<User> readFiles(){
-        System.out.println("A ler");
+        System.out.println("Reading.");
         ArrayList<User> users = new ArrayList<>();
         try {
             ObjectInputStream objectIn = new ObjectInputStream(new BufferedInputStream(new FileInputStream("data.bin")));
             users = (ArrayList) objectIn.readObject();
             objectIn.close();
+            System.out.println("Read users file successfully.");
             return users;
         }
         catch (FileNotFoundException e) {
             e.printStackTrace();
         } catch (IOException e) {
-            e.printStackTrace();
+            System.out.println("Empty file!");
         }
         catch (ClassNotFoundException e) {
             e.printStackTrace();
@@ -161,28 +158,25 @@ public class MulticastServer extends Thread implements Serializable {
         return users;
     }
 
-    public static void writeFiles(ArrayList<User> usersList){
-        System.out.println("Entrou");
+    public ArrayList<User> writeFiles(ArrayList<User> usersList, User newUser){
+        System.out.println("Writing.");
+        usersList.add(newUser);
         try{
-            ArrayList<User> teste = new ArrayList<>();
-            teste.add(new User("Joao","caralho"));
-            teste.add(new User("franc","caralho"));
-            teste.add(new User("nelso","caralho"));
             File file = new File("data.bin");
             FileOutputStream out = new FileOutputStream(file);
             ObjectOutputStream fout = new ObjectOutputStream(out);
-            //fout.writeObject(usersList);
-            fout.writeObject(teste);
-            //fout.writeObject("continue");
+            fout.writeObject(usersList);
             fout.close();
             out.close();
         }
         catch (FileNotFoundException ex) {
             Logger.getLogger(MulticastServer.class.getName()).log(Level.SEVERE, null, ex);
-            System.out.println("File not found");
+            System.out.println("File not found!");
         } catch (IOException ex) {
             Logger.getLogger(MulticastServer.class.getName()).log(Level.SEVERE, null, ex);
         }
+        System.out.println("Users list wrote successfully.");
+        return usersList;
     }
 }
 
@@ -202,7 +196,7 @@ class catchCtrlC extends Thread {
 
             }
         }
-        MulticastServer.writeFiles(users);
+        //MulticastServer.writeFiles(users);
         System.out.println("Escreveu no ficheiro de objetos.");
     }
 }
