@@ -85,36 +85,36 @@ public class Client {
     }
 
     public static void login(Hello rmi, Scanner reader) throws RemoteException {
-        System.out.println("Insira o seu login('username-password'):");
+        System.out.println("Insert your login('username-password'):");
         String txt = reader.nextLine();
         txt = rmi.checkLogin(txt);
         switch (txt){
             case "type|loginComplete":
-                System.out.println("Seja Bem-vindo.");
+                System.out.println("Welcome!");
                 //menuPrincipal(rmi, reader);
                 break;
             case "type|loginFail":
-                System.out.println("Login falhou.");
+                System.out.println("Login failed.");
                 break;
             default:
-                System.out.println("Alguma coisa correu mal.");
+                System.out.println("Something went wrong.");
         }
     }
 
     public static void registo(Hello rmi, Scanner reader) throws RemoteException {
-        System.out.println("insira os seus dados('username-password')");
+        System.out.println("Insert your data('username-password')");
         String txt = reader.nextLine();
         txt = rmi.checkRegister(txt);
         switch (txt){
             case "type|usernameUsed":
-                System.out.println("Este username já está registado.");
+                System.out.println("That username already exists.");
                 break;
             case "type|registComplete":
-                System.out.println("Registo sucessido.");
+                System.out.println("Successful register.");
                 //menuPrincipal(rmi,reader);
                 break;
             default:
-                System.out.println("Alguma coisa correu mal.");
+                System.out.println("Something went wrong.");
         }
     }
 

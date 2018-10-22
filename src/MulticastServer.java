@@ -60,7 +60,7 @@ public class MulticastServer extends Thread implements Serializable {
                         String pass = loginPasswordParts[1];
                         System.out.println("USERNAME: " + user + " PASSWORD: " + pass);
                         boolean loggedInSuccessfully = checkUsernameLogin(user, pass);
-                        if(loggedInSuccessfully == false){
+                        if(!loggedInSuccessfully){
                             sendMsg(socket,"type|loginFail");
                             System.out.println("ERRO: Login não completo.");
                         }
@@ -78,14 +78,22 @@ public class MulticastServer extends Thread implements Serializable {
                         String username = registerUsernameParts[1];
                         String password = registerPasswordParts[1];
                         System.out.println("USERNAME: " + username + " PASSWORD: " + password);
-                        boolean usernameUsed = checkUsernameRegister(username);
-                        if(usernameUsed == true) {
+                        int usernameUsed = checkUsernameRegister(username);
+                        if(usernameUsed == 1) {
                             sendMsg(socket, "type|usernameUsed");
                             System.out.println("ERRO: Username já usado.");
                         }
+                        else if(usernameUsed == -1){
+                            User newUser = new User(username, password);
+                            newUser.makeEditor();
+                            System.out.println("Editor permisions given.");
+                            usersList = writeFilesUser(usersList,newUser);
+                            System.out.println("SUCCESS: User added to database with username: '" + username + "' and password '" + password +"'");
+                            sendMsg(socket, "type|registComplete");
+                        }
                         else {
                             User newUser = new User(username, password);
-                            usersList = writeFiles(usersList,newUser);
+                            usersList = writeFilesUser(usersList,newUser);
                             System.out.println("SUCESSO: Adicionou ao arraylist com user '" + username + "' e password '" + password +"'");
                             sendMsg(socket, "type|registComplete");
                         }
@@ -119,13 +127,18 @@ public class MulticastServer extends Thread implements Serializable {
         return false;
     }
 
-    public boolean checkUsernameRegister(String username){
-        for (User user : usersList) {
-            if(user.getUsername().equals(username)) {
-                return true;
+    public int checkUsernameRegister(String username){
+        if(usersList.isEmpty()){
+            return -1;
+        }
+        else {
+            for (User user : usersList) {
+                if (user.getUsername().equals(username)) {
+                    return 1;
+                }
             }
         }
-        return false;
+        return 0;
     }
 
     private void sendMsg(MulticastSocket socket, String msg) throws IOException {
@@ -158,7 +171,7 @@ public class MulticastServer extends Thread implements Serializable {
         return users;
     }
 
-    public ArrayList<User> writeFiles(ArrayList<User> usersList, User newUser){
+    public ArrayList<User> writeFilesUser(ArrayList<User> usersList, User newUser){
         System.out.println("Writing.");
         usersList.add(newUser);
         try{
