@@ -1,8 +1,8 @@
 import java.io.Serializable;
 
 public class User implements Serializable{
-    private final String username;
-    private final String password;
+    private String username;
+    private String password;
     private boolean editor = false;
 
 
@@ -12,6 +12,18 @@ public class User implements Serializable{
 
     public String getPassword() {
         return password;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
+    public void setEditor(boolean editor) {
+        this.editor = editor;
     }
 
     public boolean checkPassword(String password){

@@ -4,6 +4,7 @@ public class Album {
     private ArrayList<Music> musicsList;
     private ArrayList<Critic> criticsList = new ArrayList<>();
     private double sum;
+    private String name;
     private Artist artist;
     private String description;
 
@@ -28,6 +29,10 @@ public class Album {
         return artist;
     }
 
+    public String getName(){
+        return name;
+    }
+
     public double getAverageScore() {
         if(criticsList.isEmpty()){
             return 0;
@@ -42,6 +47,30 @@ public class Album {
 
     public String getDescription() {
         return description;
+    }
+
+    public void setMusicsList(ArrayList<Music> musicsList) {
+        this.musicsList = musicsList;
+    }
+
+    public void setCriticsList(ArrayList<Critic> criticsList) {
+        this.criticsList = criticsList;
+    }
+
+    public void setSum(double sum) {
+        this.sum = sum;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public void setArtist(Artist artist) {
+        this.artist = artist;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
     }
 
     public Album(ArrayList<Music> musicsList, Artist artist, String description) {
