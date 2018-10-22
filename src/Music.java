@@ -1,6 +1,5 @@
 public class Music {
-    private String composer,artist,title,duration,style;
-
+    private String composer,artist,title,duration,style,album,genre;
     public String getComposer() {
         return composer;
     }
@@ -41,11 +40,29 @@ public class Music {
         this.style = style;
     }
 
-    public Music(String composer, String artist, String title, String duration, String style) {
+    public String getAlbum() {
+        return album;
+    }
+
+    public void setAlbum(String album) {
+        this.album = album;
+    }
+
+    public String getGenre() {
+        return genre;
+    }
+
+    public void setGenre(String genre) {
+        this.genre = genre;
+    }
+
+    public Music(String composer, String artist, String title, String duration, String style, String album, String genre) {
         this.composer = composer;
         this.artist = artist;
         this.title = title;
         this.duration = duration;
         this.style = style;
+        this.album = album;
+        this.genre = genre;
     }
 }

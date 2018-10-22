@@ -1,5 +1,5 @@
 public class Artist {
-    private String name,description;
+    private String name,description, genre;
 
     public String getName() {
         return name;
@@ -17,8 +17,17 @@ public class Artist {
         this.description = description;
     }
 
-    public Artist(String name, String description) {
+    public String getGenre() {
+        return genre;
+    }
+
+    public void setGenre(String genre) {
+        this.genre = genre;
+    }
+
+    public Artist(String name, String description, String genre) {
         this.name = name;
         this.description = description;
+        this.genre = genre;
     }
 }
