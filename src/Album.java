@@ -37,7 +37,7 @@ public class Album {
                 sum+=critic.getScore();
             }
         }
-        return sum/criticsList.size();
+        return (sum/criticsList.size());
     }
 
     public String getDescription() {
