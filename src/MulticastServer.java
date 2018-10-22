@@ -20,6 +20,7 @@ public class MulticastServer extends Thread implements Serializable {
     private int PORT = 4321;
     private long SLEEP_TIME = 5000;
     private ArrayList<User> usersList = new ArrayList<>();
+    private ArrayList<User> usersLogged = new ArrayList<>();
 
     public static void main(String[] args){
         MulticastServer server = new MulticastServer();
@@ -59,14 +60,24 @@ public class MulticastServer extends Thread implements Serializable {
                         String user = loginUsernameParts[1];
                         String pass = loginPasswordParts[1];
                         System.out.println("USERNAME: " + user + " PASSWORD: " + pass);
-                        boolean loggedInSuccessfully = checkUsernameLogin(user, pass);
-                        if(!loggedInSuccessfully){
-                            sendMsg(socket,"type|loginFail");
-                            System.out.println("ERRO: Login não completo.");
+                        if(!usersLogged.isEmpty()) {
+                            for (User u : usersLogged) {
+                                if (user.equals(u.getUsername())) {
+                                    sendMsg(socket, "type|loginFail");
+                                    System.out.println("ERRO: User already logged in.");
+                                }
+                            }
                         }
-                        else{
-                            sendMsg(socket,"type|loginComplete");
-                            System.out.println("SUCESSO: Login Completo");
+                        else {
+                            boolean loggedInSuccessfully = checkUsernameLogin(user, pass);
+                            if (!loggedInSuccessfully) {
+                                sendMsg(socket, "type|loginFail");
+                                System.out.println("ERRO: Login não completo.");
+                            } else {
+                                usersLogged.add(new User(user,pass));
+                                sendMsg(socket, "type|loginComplete");
+                                System.out.println("SUCESSO: Login Completo");
+                            }
                         }
                         //funçao passa como argumentos o user e pw
                         //funçao pra confirmar se o user existe, se a pw ta certa e por fim enviar a resposta
