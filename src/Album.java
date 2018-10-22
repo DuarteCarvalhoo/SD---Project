@@ -7,6 +7,7 @@ public class Album {
     private String name;
     private Artist artist;
     private String description;
+    private double duracao;
 
 
     public void addCritic(Critic c){
@@ -69,13 +70,22 @@ public class Album {
         this.artist = artist;
     }
 
+    public double getDuracao() {
+        return duracao;
+    }
+
+    public void setDuracao(double duracao) {
+        this.duracao = duracao;
+    }
+
     public void setDescription(String description) {
         this.description = description;
     }
 
-    public Album(ArrayList<Music> musicsList, Artist artist, String description) {
+    public Album(ArrayList<Music> musicsList, Artist artist, String description, Double duracao) {
         this.musicsList = musicsList;
         this.artist = artist;
         this.description = description;
+        this.duracao = duracao;
     }
 }
