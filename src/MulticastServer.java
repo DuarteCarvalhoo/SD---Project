@@ -28,7 +28,7 @@ public class MulticastServer extends Thread implements Serializable {
 
     public MulticastServer(){ super ("Server " + (long) (Math.random()*1000));}
 
-    public void run(){
+    public void run() {
         MulticastSocket socket = null;
         Runtime.getRuntime().addShutdownHook(new catchCtrlC(usersList));
         //System.out.println(this.getName() + "run...");
@@ -38,71 +38,99 @@ public class MulticastServer extends Thread implements Serializable {
             InetAddress group = InetAddress.getByName(MULTICAST_ADDRESS);
             socket.joinGroup(group);
             usersList = readFiles();
-            if(usersList.isEmpty()){
+            if (usersList.isEmpty()) {
                 System.out.println("Arraylist empty!");
             }
-            while(true){
+            while (true) {
                 System.out.println("INICIO");
                 byte[] bufferRec = new byte[256];
                 DatagramPacket packetRec = new DatagramPacket(bufferRec, bufferRec.length);
                 socket.setLoopbackMode(false);
                 socket.receive(packetRec);
-                System.out.print("De: "+ packetRec.getAddress().getHostAddress() + ":" + packetRec.getPort() + " com a mensagem: ");
+                System.out.print("De: " + packetRec.getAddress().getHostAddress() + ":" + packetRec.getPort() + " com a mensagem: ");
                 String msg = new String(packetRec.getData(), 0, packetRec.getLength());
                 System.out.println(msg);
                 //try { sleep((long) (Math.random() * SLEEP_TIME)); } catch (InterruptedException e) { }
                 String[] aux = msg.split(";");
-                switch (aux[0]){
+                switch (aux[0]) {
                     case "type|login":
-                        String [] loginUsernameParts = aux[1].split("\\|");
-                        String [] loginPasswordParts = aux[2].split("\\|");
+                        String[] loginUsernameParts = aux[1].split("\\|");
+                        String[] loginPasswordParts = aux[2].split("\\|");
                         String user = loginUsernameParts[1];
                         String pass = loginPasswordParts[1];
                         System.out.println("USERNAME: " + user + " PASSWORD: " + pass);
-                        boolean loggedInSuccessfully = checkUsernameLogin(user, pass);
-                        if(!loggedInSuccessfully){
-                            sendMsg(socket,"type|loginFail");
-                            System.out.println("ERRO: Login não completo.");
+                        if(usersList.isEmpty()){
+                            sendMsg(socket, "type|loginFail");
+                            System.out.println("ERRO: No users on the database.");
                         }
-                        else{
-                            sendMsg(socket,"type|loginComplete");
-                            System.out.println("SUCESSO: Login Completo");
+                        else {
+                            for (User u : usersList) {
+                                if (user.equals(u.getUsername())) {
+                                    if (u.isOnline()) {
+                                        sendMsg(socket, "type|loginFail");
+                                        System.out.println("ERRO: User already logged in.");
+                                    } else {
+                                        boolean loggedInSuccessfully = checkUsernameLogin(user, pass);
+                                        if (!loggedInSuccessfully) {
+                                            sendMsg(socket, "type|loginFail");
+                                            System.out.println("ERRO: Login não completo.");
+                                        } else {
+                                            u.setOnline();
+                                            sendMsg(socket, "type|loginComplete");
+                                            System.out.println("SUCESSO: Login Completo");
+                                        }
+                                    }
+                                }
+                            }
                         }
                         //funçao passa como argumentos o user e pw
                         //funçao pra confirmar se o user existe, se a pw ta certa e por fim enviar a resposta
                         break;
                     case "type|register":
                         String aux2 = aux[1];
-                        String [] registerUsernameParts = aux2.split("\\|");
-                        String [] registerPasswordParts = aux[2].split("\\|");
+                        String[] registerUsernameParts = aux2.split("\\|");
+                        String[] registerPasswordParts = aux[2].split("\\|");
                         String username = registerUsernameParts[1];
                         String password = registerPasswordParts[1];
                         System.out.println("USERNAME: " + username + " PASSWORD: " + password);
                         int usernameUsed = checkUsernameRegister(username);
-                        if(usernameUsed == 1) {
+                        if (usernameUsed == 1) {
                             sendMsg(socket, "type|usernameUsed");
                             System.out.println("ERRO: Username já usado.");
-                        }
-                        else if(usernameUsed == -1){
+                        } else if (usernameUsed == -1) {
                             User newUser = new User(username, password);
                             newUser.makeEditor();
                             System.out.println("Editor permisions given.");
-                            usersList = writeFilesUser(usersList,newUser);
-                            System.out.println("SUCCESS: User added to database with username: '" + username + "' and password '" + password +"'");
+                            usersList = writeFilesUser(usersList, newUser);
+                            System.out.println("SUCCESS: User added to database with username: '" + username + "' and password '" + password + "'");
                             sendMsg(socket, "type|registComplete");
-                        }
-                        else {
+                        } else {
                             User newUser = new User(username, password);
-                            usersList = writeFilesUser(usersList,newUser);
-                            System.out.println("SUCESSO: Adicionou ao arraylist com user '" + username + "' e password '" + password +"'");
+                            usersList = writeFilesUser(usersList, newUser);
+                            System.out.println("SUCESSO: Adicionou ao arraylist com user '" + username + "' e password '" + password + "'");
                             sendMsg(socket, "type|registComplete");
                         }
                         //funçao passa como argumentos o user e pw
                         //na funçao verificar se nao ha users iguais, se nao guardar no arraylist (se usarmos 2 pws ver se sao iguais) e enviar a resposta
                         break;
-                    case "type|pesquisa":
-                        //dentro da funçao decidir o que pesquisa artista, estilo ou album
+                    case "type|logout":
+                        String[] logoutUsername = aux[1].split("\\|");
+                        String logoutUser = logoutUsername[1];
+                        if(!logoutUser.equals("none")) {
+                            for (User u : usersList) {
+                                if (u.getUsername().equals(logoutUser)) {
+                                    u.setOffline();
+                                    sendMsg(socket,"type|logoutComplete");
+                                    break;
+                                }
+                            }
+                        }
+                        else{
+                            System.out.println("No user is logged in.");
+                            sendMsg(socket,"type|logoutFail");
+                        }
                         break;
+                        //dentro da funçao decidir o que pesquisa artista, estilo ou album
                     default:
                         System.out.println("Default");
                         break;

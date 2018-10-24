@@ -36,6 +36,8 @@
  * maintenance of any nuclear facility.
  */
 
+import com.sun.xml.internal.ws.policy.privateutil.PolicyUtils;
+
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.InetAddress;
@@ -92,7 +94,7 @@ public class Server implements Hello {
             socket.joinGroup(group);
             byte[] buffer = new byte[256];
             DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
-            socket.receive(packet);
+            receive(socket, packet);
 
             String msg = new String(packet.getData(), 0, packet.getLength());
             System.out.println(msg);
@@ -107,7 +109,54 @@ public class Server implements Hello {
         return "ups";
     }
 
-  public String checkRegister(String register){
+    public String checkLogout(User user){
+        System.out.println("Entrou no logout");
+        System.out.println(user.getUsername());
+        MulticastSocket socket = null;
+        //envia pra o multicast
+        try{
+            socket = new MulticastSocket();
+            InetAddress group = InetAddress.getByName(MULTICAST_ADDRESS);
+            socket.joinGroup(group);
+            String aux = "type|logout;username|" + user.getUsername(); //protocol
+            System.out.println(aux); //ver como ficou
+            byte[] buffer = aux.getBytes();
+            DatagramPacket packet = new DatagramPacket(buffer, buffer.length, group, PORT);
+            socket.send(packet);
+            System.out.println("test3");
+            //falta receber a resposta se ja existe ou nao, se a pw ta bem etc...
+        } catch (IOException e){
+            e.printStackTrace();
+        } finally {
+            socket.close();
+        }
+
+        //recebe do multicast
+        try{
+            socket = new MulticastSocket(PORT);
+            InetAddress group = InetAddress.getByName(MULTICAST_ADDRESS);
+            socket.joinGroup(group);
+            byte[] buffer = new byte[256];
+            DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
+            receive(socket, packet);
+            String msg = new String(packet.getData(), 0, packet.getLength());
+            System.out.println(msg);
+
+            return msg;
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            socket.close();
+        }
+
+        return "ups";
+    }
+
+    private void receive(MulticastSocket socket, DatagramPacket packet) throws IOException {
+        socket.receive(packet);
+    }
+
+    public String checkRegister(String register){
         System.out.println("Está no registo.");
         String[] newRegisto = register.split("-");
         MulticastSocket socket = null;
@@ -136,8 +185,12 @@ public class Server implements Hello {
             socket.joinGroup(group);
             byte[] buffer = new byte[256];
             DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
-            socket.receive(packet);
-
+            try{
+                receive(socket, packet);
+            }
+            catch (IOException e){
+                System.out.println("Deu merda.");
+            }
             String msg = new String(packet.getData(), 0, packet.getLength());
             System.out.println(msg);
 
