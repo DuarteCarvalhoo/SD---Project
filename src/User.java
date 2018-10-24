@@ -3,6 +3,7 @@ import java.io.Serializable;
 public class User implements Serializable{
     private String username;
     private String password;
+    private boolean online = false;
     private boolean editor = false;
 
 
@@ -45,10 +46,25 @@ public class User implements Serializable{
         return "Username: " + getUsername() + " Password: " + getPassword();
     }
 
+    public boolean isOnline(){
+        return online;
+    }
+
+    public void setOffline() {
+        this.online = false;
+    }
+
+    public void setOnline(){
+        this.online = true;
+    }
+
     public User(String username, String password) {
         this.username = username;
         this.password = password;
     }
 
-    public User(){}
+    public User(){
+        this.username = "none";
+        this.password = "none";
+    }
 }

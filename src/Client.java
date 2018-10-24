@@ -43,6 +43,7 @@ import java.rmi.registry.Registry;
 
 public class Client {
 
+    private static User loggedUser = new User();
     private Client() {}
 
     public static void main(String[] args) {
@@ -72,6 +73,12 @@ public class Client {
                     case "/register":
                         registo(rmi, reader);
                         break;
+                    case "/logout":
+                        logout(rmi,reader);
+                        break;
+                    case "/user":
+                        System.out.println(loggedUser.getUsername());
+                        break;
                     default:
                         System.out.println("Este comando não faz nada. Para sair escreva 'quit'");
                 }
@@ -86,15 +93,31 @@ public class Client {
 
     public static void login(Hello rmi, Scanner reader) throws RemoteException {
         System.out.println("Insert your login('username-password'):");
-        String txt = reader.nextLine();
-        txt = rmi.checkLogin(txt);
+        String userData = reader.nextLine();
+        String txt = rmi.checkLogin(userData);
+        String[] userDataSplit = userData.split("-");
         switch (txt){
             case "type|loginComplete":
+                loggedUser = new User(userDataSplit[0],userDataSplit[1]);
                 System.out.println("Welcome!");
                 //menuPrincipal(rmi, reader);
                 break;
             case "type|loginFail":
                 System.out.println("Login failed.");
+                break;
+            default:
+                System.out.println("Something went wrong.");
+        }
+    }
+
+    public static void logout(Hello rmi, Scanner reader) throws RemoteException{
+        String txt = rmi.checkLogout(loggedUser);
+        switch(txt){
+            case "type|logoutComplete":
+                System.out.println("Logged out successfully.");
+                break;
+            case "type|logoutFail":
+                System.out.println("Logout failed.");
                 break;
             default:
                 System.out.println("Something went wrong.");

@@ -47,4 +47,7 @@ public interface Hello extends Remote {
     String checkLogin(String login) throws RemoteException;
 
     String checkRegister(String register) throws RemoteException;
+
+    String checkLogout(User user) throws RemoteException;
+
 }
