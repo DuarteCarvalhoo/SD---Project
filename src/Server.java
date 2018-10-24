@@ -55,7 +55,8 @@ public class Server implements Hello {
     private int PORT = 4321;
 
 
-    public Server() {}
+    public Server() {
+    }
 
     public String sayHello() {
         return "Hello, world!";
@@ -66,13 +67,13 @@ public class Server implements Hello {
         return " ";
     }
 
-    public String checkLogin(String login){
+    public String checkLogin(String login) {
         System.out.println("Entrou no Login");
         System.out.println(login);
         String[] newLogin = login.split("-");
         MulticastSocket socket = null;
         //envia pra o multicast
-        try{
+        try {
             socket = new MulticastSocket();
             InetAddress group = InetAddress.getByName(MULTICAST_ADDRESS);
             socket.joinGroup(group);
@@ -83,7 +84,7 @@ public class Server implements Hello {
             socket.send(packet);
             System.out.println("test1");
             //falta receber a resposta se ja existe ou nao, se a pw ta bem etc...
-        } catch (IOException e){
+        } catch (IOException e) {
             e.printStackTrace();
         } finally {
             socket.close();
@@ -91,9 +92,9 @@ public class Server implements Hello {
 
         //recebe do multicast
         String msg = receiveMulticast(socket);
-        if (msg != null) return msg;
+        return msg;
 
-        return "ups";
+        //return "ups";
     }
 
     private String receiveMulticast(MulticastSocket socket) {
@@ -117,12 +118,12 @@ public class Server implements Hello {
         return null;
     }
 
-    public String checkLogout(User user){
+    public String checkLogout(User user) {
         System.out.println("Entrou no logout");
         System.out.println(user.getUsername());
         MulticastSocket socket = null;
         //envia pra o multicast
-        try{
+        try {
             socket = new MulticastSocket();
             InetAddress group = InetAddress.getByName(MULTICAST_ADDRESS);
             socket.joinGroup(group);
@@ -133,29 +134,15 @@ public class Server implements Hello {
             socket.send(packet);
             System.out.println("test3");
             //falta receber a resposta se ja existe ou nao, se a pw ta bem etc...
-        } catch (IOException e){
+        } catch (IOException e) {
             e.printStackTrace();
         } finally {
             socket.close();
         }
 
         //recebe do multicast
-        try{
-            socket = new MulticastSocket(PORT);
-            InetAddress group = InetAddress.getByName(MULTICAST_ADDRESS);
-            socket.joinGroup(group);
-            byte[] buffer = new byte[256];
-            DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
-            receive(socket, packet);
-            String msg = new String(packet.getData(), 0, packet.getLength());
-            System.out.println(msg);
-
-            return msg;
-        } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            socket.close();
-        }
+        String msg = receiveMulticast(socket);
+        if (msg != null) return msg;
 
         return "ups";
     }
@@ -164,53 +151,31 @@ public class Server implements Hello {
         socket.receive(packet);
     }
 
-    public String checkRegister(String register){
-    public String checkRegister(String register){
-        System.out.println("Está no registo.");
-        String[] newRegisto = register.split("-");
-        MulticastSocket socket = null;
+    public String checkRegister(String register) {
+            System.out.println("Está no registo.");
+            String[] newRegisto = register.split("-");
+            MulticastSocket socket = null;
 
-        try{
-            socket = new MulticastSocket();
-            InetAddress group = InetAddress.getByName(MULTICAST_ADDRESS);
-            socket.joinGroup(group);
-            String aux = "type|register;username|" + newRegisto[0] + ";password|" + newRegisto[1]; //protocol
-            System.out.println(aux); //ver como ficou
-            byte[] buffer = aux.getBytes();
-            DatagramPacket packet = new DatagramPacket(buffer, buffer.length, group, PORT);
-            socket.send(packet);
-            System.out.println("test2");
-            //falta receber a resposta se ja existe ou nao, se a pw ta bem etc...
-        } catch (IOException e){
-            e.printStackTrace();
-        } finally {
-            socket.close();
-        }
-
-        //recebe do multicast
-        try{
-            socket = new MulticastSocket(PORT);
-            InetAddress group = InetAddress.getByName(MULTICAST_ADDRESS);
-            socket.joinGroup(group);
-            byte[] buffer = new byte[256];
-            DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
-            try{
-                receive(socket, packet);
+            try {
+                socket = new MulticastSocket();
+                InetAddress group = InetAddress.getByName(MULTICAST_ADDRESS);
+                socket.joinGroup(group);
+                String aux = "type|register;username|" + newRegisto[0] + ";password|" + newRegisto[1]; //protocol
+                System.out.println(aux); //ver como ficou
+                byte[] buffer = aux.getBytes();
+                DatagramPacket packet = new DatagramPacket(buffer, buffer.length, group, PORT);
+                socket.send(packet);
+                System.out.println("test2");
+                //falta receber a resposta se ja existe ou nao, se a pw ta bem etc...
+            } catch (IOException e) {
+                e.printStackTrace();
+            } finally {
+                socket.close();
             }
-            catch (IOException e){
-                System.out.println("Deu merda.");
-            }
-            String msg = new String(packet.getData(), 0, packet.getLength());
-            System.out.println(msg);
 
-            return msg;
-        } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            socket.close();
-        }
-        String msg = receiveMulticast(socket);
-        if (msg != null) return msg;
+            //recebe do multicast
+            String msg = receiveMulticast(socket);
+            if (msg != null) return msg;
         /*
         if(newRegisto.length != 3){
             return "preencheu mal os campos por favor tente de novo";
@@ -224,45 +189,47 @@ public class Server implements Hello {
             //registar o user
             return "registado";
         }*/
-        return "ups";
-    }
+            return "ups";
+        }
 
-    public String ping(){return "pong";}
+        public String ping() {
+            return "pong";
+        }
 
-    public static void main(String[] args) {
-        int aux =0;
-        while(aux<4){
-            try{
-                Hello connect = (Hello) LocateRegistry.getRegistry(7000).lookup("Hello");
-                connect.ping();
-                System.out.println("Pong");
-                aux = 0;
-            } catch (NotBoundException e) {
-                e.printStackTrace();
-            } catch (RemoteException e) {
-                System.out.println("test try fail");
-                aux++;
+        public static void main (String[]args){
+            int aux = 0;
+            while (aux < 4) {
+                try {
+                    Hello connect = (Hello) LocateRegistry.getRegistry(7000).lookup("Hello");
+                    connect.ping();
+                    System.out.println("Pong");
+                    aux = 0;
+                } catch (NotBoundException e) {
+                    e.printStackTrace();
+                } catch (RemoteException e) {
+                    System.out.println("test try fail");
+                    aux++;
+                }
+
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
             }
 
-            try{
-                Thread.sleep(1000);
-            } catch (InterruptedException e) {
+            try {
+                Server obj = new Server();
+                Hello stub = (Hello) UnicastRemoteObject.exportObject(obj, 0);
+
+                // Bind the remote object's stub in the registry
+                Registry registry = LocateRegistry.createRegistry(7000);
+                registry.rebind("Hello", stub);
+
+                System.err.println("Server ready");
+            } catch (Exception e) {
+                System.err.println("Server exception: " + e.toString());
                 e.printStackTrace();
             }
         }
-
-        try {
-            Server obj = new Server();
-            Hello stub = (Hello) UnicastRemoteObject.exportObject(obj, 0);
-
-            // Bind the remote object's stub in the registry
-            Registry registry = LocateRegistry.createRegistry(7000);
-            registry.rebind("Hello", stub);
-
-            System.err.println("Server ready");
-        } catch (Exception e) {
-            System.err.println("Server exception: " + e.toString());
-            e.printStackTrace();
-        }
     }
-}

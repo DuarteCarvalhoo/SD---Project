@@ -72,9 +72,13 @@ public class Client {
                 switch(text){
                     case "/login":
                         login(rmi, reader);
+                        menuPrincipal(rmi,reader);
                         break;
                     case "/register":
                         registo(rmi, reader);
+                        break;
+                    case "/user":
+                        System.out.println(loggedUser.getUsername());
                         break;
                     case "download":
                         //downloadMusic();
@@ -108,7 +112,7 @@ public class Client {
         Hello rmi;
         Registry registry = LocateRegistry.getRegistry(7000);
         rmi =(Hello) registry.lookup("Hello");
-        System.out.println("por favor repita o ultimo input");
+        System.out.println("Por favor repita o ultimo input");
         return rmi;
     }
 
@@ -117,6 +121,7 @@ public class Client {
         String userData = reader.nextLine();
         String txt = rmi.checkLogin(userData);
         String[] userDataSplit = userData.split("-");
+        System.out.println(txt);
         switch (txt){
             case "type|loginComplete":
                 loggedUser = new User(userDataSplit[0],userDataSplit[1]);
@@ -136,6 +141,7 @@ public class Client {
         switch(txt){
             case "type|logoutComplete":
                 System.out.println("Logged out successfully.");
+                loggedUser = new User();
                 break;
             case "type|logoutFail":
                 System.out.println("Logout failed.");
@@ -162,8 +168,9 @@ public class Client {
         }
     }
 
-    /*public static void menuPrincipal(Hello rmi, Scanner reader){
-        while(!text.equals("leave")){
+    public static void menuPrincipal(Hello rmi, Scanner reader) throws RemoteException, NotBoundException {
+        boolean flag = false;
+        while(true){
             try{
                 System.out.println("MENU PRINCIPAL:\n" +
                         "Pesquisar\n" +
@@ -171,6 +178,15 @@ public class Client {
                         "Download\n\n" +
                         "Escolha a sua opcao.");
                 String text = reader.nextLine();
+                while(!flag){
+                    if(text.equals("/login") || text.equals("/register")){
+                        System.out.println("To login into another account or register another user, please logout first!");
+                        text = reader.nextLine();
+                    }
+                    else{
+                        flag=true;
+                    }
+                }
                 rmi.msgInput(text);
                 switch(text){
                     case "Pesquisar":
@@ -179,6 +195,9 @@ public class Client {
                     case "Uploda":
                         registo(rmi, reader);
                         break;
+                    case "/logout":
+                        logout(rmi,reader);
+                        return;
                     case "Download":
                         break;
                     default:
@@ -217,5 +236,5 @@ public class Client {
             default:
                 System.out.println("Inseriu mal o comando. Por favor volte a tentar.");
         }
-    }*/
+    }
 }
