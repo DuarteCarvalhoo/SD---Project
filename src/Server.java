@@ -42,6 +42,8 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.net.MulticastSocket;
+import java.rmi.AccessException;
+import java.rmi.NotBoundException;
 import java.rmi.registry.Registry;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.RemoteException;
@@ -88,7 +90,14 @@ public class Server implements Hello {
         }
 
         //recebe do multicast
-        try{
+        String msg = receiveMulticast(socket);
+        if (msg != null) return msg;
+
+        return "ups";
+    }
+
+    private String receiveMulticast(MulticastSocket socket) {
+        try {
             socket = new MulticastSocket(PORT);
             InetAddress group = InetAddress.getByName(MULTICAST_ADDRESS);
             socket.joinGroup(group);
@@ -105,8 +114,7 @@ public class Server implements Hello {
         } finally {
             socket.close();
         }
-
-        return "ups";
+        return null;
     }
 
     public String checkLogout(User user){
@@ -157,6 +165,7 @@ public class Server implements Hello {
     }
 
     public String checkRegister(String register){
+    public String checkRegister(String register){
         System.out.println("Está no registo.");
         String[] newRegisto = register.split("-");
         MulticastSocket socket = null;
@@ -200,6 +209,8 @@ public class Server implements Hello {
         } finally {
             socket.close();
         }
+        String msg = receiveMulticast(socket);
+        if (msg != null) return msg;
         /*
         if(newRegisto.length != 3){
             return "preencheu mal os campos por favor tente de novo";
@@ -216,16 +227,37 @@ public class Server implements Hello {
         return "ups";
     }
 
-    public static void main(String[] args) {
+    public String ping(){return "pong";}
 
-        //usernamesTodos.add("duarte");
+    public static void main(String[] args) {
+        int aux =0;
+        while(aux<4){
+            try{
+                Hello connect = (Hello) LocateRegistry.getRegistry(7000).lookup("Hello");
+                connect.ping();
+                System.out.println("Pong");
+                aux = 0;
+            } catch (NotBoundException e) {
+                e.printStackTrace();
+            } catch (RemoteException e) {
+                System.out.println("test try fail");
+                aux++;
+            }
+
+            try{
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+
         try {
             Server obj = new Server();
             Hello stub = (Hello) UnicastRemoteObject.exportObject(obj, 0);
 
             // Bind the remote object's stub in the registry
-            Registry registry = LocateRegistry.getRegistry();
-            registry.bind("Hello", stub);
+            Registry registry = LocateRegistry.createRegistry(7000);
+            registry.rebind("Hello", stub);
 
             System.err.println("Server ready");
         } catch (Exception e) {

@@ -36,6 +36,9 @@
  * maintenance of any nuclear facility.
  */
 
+import java.io.IOException;
+import java.net.Socket;
+import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.util.Scanner;
@@ -46,13 +49,13 @@ public class Client {
     private static User loggedUser = new User();
     private Client() {}
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws RemoteException, NotBoundException {
         String text = "";
         Hello rmi = null;
-        String host = (args.length < 1) ? null : args[0];
+        //String host = (args.length < 1) ? null : args[0];
         Scanner reader = new Scanner(System.in);
         try {
-            Registry registry = LocateRegistry.getRegistry(host);
+            Registry registry = LocateRegistry.getRegistry(7000);
             rmi =(Hello) registry.lookup("Hello");
             Hello stub = (Hello) registry.lookup("Hello");
             String response = stub.sayHello();
@@ -73,22 +76,40 @@ public class Client {
                     case "/register":
                         registo(rmi, reader);
                         break;
-                    case "/logout":
-                        logout(rmi,reader);
+                    case "download":
+                        //downloadMusic();
                         break;
-                    case "/user":
-                        System.out.println(loggedUser.getUsername());
+                    case "upload":
                         break;
                     default:
                         System.out.println("Este comando não faz nada. Para sair escreva 'quit'");
                 }
             }
             catch(RemoteException e){
-                e.printStackTrace();
+                rmi = changeRMI();
+                //por aqui pra ler as opçoes
             }
         }
         reader.close();
         System.out.println("Finished");
+    }
+
+    /*public static void downloadMusic() throws IOException {
+        String adress = "localhost";
+        Socket s= new Socket(adress,5000);
+    }*/
+
+    private static Hello changeRMI() throws RemoteException, NotBoundException {
+        try {
+            Thread.sleep(5000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        Hello rmi;
+        Registry registry = LocateRegistry.getRegistry(7000);
+        rmi =(Hello) registry.lookup("Hello");
+        System.out.println("por favor repita o ultimo input");
+        return rmi;
     }
 
     public static void login(Hello rmi, Scanner reader) throws RemoteException {
@@ -142,7 +163,7 @@ public class Client {
     }
 
     /*public static void menuPrincipal(Hello rmi, Scanner reader){
-        while(!reader.equals("leave")){
+        while(!text.equals("leave")){
             try{
                 System.out.println("MENU PRINCIPAL:\n" +
                         "Pesquisar\n" +
@@ -165,7 +186,8 @@ public class Client {
                 }
             }
             catch(RemoteException e){
-                e.printStackTrace();
+                rmi = changeRMI();
+                //e.printStackTrace();
             }
         }
     }
