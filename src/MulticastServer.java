@@ -74,6 +74,8 @@ public class MulticastServer extends Thread implements Serializable {
                                     }
                                 }
                             }
+                            System.out.println("user nao existe");
+                            sendMsg(socket, "type|loginFail");
                         }
                         //funçao passa como argumentos o user e pw
                         //funçao pra confirmar se o user existe, se a pw ta certa e por fim enviar a resposta
@@ -119,6 +121,7 @@ public class MulticastServer extends Thread implements Serializable {
                         receiveMusic(socketHelp, musicName[1]);
                         sendMsg(socket, "it worked out");
                     case "type|logout":
+                        System.out.println("tou a dar logout");
                         String[] logoutUsername = aux[1].split("\\|");
                         String logoutUser = logoutUsername[1];
                         if(!logoutUser.equals("none")) {
@@ -129,6 +132,8 @@ public class MulticastServer extends Thread implements Serializable {
                                     break;
                                 }
                             }
+                            System.out.println("erro nos ficheiros");
+                            sendMsg(socket, "type|logooutFail");
                         }
                         else{
                             System.out.println("No user is logged in.");
@@ -141,7 +146,6 @@ public class MulticastServer extends Thread implements Serializable {
                         break;
                 }
             }
-
         } catch (IOException e) {
             e.printStackTrace();
         } finally {
@@ -153,6 +157,7 @@ public class MulticastServer extends Thread implements Serializable {
         Socket socket = new Socket(address,5000);
         return socket;
     }
+
     private void receiveMusic(Socket socket, String musicName) throws IOException {
         byte[] b= new byte[2002];
         InputStream is = socket.getInputStream();

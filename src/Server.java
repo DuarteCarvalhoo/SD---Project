@@ -142,8 +142,6 @@ public class Server implements Hello {
         return "ups";
     }
 
-
-
     private String receiveMulticast(MulticastSocket socket) {
         try {
             socket = new MulticastSocket(PORT);
@@ -156,18 +154,20 @@ public class Server implements Hello {
             System.out.println("3.1");
             DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
             System.out.println("3.2");
-
             socket.receive(packet);
             System.out.println("4");
             String msg = new String(packet.getData(), 0, packet.getLength());
             System.out.println(msg);
 
+            socket.close();
             return msg;
+
         } catch (IOException e) {
             e.printStackTrace();
-        }finally {
-            socket.close();
         }
+        //finally {
+        //    socket.close();
+        //}
         return null;
     }
 
@@ -189,6 +189,7 @@ public class Server implements Hello {
             //recebe do multicast
             String msg = receiveMulticast(socket);
             if (msg != null) return msg;
+            socket.leaveGroup(group);
         } catch (IOException e) {
             e.printStackTrace();
         } finally {
@@ -199,7 +200,6 @@ public class Server implements Hello {
 
         return "ups";
     }
-
 
     public String checkRegister(String register) {
             System.out.println("Está no registo.");
@@ -242,11 +242,11 @@ public class Server implements Hello {
             return "ups";
     }
 
-        public String ping() {
+    public String ping() {
             return "pong";
         }
 
-        public static void main (String[]args){
+    public static void main (String[]args){
             int aux = 0;
             while (aux < 4) {
                 try {
@@ -283,4 +283,6 @@ public class Server implements Hello {
                 e.printStackTrace();
             }
         }
+
+
 }
