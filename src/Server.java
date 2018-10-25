@@ -194,7 +194,6 @@ public class Server implements Hello {
     private void receive(MulticastSocket socket, DatagramPacket packet) throws IOException {
         socket.receive(packet);
     }
-
     public String checkRegister(String register) {
             System.out.println("Está no registo.");
             String[] newRegisto = register.split("-");
@@ -249,6 +248,7 @@ public class Server implements Hello {
                     System.out.println("Pong");
                     aux = 0;
                 } catch (NotBoundException e) {
+                    System.out.println("Not bound.");
                     e.printStackTrace();
                 } catch (RemoteException e) {
                     System.out.println("test try fail");

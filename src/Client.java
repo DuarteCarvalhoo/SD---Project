@@ -36,11 +36,14 @@
  * maintenance of any nuclear facility.
  */
 
+import com.sun.org.apache.xpath.internal.operations.Bool;
+
 import java.io.*;
 import java.net.Socket;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
+import java.util.ArrayList;
 import java.util.Scanner;
 import java.rmi.registry.Registry;
 import java.net.*;
@@ -48,6 +51,7 @@ import java.net.*;
 public class Client {
 
     private static User loggedUser = new User();
+    private static ArrayList<User> users = new ArrayList<>();
     private Client() {}
 
     public static void main(String[] args) throws IOException, NotBoundException {
@@ -56,7 +60,7 @@ public class Client {
         //String host = (args.length < 1) ? null : args[0];
         Scanner reader = new Scanner(System.in);
         try {
-            Registry registry = LocateRegistry.getRegistry(7000);
+            Registry registry = LocateRegistry.getRegistry();
             rmi =(Hello) registry.lookup("Hello");
             Hello stub = (Hello) registry.lookup("Hello");
             String response = stub.sayHello();
@@ -73,7 +77,6 @@ public class Client {
                 switch(text){
                     case "/login":
                         login(rmi, reader);
-                        menuPrincipal(rmi,reader);
                         break;
                     case "/register":
                         registo(rmi, reader);
@@ -141,17 +144,21 @@ public class Client {
         return aux1[aux1.length-1];
     }
 
-    public static void login(Hello rmi, Scanner reader) throws RemoteException {
+    public static void login(Hello rmi, Scanner reader) throws IOException, NotBoundException {
         System.out.println("Insert your login('username-password'):");
         String userData = reader.nextLine();
         String txt = rmi.checkLogin(userData);
-        String[] userDataSplit = userData.split("-");
+        String[] txtSplit = txt.split(";");
+        String[] username = txtSplit[1].split("\\|");
+        String[] password = txtSplit[2].split("\\|");
+        String[] editor = txtSplit[3].split("\\|");
+        String[] online = txtSplit[4].split("\\|");
         System.out.println(txt);
-        switch (txt){
+        switch (txtSplit[0]){
             case "type|loginComplete":
-                loggedUser = new User(userDataSplit[0],userDataSplit[1]);
+                loggedUser = new User(username[1],password[1],Boolean.parseBoolean(editor[1]),Boolean.parseBoolean(online[1]));
                 System.out.println("Welcome!");
-                //menuPrincipal(rmi, reader);
+                menuPrincipal(rmi,reader);
                 break;
             case "type|loginFail":
                 System.out.println("Login failed.");
@@ -197,11 +204,20 @@ public class Client {
         boolean flag = false;
         while(true){
             try{
-                System.out.println("MENU PRINCIPAL:\n" +
-                        "Pesquisar\n" +
-                        "Upload\n" +
+                if(loggedUser.isEditor()){
+                    System.out.println("MENU PRINCIPAL:\n" +
+                            "Search\n" +
+                            "Edit\n" +
+                            "Upload\n" +
+                            "Download\n\n" +
+                            "Choose an option: ");
+                }
+                else{
+                    System.out.println("MENU PRINCIPAL:\n" +
+                        "Search\n" + "Upload\n" +
                         "Download\n\n" +
-                        "Escolha a sua opcao.");
+                        "Choose an option: ");}
+
                 String text = reader.nextLine();
                 while(!flag){
                     if(text.equals("/login") || text.equals("/register")){
@@ -214,16 +230,19 @@ public class Client {
                 }
                 rmi.msgInput(text);
                 switch(text){
-                    case "Pesquisar":
+                    case "/search":
                         menuDePesquisa(rmi, reader);
+                        break;
+                    case "/edit":
+                        //editMenu(rmi, reader);
                         break;
                     case "/logout":
                         logout(rmi,reader);
                         return;
-                    case "download":
+                    case "/download":
                         //downloadMusic();
                         break;
-                    case "upload":
+                    case "/upload":
                         String musicName = sendMusic(rmi);
                         System.out.println(rmi.sendMusicRMI(musicName));
                         break;
@@ -239,11 +258,6 @@ public class Client {
     }
 
     public static void menuPrincipalEditor(Hello rmi, Scanner reader){
-        System.out.println("MENU PRINCIPAL:\n" +
-                "Pesquisar\n" +
-                "Gerir" +
-                "Upload\n" +
-                "Download");
     }
 
     public static void menuDePesquisa(Hello rmi, Scanner reader) throws RemoteException{
