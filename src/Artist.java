@@ -1,4 +1,6 @@
-public class Artist {
+import java.io.Serializable;
+
+public class Artist implements Serializable {
     private String name,description, genre;
 
     public String getName() {
@@ -25,7 +27,7 @@ public class Artist {
         this.genre = genre;
     }
 
-    public Artist(String name, String description, String genre) {
+    public Artist(String name, String genre, String description) {
         this.name = name;
         this.description = description;
         this.genre = genre;
