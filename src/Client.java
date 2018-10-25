@@ -41,6 +41,7 @@ import com.sun.org.apache.xpath.internal.operations.Bool;
 import java.io.*;
 import java.net.Socket;
 import java.rmi.NotBoundException;
+import java.rmi.Remote;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.util.ArrayList;
@@ -159,7 +160,6 @@ public class Client {
         String userData = reader.nextLine();
         String txt = rmi.checkLogin(userData);
         String[] txtSplit = txt.split(";");
-        System.out.println(txt);
         switch (txtSplit[0]){
             case "type|loginComplete":
                 if (txtSplit.length == 5) {
@@ -220,6 +220,7 @@ public class Client {
                     System.out.println("MENU PRINCIPAL:\n" +
                             "Search\n" +
                             "Edit\n" +
+                            "Make editor\n" +
                             "Upload\n" +
                             "Download\n\n" +
                             "Choose an option: ");
@@ -251,6 +252,9 @@ public class Client {
                     case "/logout":
                         logout(rmi,reader);
                         return;
+                    case "/makeeditor":
+                        makeEditor(rmi,reader);
+                        break;
                     case "/download":
                         //downloadMusic();
                         break;
@@ -269,8 +273,22 @@ public class Client {
         }
     }
 
-    public static void menuPrincipalEditor(Hello rmi, Scanner reader){
+    public static void makeEditor(Hello rmi, Scanner reader) throws RemoteException{
+        System.out.println("Insert user's name: ");
+        String name = reader.nextLine();
+        String response = rmi.checkEditorMaking(name);
+
+        switch (response){
+            case "type|makingEditorComplete":
+                System.out.println(name +" is now an editor.");
+                break;
+            case "type|makingEditorFail":
+                System.out.println("Making "+name+" an Editor didn't work.");
+                break;
+        }
     }
+
+
 
     public static void menuDePesquisa(Hello rmi, Scanner reader) throws RemoteException{
         System.out.println("O que deseja pesquisar?\n" +

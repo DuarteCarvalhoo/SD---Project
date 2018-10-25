@@ -21,7 +21,6 @@ public class MulticastServer extends Thread implements Serializable {
 
     public void run() {
         MulticastSocket socket = null;
-        Runtime.getRuntime().addShutdownHook(new catchCtrlC(usersList));
         //System.out.println(this.getName() + "run...");
 
         try {
@@ -35,7 +34,7 @@ public class MulticastServer extends Thread implements Serializable {
             String aux2= "";
             Socket socketHelp= null;
             while (true) {
-                System.out.println("INICIO");
+                System.out.println("_______________________________________________________________________________________________________");
                 byte[] bufferRec = new byte[256];
                 DatagramPacket packetRec = new DatagramPacket(bufferRec, bufferRec.length);
                 socket.receive(packetRec);
@@ -265,26 +264,5 @@ public class MulticastServer extends Thread implements Serializable {
         }
         System.out.println("Users list wrote successfully.");
         return usersList;
-    }
-}
-
-class catchCtrlC extends Thread {
-    ArrayList<User> users = new ArrayList<>();
-    public catchCtrlC(ArrayList<User> usersList) {
-        this.users = usersList;
-    }
-
-    @Override
-    public void run() {
-        for(User user : users) {
-            if (user == null) {
-                System.out.println("rip");
-            } else {
-                System.out.println(user);
-
-            }
-        }
-        //MulticastServer.writeFiles(users);
-        System.out.println("Escreveu no ficheiro de objetos.");
     }
 }
