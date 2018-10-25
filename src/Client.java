@@ -60,7 +60,7 @@ public class Client {
         //String host = (args.length < 1) ? null : args[0];
         Scanner reader = new Scanner(System.in);
         try {
-            Registry registry = LocateRegistry.getRegistry();
+            Registry registry = LocateRegistry.getRegistry(7000);
             rmi =(Hello) registry.lookup("Hello");
             Hello stub = (Hello) registry.lookup("Hello");
             String response = stub.sayHello();
@@ -131,7 +131,7 @@ public class Client {
         FilePermission permission = new FilePermission(auxx, "read");
         FileInputStream fInStream= new FileInputStream(auxx);
         System.out.println("tou much bytes?");
-        byte b[] = new byte [3000000];
+        byte b[] = new byte [2002];
         System.out.println("no");
         fInStream.read(b, 0, b.length);
         System.out.println("too big too read");
@@ -149,14 +149,16 @@ public class Client {
         String userData = reader.nextLine();
         String txt = rmi.checkLogin(userData);
         String[] txtSplit = txt.split(";");
-        String[] username = txtSplit[1].split("\\|");
-        String[] password = txtSplit[2].split("\\|");
-        String[] editor = txtSplit[3].split("\\|");
-        String[] online = txtSplit[4].split("\\|");
         System.out.println(txt);
         switch (txtSplit[0]){
             case "type|loginComplete":
-                loggedUser = new User(username[1],password[1],Boolean.parseBoolean(editor[1]),Boolean.parseBoolean(online[1]));
+                if (txtSplit.length == 5) {
+                    String[] username = txtSplit[1].split("\\|");
+                    String[] password = txtSplit[2].split("\\|");
+                    String[] editor = txtSplit[3].split("\\|");
+                    String[] online = txtSplit[4].split("\\|");
+                    loggedUser = new User(username[1], password[1], Boolean.parseBoolean(editor[1]), Boolean.parseBoolean(online[1]));
+                }
                 System.out.println("Welcome!");
                 menuPrincipal(rmi,reader);
                 break;

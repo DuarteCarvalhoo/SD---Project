@@ -125,18 +125,21 @@ public class Server implements Hello {
             DatagramPacket packet = new DatagramPacket(buffer, buffer.length, group, PORT);
             socket.send(packet);
             System.out.println("test1");
+            //recebe do multicast
+            String msg = receiveMulticast(socket);
+            return msg;
             //falta receber a resposta se ja existe ou nao, se a pw ta bem etc...
         } catch (IOException e) {
             e.printStackTrace();
-        } finally {
+        }finally {
             socket.close();
         }
 
-        //recebe do multicast
-        String msg = receiveMulticast(socket);
-        return msg;
+        System.out.println("vou fechar");
+        socket.close();
+        System.out.println("freeze?");
 
-        //return "ups";
+        return "ups";
     }
 
 
@@ -144,19 +147,25 @@ public class Server implements Hello {
     private String receiveMulticast(MulticastSocket socket) {
         try {
             socket = new MulticastSocket(PORT);
+            System.out.println("1");
             InetAddress group = InetAddress.getByName(MULTICAST_ADDRESS);
+            System.out.println("2");
             socket.joinGroup(group);
-            byte[] buffer = new byte[256];
+            System.out.println("3");
+            byte[] buffer = new byte[2002];
+            System.out.println("3.1");
             DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
-            receive(socket, packet);
+            System.out.println("3.2");
 
+            socket.receive(packet);
+            System.out.println("4");
             String msg = new String(packet.getData(), 0, packet.getLength());
             System.out.println(msg);
 
             return msg;
         } catch (IOException e) {
             e.printStackTrace();
-        } finally {
+        }finally {
             socket.close();
         }
         return null;
@@ -177,23 +186,21 @@ public class Server implements Hello {
             DatagramPacket packet = new DatagramPacket(buffer, buffer.length, group, PORT);
             socket.send(packet);
             System.out.println("test3");
-            //falta receber a resposta se ja existe ou nao, se a pw ta bem etc...
+            //recebe do multicast
+            String msg = receiveMulticast(socket);
+            if (msg != null) return msg;
         } catch (IOException e) {
             e.printStackTrace();
         } finally {
             socket.close();
         }
 
-        //recebe do multicast
-        String msg = receiveMulticast(socket);
-        if (msg != null) return msg;
+
 
         return "ups";
     }
 
-    private void receive(MulticastSocket socket, DatagramPacket packet) throws IOException {
-        socket.receive(packet);
-    }
+
     public String checkRegister(String register) {
             System.out.println("Está no registo.");
             String[] newRegisto = register.split("-");
@@ -209,16 +216,16 @@ public class Server implements Hello {
                 DatagramPacket packet = new DatagramPacket(buffer, buffer.length, group, PORT);
                 socket.send(packet);
                 System.out.println("test2");
-                //falta receber a resposta se ja existe ou nao, se a pw ta bem etc...
+                //recebe do multicast
+                String msg = receiveMulticast(socket);
+                if (msg != null) return msg;
             } catch (IOException e) {
                 e.printStackTrace();
             } finally {
                 socket.close();
             }
 
-            //recebe do multicast
-            String msg = receiveMulticast(socket);
-            if (msg != null) return msg;
+
         /*
         if(newRegisto.length != 3){
             return "preencheu mal os campos por favor tente de novo";

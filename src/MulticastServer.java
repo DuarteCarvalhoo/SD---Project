@@ -154,7 +154,7 @@ public class MulticastServer extends Thread implements Serializable {
         return socket;
     }
     private void receiveMusic(Socket socket, String musicName) throws IOException {
-        byte[] b= new byte[3000000];
+        byte[] b= new byte[2002];
         InputStream is = socket.getInputStream();
         FileOutputStream fOutStream = new FileOutputStream("C:\\Users\\Duarte\\Desktop\\SD\\PROJETO\\META 1\\SD---Project\\musicasServer\\" + musicName);
         is.read(b, 0, b.length);
