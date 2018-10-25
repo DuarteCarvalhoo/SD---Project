@@ -1,19 +1,9 @@
-import java.io.IOException;
+import java.io.*;
 import java.net.*;
 import java.util.*;
-import java.io.BufferedInputStream;
-import java.io.BufferedReader;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.FileReader;
 import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.io.Serializable;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.io.File;
 
 public class MulticastServer extends Thread implements Serializable {
     private String MULTICAST_ADDRESS = "224.0.224.0";
@@ -41,6 +31,8 @@ public class MulticastServer extends Thread implements Serializable {
             if (usersList.isEmpty()) {
                 System.out.println("Arraylist empty!");
             }
+            String aux2= "";
+            Socket socketHelp= null;
             while (true) {
                 System.out.println("INICIO");
                 byte[] bufferRec = new byte[256];
@@ -87,7 +79,7 @@ public class MulticastServer extends Thread implements Serializable {
                         //funçao pra confirmar se o user existe, se a pw ta certa e por fim enviar a resposta
                         break;
                     case "type|register":
-                        String aux2 = aux[1];
+                        aux2 = aux[1];
                         String[] registerUsernameParts = aux2.split("\\|");
                         String[] registerPasswordParts = aux[2].split("\\|");
                         String username = registerUsernameParts[1];
@@ -113,6 +105,19 @@ public class MulticastServer extends Thread implements Serializable {
                         //funçao passa como argumentos o user e pw
                         //na funçao verificar se nao ha users iguais, se nao guardar no arraylist (se usarmos 2 pws ver se sao iguais) e enviar a resposta
                         break;
+                    case "type|turnOnSocket":
+                        aux2 = aux[1];
+                        String[] address = aux2.split("\\|");
+                        socketHelp = ligarSocket(address[1]);
+                        //String[] musicName = aux[2].split("\\|");
+                        //receiveMusic(address[1], musicName[1]);
+                        sendMsg(socket, "Music saving on the server.");
+                        break;
+                    case "type|sendMusic":
+                        aux2 = aux[1];
+                        String[] musicName= aux2.split("\\|");
+                        receiveMusic(socketHelp, musicName[1]);
+                        sendMsg(socket, "it worked out");
                     case "type|logout":
                         String[] logoutUsername = aux[1].split("\\|");
                         String logoutUser = logoutUsername[1];
@@ -142,6 +147,18 @@ public class MulticastServer extends Thread implements Serializable {
         } finally {
             socket.close();
         }
+    }
+
+    private Socket ligarSocket(String address) throws IOException {
+        Socket socket = new Socket(address,5000);
+        return socket;
+    }
+    private void receiveMusic(Socket socket, String musicName) throws IOException {
+        byte[] b= new byte[3000000];
+        InputStream is = socket.getInputStream();
+        FileOutputStream fOutStream = new FileOutputStream("C:\\Users\\Duarte\\Desktop\\SD\\PROJETO\\META 1\\SD---Project\\musicasServer\\" + musicName);
+        is.read(b, 0, b.length);
+        fOutStream.write(b, 0, b.length);
     }
 
     public boolean checkUsernameLogin(String username, String password){

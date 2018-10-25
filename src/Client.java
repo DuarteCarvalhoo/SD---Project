@@ -36,20 +36,21 @@
  * maintenance of any nuclear facility.
  */
 
-import java.io.IOException;
+import java.io.*;
 import java.net.Socket;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.util.Scanner;
 import java.rmi.registry.Registry;
+import java.net.*;
 
 public class Client {
 
     private static User loggedUser = new User();
     private Client() {}
 
-    public static void main(String[] args) throws RemoteException, NotBoundException {
+    public static void main(String[] args) throws IOException, NotBoundException {
         String text = "";
         Hello rmi = null;
         //String host = (args.length < 1) ? null : args[0];
@@ -80,11 +81,6 @@ public class Client {
                     case "/user":
                         System.out.println(loggedUser.getUsername());
                         break;
-                    case "download":
-                        //downloadMusic();
-                        break;
-                    case "upload":
-                        break;
                     default:
                         System.out.println("Este comando não faz nada. Para sair escreva 'quit'");
                 }
@@ -114,6 +110,34 @@ public class Client {
         rmi =(Hello) registry.lookup("Hello");
         System.out.println("Por favor repita o ultimo input");
         return rmi;
+    }
+
+    private static String sendMusic(Hello rmi) throws IOException {
+
+        ServerSocket socket = new ServerSocket(5000);
+        System.out.println("check1");
+        String[] aux = socket.getLocalSocketAddress().toString().split("/");
+        rmi.startSocket(aux[0]);
+        Socket socketAcept = socket.accept();
+        System.out.println("Write down the directory of your music: (example:'C:\\Duarte\\example.wav').");
+        Scanner direc = new Scanner(System.in);
+        String auxx = direc.nextLine();
+        String[] aux1 = auxx.split("\\\\");
+        System.out.println("can it split?");
+        System.out.println(aux1[aux1.length-1]);
+        FilePermission permission = new FilePermission(auxx, "read");
+        FileInputStream fInStream= new FileInputStream(auxx);
+        System.out.println("tou much bytes?");
+        byte b[] = new byte [3000000];
+        System.out.println("no");
+        fInStream.read(b, 0, b.length);
+        System.out.println("too big too read");
+        OutputStream outStream = socketAcept.getOutputStream();
+        outStream.write(b, 0, b.length);
+        System.out.println("too big too write");
+        outStream.flush();
+        socket.isClosed();
+        return aux1[aux1.length-1];
     }
 
     public static void login(Hello rmi, Scanner reader) throws RemoteException {
@@ -168,7 +192,7 @@ public class Client {
         }
     }
 
-    public static void menuPrincipal(Hello rmi, Scanner reader) throws RemoteException, NotBoundException {
+    public static void menuPrincipal(Hello rmi, Scanner reader) throws IOException, NotBoundException {
         boolean flag = false;
         while(true){
             try{
@@ -192,13 +216,15 @@ public class Client {
                     case "Pesquisar":
                         menuDePesquisa(rmi, reader);
                         break;
-                    case "Uploda":
-                        registo(rmi, reader);
-                        break;
                     case "/logout":
                         logout(rmi,reader);
                         return;
-                    case "Download":
+                    case "download":
+                        //downloadMusic();
+                        break;
+                    case "upload":
+                        String musicName = sendMusic(rmi);
+                        System.out.println(rmi.sendMusicRMI(musicName));
                         break;
                     default:
                         System.out.println("Este comando não faz nada. Para sair escreva 'leave'");

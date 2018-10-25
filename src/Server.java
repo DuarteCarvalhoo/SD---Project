@@ -38,10 +38,14 @@
 
 import com.sun.xml.internal.ws.policy.privateutil.PolicyUtils;
 
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.net.MulticastSocket;
+import java.net.Socket;
 import java.rmi.AccessException;
 import java.rmi.NotBoundException;
 import java.rmi.registry.Registry;
@@ -65,6 +69,44 @@ public class Server implements Hello {
     public String msgInput(String text) {
         System.out.println("escreveu uma mensagem: " + text);
         return " ";
+    }
+
+    public String startSocket(String clientAddress){
+        MulticastSocket socket = null;
+        //envia pra o multicast
+        try {
+            socket = new MulticastSocket();
+            InetAddress group = InetAddress.getByName(MULTICAST_ADDRESS);
+            socket.joinGroup(group);
+            String aux = "type|turnOnSocket;address|"+clientAddress; //protocol
+            byte[] buffer = aux.getBytes();
+            DatagramPacket packet = new DatagramPacket(buffer, buffer.length, group, PORT);
+            socket.send(packet);
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            socket.close();
+        }
+        return receiveMulticast(socket);
+    }
+
+    public String sendMusicRMI(String musicName){
+        MulticastSocket socket = null;
+        //envia pra o multicast
+        try {
+            socket = new MulticastSocket();
+            InetAddress group = InetAddress.getByName(MULTICAST_ADDRESS);
+            socket.joinGroup(group);
+            String aux = "type|sendMusic;musicName|"+musicName; //protocol
+            byte[] buffer = aux.getBytes();
+            DatagramPacket packet = new DatagramPacket(buffer, buffer.length, group, PORT);
+            socket.send(packet);
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            socket.close();
+        }
+        return receiveMulticast(socket);
     }
 
     public String checkLogin(String login) {
@@ -96,6 +138,8 @@ public class Server implements Hello {
 
         //return "ups";
     }
+
+
 
     private String receiveMulticast(MulticastSocket socket) {
         try {
@@ -190,7 +234,7 @@ public class Server implements Hello {
             return "registado";
         }*/
             return "ups";
-        }
+    }
 
         public String ping() {
             return "pong";
@@ -223,7 +267,7 @@ public class Server implements Hello {
                 Hello stub = (Hello) UnicastRemoteObject.exportObject(obj, 0);
 
                 // Bind the remote object's stub in the registry
-                Registry registry = LocateRegistry.createRegistry(7000);
+                Registry registry = LocateRegistry.getRegistry(7000);
                 registry.rebind("Hello", stub);
 
                 System.err.println("Server ready");
@@ -232,4 +276,4 @@ public class Server implements Hello {
                 e.printStackTrace();
             }
         }
-    }
+}

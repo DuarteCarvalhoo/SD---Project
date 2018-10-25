@@ -42,6 +42,8 @@ import java.rmi.RemoteException;
 public interface Hello extends Remote {
     String sayHello() throws RemoteException;
 
+    String startSocket(String clientAddress) throws RemoteException;
+
     String msgInput(String text) throws RemoteException;
 
     String checkLogin(String login) throws RemoteException;
@@ -49,6 +51,8 @@ public interface Hello extends Remote {
     String checkRegister(String register) throws RemoteException;
 
     String checkLogout(User user) throws RemoteException;
+
+    String sendMusicRMI(String musicName) throws RemoteException;
 
     String ping() throws RemoteException;
 }
