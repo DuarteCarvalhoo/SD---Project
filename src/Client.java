@@ -150,13 +150,6 @@ public class Client {
             outStream.write(b);
             System.out.print("Sending file ... "+(current*100)/auxx.length()+"% complete!");
         }
-        /*fInStream.read(b, 0, b.length);
-        System.out.println("too big too read");
-        OutputStream outStream = socketAcept.getOutputStream();
-        System.out.println("is this it?");
-        outStream.write(b, 0, b.length);
-        System.out.println("too big too write");
-        */
         outStream.flush();
         socket.isClosed();
         return aux1[aux1.length-1];
