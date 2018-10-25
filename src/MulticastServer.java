@@ -177,14 +177,16 @@ public class MulticastServer extends Thread implements Serializable {
                         break;
                     case "type|deleteArtist":
                         String[] nameP = aux[1].split("\\|");
+                        String name = nameP[1];
                         if(!checkArtistExists(nameP[1])){
                             sendMsg("type|artistNotFound");
                             System.out.println("ERROR: Artist Not Found.");
                         }
                         else{
-                            for(Artist a : artistsList){
-                                if(a.getName().equals(nameP[1])){
-                                    artistsList.remove(a);
+                            int i;
+                            for(i=0;i<artistsList.size();i++){
+                                if(artistsList.get(i).getName().equals(name)){
+                                    artistsList.remove(artistsList.get(i));
                                     sendMsg("type|deleteArtistComplete");
                                     System.out.println("SUCCESS: Artist deleted.");
                                 }
