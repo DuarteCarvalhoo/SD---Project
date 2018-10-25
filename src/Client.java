@@ -133,6 +133,7 @@ public class Client {
         fInStream.read(b, 0, b.length);
         System.out.println("too big too read");
         OutputStream outStream = socketAcept.getOutputStream();
+        System.out.println("is this it?");
         outStream.write(b, 0, b.length);
         System.out.println("too big too write");
         outStream.flush();

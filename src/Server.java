@@ -267,7 +267,7 @@ public class Server implements Hello {
                 Hello stub = (Hello) UnicastRemoteObject.exportObject(obj, 0);
 
                 // Bind the remote object's stub in the registry
-                Registry registry = LocateRegistry.getRegistry(7000);
+                Registry registry = LocateRegistry.createRegistry(7000);
                 registry.rebind("Hello", stub);
 
                 System.err.println("Server ready");
