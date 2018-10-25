@@ -70,6 +70,12 @@ public class User implements Serializable{
         this.online = online;
     }
 
+    public User(String username, String password, boolean online) {
+        this.username = username;
+        this.password = password;
+        this.online = online;
+    }
+
     public User(){
         this.username = "none";
         this.password = "none";
