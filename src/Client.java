@@ -131,29 +131,37 @@ public class Client {
         System.out.println("can it split?");
         System.out.println(aux1[aux1.length-1]);
         FilePermission permission = new FilePermission(auxx, "read");
-        FileInputStream fInStream= new FileInputStream(auxx);
+        FileInputStream fInStream= new FileInputStream(file);
         System.out.println("tou much bytes?");
         OutputStream outStream = socketAcept.getOutputStream();
         byte b[];
         System.out.println("no");
         int current =0;
-        while(current!=auxx.length()){
-            int size = 10000;
-            if(auxx.length() - current >= size)
+        long len = file.length();
+        while(current!=len){
+            int size = 1024;
+
+            if(len - current >= size)
                 current += size;
             else{
-                size = (int)(auxx.length() - current);
-                current = auxx.length();
+                size = (int)(len - current);
+                current = (int) len;
             }
             b = new byte[size];
+            System.out.println("antes de fstream");
             fInStream.read(b, 0, size);
+            System.out.println("antes de outstream");
             outStream.write(b);
-            System.out.print("Sending file ... "+(current*100)/auxx.length()+"% complete!");
+            System.out.println("Sending file ... "+(current*100)/len+"% complete!");
+
         }
+        System.out.println("uff");
         outStream.flush();
         socket.isClosed();
         return aux1[aux1.length-1];
     }
+
+    
 
     public static void login(Hello rmi, Scanner reader) throws IOException, NotBoundException {
         System.out.println("Insert your login('username-password'):");
@@ -287,8 +295,6 @@ public class Client {
                 break;
         }
     }
-
-
 
     public static void menuDePesquisa(Hello rmi, Scanner reader) throws RemoteException{
         System.out.println("O que deseja pesquisar?\n" +

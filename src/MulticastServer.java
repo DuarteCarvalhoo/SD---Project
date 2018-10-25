@@ -232,7 +232,7 @@ public class MulticastServer extends Thread implements Serializable {
     }
 
     private void receiveMusic(Socket socket, String musicName) throws IOException {
-        byte[] b= new byte[10000];
+        byte[] b= new byte[1024];
         System.out.println("1");
         InputStream is = socket.getInputStream();
         System.out.println("2");
@@ -243,8 +243,12 @@ public class MulticastServer extends Thread implements Serializable {
         int aux= 0;
         System.out.println("4");
         while ((aux = is.read(b))!=-1){
+            System.out.println(b.length);
             bOutStream.write(b, 0, aux);
             System.out.println("4.1");
+            if(is.available()==0){
+                break;
+            }
         }
         System.out.println("5");
         bOutStream.flush();

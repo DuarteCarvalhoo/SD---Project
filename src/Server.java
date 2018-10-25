@@ -230,6 +230,7 @@ public class Server implements Hello {
         return null;
     }
 
+
     public String checkLogout(User user) {
         System.out.println("Entrou no logout");
         System.out.println(user.getUsername());
