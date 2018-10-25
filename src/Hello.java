@@ -55,4 +55,6 @@ public interface Hello extends Remote {
     String sendMusicRMI(String musicName) throws RemoteException;
 
     String ping() throws RemoteException;
+
+    String checkEditorMaking(String name) throws RemoteException;
 }

@@ -109,6 +109,26 @@ public class Server implements Hello {
         return receiveMulticast();
     }
 
+    public String checkEditorMaking(String name){
+        MulticastSocket socket = null;
+        //envia pra o multicast
+        try {
+            socket = new MulticastSocket();
+            InetAddress group = InetAddress.getByName(MULTICAST_ADDRESS);
+            socket.joinGroup(group);
+            String aux = "type|makeEditor;User|"+name; //protocol
+            byte[] buffer = aux.getBytes();
+            DatagramPacket packet = new DatagramPacket(buffer, buffer.length, group, PORT);
+            socket.send(packet);
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            socket.close();
+        }
+        String msg = receiveMulticast();
+        return msg;
+    }
+
     public String checkLogin(String login) {
         System.out.println("Entrou no Login");
         System.out.println(login);
@@ -124,7 +144,6 @@ public class Server implements Hello {
             byte[] buffer = aux.getBytes();
             DatagramPacket packet = new DatagramPacket(buffer, buffer.length, group, PORT);
             socket.send(packet);
-            System.out.println("test1");
             //recebe do multicast
             String msg = receiveMulticast();
             return msg;
@@ -143,17 +162,11 @@ public class Server implements Hello {
         MulticastSocket socket = null;
         try {
             socket = new MulticastSocket(PORT);
-            System.out.println("1");
             InetAddress group = InetAddress.getByName(MULTICAST_ADDRESS);
-            System.out.println("2");
             socket.joinGroup(group);
-            System.out.println("3");
             byte[] buffer = new byte[2002];
-            System.out.println("3.1");
             DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
-            System.out.println("3.2");
             socket.receive(packet);
-            System.out.println("4");
             String msg = new String(packet.getData(), 0, packet.getLength());
             System.out.println(msg);
 
@@ -183,7 +196,6 @@ public class Server implements Hello {
             byte[] buffer = aux.getBytes();
             DatagramPacket packet = new DatagramPacket(buffer, buffer.length, group, PORT);
             socket.send(packet);
-            System.out.println("test3");
             //recebe do multicast
             String msg = receiveMulticast();
             if (msg != null) return msg;
@@ -213,7 +225,6 @@ public class Server implements Hello {
                 byte[] buffer = aux.getBytes();
                 DatagramPacket packet = new DatagramPacket(buffer, buffer.length, group, PORT);
                 socket.send(packet);
-                System.out.println("test2");
                 //recebe do multicast
                 String msg = receiveMulticast();
                 if (msg != null) return msg;
