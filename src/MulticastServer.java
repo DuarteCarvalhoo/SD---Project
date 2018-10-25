@@ -9,7 +9,7 @@ public class MulticastServer extends Thread implements Serializable {
     private String MULTICAST_ADDRESS = "224.0.224.0";
     private int PORT = 4321;
     private long SLEEP_TIME = 5000;
-    private ArrayList<User> usersList = new ArrayList<>();
+    public ArrayList<User> usersList = new ArrayList<>();
 
     public static void main(String[] args){
         MulticastServer server = new MulticastServer();
@@ -68,7 +68,7 @@ public class MulticastServer extends Thread implements Serializable {
                                             System.out.println("ERRO: Login não completo.");
                                         } else {
                                             u.setOnline();
-                                            sendMsg(socket, "type|loginComplete");
+                                            sendMsg(socket, "type|loginComplete;username|"+u.getUsername()+";password|"+u.getPassword()+";editor|"+u.isEditor()+";online|"+u.isOnline());
                                             System.out.println("SUCESSO: Login Completo");
                                         }
                                     }

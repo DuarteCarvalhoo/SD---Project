@@ -63,6 +63,13 @@ public class User implements Serializable{
         this.password = password;
     }
 
+    public User(String username, String password, boolean editor, boolean online) {
+        this.username = username;
+        this.password = password;
+        this.editor = editor;
+        this.online = online;
+    }
+
     public User(){
         this.username = "none";
         this.password = "none";
