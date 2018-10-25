@@ -57,4 +57,8 @@ public interface Hello extends Remote {
     String ping() throws RemoteException;
 
     String checkEditorMaking(String name) throws RemoteException;
+
+    String createArtist(String name, String genre, String description) throws RemoteException;
+
+    public String deleteArtist(String name) throws RemoteException;
 }

@@ -254,7 +254,7 @@ public class Client {
                         menuDePesquisa(rmi, reader);
                         break;
                     case "/edit":
-                        //editMenu(rmi, reader);
+                        editorMenu(rmi, reader);
                         break;
                     case "/logout":
                         logout(rmi,reader);
@@ -281,7 +281,7 @@ public class Client {
     }
 
     public static void makeEditor(Hello rmi, Scanner reader) throws RemoteException{
-        System.out.println("Insert user's name: ");
+        System.out.print("Insert user's name: ");
         String name = reader.nextLine();
         String response = rmi.checkEditorMaking(name);
 
@@ -313,6 +313,93 @@ public class Client {
                 break;
             default:
                 System.out.println("Inseriu mal o comando. Por favor volte a tentar.");
+        }
+    }
+
+    public static void editorMenu(Hello rmi,Scanner reader) throws RemoteException{
+        System.out.println("What do you want to do: Create, Edit, Delete?");
+        String response = reader.nextLine();
+        switch (response){
+            case "/create":
+                createMenu(rmi,reader);
+                break;
+            case "/edit":
+                //editMenu(rmi,reader);
+                break;
+            case "/delete":
+                deleteMenu(rmi,reader);
+                break;
+            default:
+                break;
+        }
+    }
+
+    public static void createMenu(Hello rmi, Scanner reader) throws RemoteException{
+        System.out.println("What do you want to create: Artist, Music, Album?");
+        String response = reader.nextLine();
+        switch(response){
+            case "/artist":
+                createArtist(rmi,reader);
+                break;
+            case "/music":
+                //createMusic();
+                break;
+            case "/album":
+                //createAlbum();
+                break;
+            default:
+                //Something;
+        }
+    }
+
+    public static void deleteMenu(Hello rmi, Scanner reader) throws RemoteException{
+        System.out.println("What do you want to delete: Artist, Music, Album");
+        String response = reader.nextLine();
+        switch(response){
+            case "/artist":
+                deleteArtist(rmi,reader);
+                break;
+            case "/music":
+                //createMusic();
+                break;
+            case "/album":
+                //createAlbum();
+                break;
+            default:
+                //Something;
+        }
+    }
+
+    public static void createArtist(Hello rmi,Scanner reader) throws RemoteException{
+        System.out.println("Insert your data('name-genre-password')");
+        String text = reader.nextLine();
+        String[] data = text.split("-");
+        String response = rmi.createArtist(data[0], data[1], data[2]);
+        switch (response){
+            case "type|artistExists":
+                System.out.println("Artist already exists.");
+                break;
+            case "type|createArtistComplete":
+                System.out.println("SUCCESS: Artist created successfully.");
+                break;
+            default:
+                //something;
+        }
+    }
+
+    public static void deleteArtist(Hello rmi,Scanner reader) throws RemoteException{
+        System.out.println("Insert your data('name')");
+        String name = reader.nextLine();
+        String response = rmi.deleteArtist(name);
+        switch (response){
+            case "type|artistNotFound":
+                System.out.println("Artist not found.");
+                break;
+            case "type|deleteArtistComplete":
+                System.out.println("SUCCESS: Artist deleted successfully.");
+                break;
+            default:
+                //something;
         }
     }
 }

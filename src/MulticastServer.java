@@ -10,7 +10,8 @@ public class MulticastServer extends Thread implements Serializable {
     private String MULTICAST_ADDRESS = "224.0.224.0";
     private int PORT = 4321;
     private long SLEEP_TIME = 5000;
-    public ArrayList<User> usersList = new ArrayList<>();
+    private ArrayList<User> usersList = new ArrayList<>();
+    private ArrayList<Artist> artistsList = new ArrayList<>();
 
     public static void main(String[] args){
         MulticastServer server = new MulticastServer();
@@ -27,9 +28,12 @@ public class MulticastServer extends Thread implements Serializable {
             socket = new MulticastSocket(PORT);
             InetAddress group = InetAddress.getByName(MULTICAST_ADDRESS);
             socket.joinGroup(group);
-            usersList = readFiles();
+            readFiles();
             if (usersList.isEmpty()) {
-                System.out.println("Arraylist empty!");
+                System.out.println("Users arraylist empty!");
+            }
+            if(artistsList.isEmpty()){
+                System.out.println("Artists arraylist empty!");
             }
             String aux2= "";
             Socket socketHelp= null;
@@ -97,12 +101,14 @@ public class MulticastServer extends Thread implements Serializable {
                             User newUser = new User(username, password);
                             newUser.makeEditor();
                             System.out.println("Editor permisions given.");
-                            usersList = writeFilesUser(usersList, newUser);
+                            usersList.add(newUser);
+                            writeFiles();
                             System.out.println("SUCCESS: User added to database with username: '" + username + "' and password '" + password + "'");
                             sendMsg("type|registComplete");
                         } else {
                             User newUser = new User(username, password);
-                            usersList = writeFilesUser(usersList, newUser);
+                            usersList.add(newUser);
+                            writeFiles();
                             System.out.println("SUCESSO: Adicionou ao arraylist com user '" + username + "' e password '" + password + "'");
                             sendMsg("type|registComplete");
                         }
@@ -152,9 +158,42 @@ public class MulticastServer extends Thread implements Serializable {
                             }
                         }
                         break;
+                    case "type|createArtist":
+                        String[] nameParts = aux[1].split("\\|");
+                        String[] genreParts = aux[2].split("\\|");
+                        String[] descriptionParts = aux[3].split("\\|");
+                        boolean artistExists = checkArtistExists(nameParts[1]);
+                        if (artistExists) {
+                            sendMsg("type|artistExists");
+                            System.out.println("ERRO: Artist already exists.");
+                        }
+                        else {
+                            Artist newArtist = new Artist(nameParts[1],descriptionParts[1],genreParts[1]);
+                            artistsList.add(newArtist);
+                            writeFiles();
+                            System.out.println("SUCESSO: Adicionou ao arraylist com nome '" + nameParts[1] + "', genre '" + genreParts[1] + "' e descrição '"+descriptionParts[1]+"'");
+                            sendMsg("type|createArtistComplete");
+                        }
+                        break;
+                    case "type|deleteArtist":
+                        String[] nameP = aux[1].split("\\|");
+                        if(!checkArtistExists(nameP[1])){
+                            sendMsg("type|artistNotFound");
+                            System.out.println("ERROR: Artist Not Found.");
+                        }
+                        else{
+                            for(Artist a : artistsList){
+                                if(a.getName().equals(nameP[1])){
+                                    artistsList.remove(a);
+                                    sendMsg("type|deleteArtistComplete");
+                                    System.out.println("SUCCESS: Artist deleted.");
+                                }
+                            }
+                        }
+                        break;
                     case "type|logout":
                         boolean flagLogout = false;
-                        System.out.println("tou a dar logout");
+                        System.out.println("Logging out.");
                         String[] logoutUsername = aux[1].split("\\|");
                         String logoutUser = logoutUsername[1];
                         if (!logoutUser.equals("none")) {
@@ -239,6 +278,20 @@ public class MulticastServer extends Thread implements Serializable {
         return 0;
     }
 
+    public boolean checkArtistExists(String name){
+        if(artistsList.isEmpty()){
+            return false;
+        }
+        else {
+            for (Artist artist : artistsList) {
+                if (artist.getName().equals(name)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
     private void sendMsg(String msg) throws IOException {
         MulticastSocket socket = new MulticastSocket();
         byte[] buffer = msg.getBytes();
@@ -254,15 +307,15 @@ public class MulticastServer extends Thread implements Serializable {
         socket.close();
     }
 
-    private ArrayList<User> readFiles(){
+    private void readFiles(){
         System.out.println("Reading.");
         ArrayList<User> users = new ArrayList<>();
         try {
             ObjectInputStream objectIn = new ObjectInputStream(new BufferedInputStream(new FileInputStream("data.bin")));
-            users = (ArrayList) objectIn.readObject();
+            this.usersList = (ArrayList) objectIn.readObject();
+            this.artistsList = (ArrayList) objectIn.readObject();
             objectIn.close();
-            System.out.println("Read users file successfully.");
-            return users;
+            System.out.println("Read file successfully.");
         }
         catch (FileNotFoundException e) {
             e.printStackTrace();
@@ -272,17 +325,16 @@ public class MulticastServer extends Thread implements Serializable {
         catch (ClassNotFoundException e) {
             e.printStackTrace();
         }
-        return users;
     }
 
-    public ArrayList<User> writeFilesUser(ArrayList<User> usersList, User newUser){
+    public void writeFiles(){
         System.out.println("Writing.");
-        usersList.add(newUser);
         try{
             File file = new File("data.bin");
             FileOutputStream out = new FileOutputStream(file);
             ObjectOutputStream fout = new ObjectOutputStream(out);
-            fout.writeObject(usersList);
+            fout.writeObject(this.usersList);
+            fout.writeObject(this.artistsList);
             fout.close();
             out.close();
         }
@@ -292,7 +344,6 @@ public class MulticastServer extends Thread implements Serializable {
         } catch (IOException ex) {
             Logger.getLogger(MulticastServer.class.getName()).log(Level.SEVERE, null, ex);
         }
-        System.out.println("Users list wrote successfully.");
-        return usersList;
+        System.out.println("Lists wrote successfully.");
     }
 }
