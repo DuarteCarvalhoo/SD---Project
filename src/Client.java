@@ -125,20 +125,37 @@ public class Client {
         System.out.println("Write down the directory of your music: (example:'C:\\Duarte\\example.wav').");
         Scanner direc = new Scanner(System.in);
         String auxx = direc.nextLine();
+        File file = new File(auxx);
         String[] aux1 = auxx.split("\\\\");
         System.out.println("can it split?");
         System.out.println(aux1[aux1.length-1]);
         FilePermission permission = new FilePermission(auxx, "read");
         FileInputStream fInStream= new FileInputStream(auxx);
         System.out.println("tou much bytes?");
-        byte b[] = new byte [2002];
+        OutputStream outStream = socketAcept.getOutputStream();
+        byte b[];
         System.out.println("no");
-        fInStream.read(b, 0, b.length);
+        int current =0;
+        while(current!=auxx.length()){
+            int size = 10000;
+            if(auxx.length() - current >= size)
+                current += size;
+            else{
+                size = (int)(auxx.length() - current);
+                current = auxx.length();
+            }
+            b = new byte[size];
+            fInStream.read(b, 0, size);
+            outStream.write(b);
+            System.out.print("Sending file ... "+(current*100)/auxx.length()+"% complete!");
+        }
+        /*fInStream.read(b, 0, b.length);
         System.out.println("too big too read");
         OutputStream outStream = socketAcept.getOutputStream();
         System.out.println("is this it?");
         outStream.write(b, 0, b.length);
         System.out.println("too big too write");
+        */
         outStream.flush();
         socket.isClosed();
         return aux1[aux1.length-1];

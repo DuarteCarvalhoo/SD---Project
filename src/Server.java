@@ -128,6 +128,7 @@ public class Server implements Hello {
             //recebe do multicast
             String msg = receiveMulticast();
             return msg;
+            //socket.leaveGroup(group);
             //falta receber a resposta se ja existe ou nao, se a pw ta bem etc...
         } catch (IOException e) {
             e.printStackTrace();
@@ -245,7 +246,7 @@ public class Server implements Hello {
 
     public static void main (String[]args){
             int aux = 0;
-            while (aux < 4) {
+            while (aux < 1) {
                 try {
                     Hello connect = (Hello) LocateRegistry.getRegistry(7000).lookup("Hello");
                     connect.ping();

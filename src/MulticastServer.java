@@ -168,11 +168,25 @@ public class MulticastServer extends Thread implements Serializable {
     }
 
     private void receiveMusic(Socket socket, String musicName) throws IOException {
-        byte[] b= new byte[2002];
+        byte[] b= new byte[10000];
+        System.out.println("1");
         InputStream is = socket.getInputStream();
+        System.out.println("2");
         FileOutputStream fOutStream = new FileOutputStream("C:\\Users\\Duarte\\Desktop\\SD\\PROJETO\\META 1\\SD---Project\\musicasServer\\" + musicName);
-        is.read(b, 0, b.length);
-        fOutStream.write(b, 0, b.length);
+        System.out.println("3");
+        BufferedOutputStream bOutStream = new BufferedOutputStream(fOutStream);
+
+        int aux= 0;
+        System.out.println("4");
+        while ((aux = is.read(b))!=-1){
+            bOutStream.write(b, 0, aux);
+            System.out.println("4.1");
+        }
+        System.out.println("5");
+        bOutStream.flush();
+        socket.close();
+
+        System.out.println("ficheiro 100% completo");
     }
 
     public boolean checkUsernameLogin(String username, String password){
