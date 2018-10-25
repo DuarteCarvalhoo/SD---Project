@@ -87,7 +87,7 @@ public class Server implements Hello {
         } finally {
             socket.close();
         }
-        return receiveMulticast(socket);
+        return receiveMulticast();
     }
 
     public String sendMusicRMI(String musicName){
@@ -106,7 +106,7 @@ public class Server implements Hello {
         } finally {
             socket.close();
         }
-        return receiveMulticast(socket);
+        return receiveMulticast();
     }
 
     public String checkLogin(String login) {
@@ -126,7 +126,7 @@ public class Server implements Hello {
             socket.send(packet);
             System.out.println("test1");
             //recebe do multicast
-            String msg = receiveMulticast(socket);
+            String msg = receiveMulticast();
             return msg;
             //falta receber a resposta se ja existe ou nao, se a pw ta bem etc...
         } catch (IOException e) {
@@ -135,14 +135,11 @@ public class Server implements Hello {
             socket.close();
         }
 
-        System.out.println("vou fechar");
-        socket.close();
-        System.out.println("freeze?");
-
         return "ups";
     }
 
-    private String receiveMulticast(MulticastSocket socket) {
+    private String receiveMulticast() {
+        MulticastSocket socket = null;
         try {
             socket = new MulticastSocket(PORT);
             System.out.println("1");
@@ -187,7 +184,7 @@ public class Server implements Hello {
             socket.send(packet);
             System.out.println("test3");
             //recebe do multicast
-            String msg = receiveMulticast(socket);
+            String msg = receiveMulticast();
             if (msg != null) return msg;
             socket.leaveGroup(group);
         } catch (IOException e) {
@@ -217,7 +214,7 @@ public class Server implements Hello {
                 socket.send(packet);
                 System.out.println("test2");
                 //recebe do multicast
-                String msg = receiveMulticast(socket);
+                String msg = receiveMulticast();
                 if (msg != null) return msg;
             } catch (IOException e) {
                 e.printStackTrace();
