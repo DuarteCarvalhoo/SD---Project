@@ -37,6 +37,7 @@
  */
 
 import com.sun.org.apache.xpath.internal.operations.Bool;
+import com.sun.scenario.effect.impl.sw.sse.SSEBlend_SRC_OUTPeer;
 
 import java.io.*;
 import java.net.Socket;
@@ -116,6 +117,55 @@ public class Client {
         return rmi;
     }
 
+    private static String downloadMusic(Hello rmi, Scanner reader) throws IOException {
+        ArrayList<String> directorias = new ArrayList<>(); // é suposto ir buscar ao multicastServer;
+        directorias.add("C:\\Users\\Duarte\\Desktop\\SD\\PROJETO\\META 1\\SD---Project\\musicasServer\\a.mp3");
+        directorias.add("C:\\Users\\Duarte\\Desktop\\SD\\PROJETO\\META 1\\SD---Project\\musicasServer\\b.mp3");
+        directorias.add("C:\\Users\\Duarte\\Desktop\\SD\\PROJETO\\META 1\\SD---Project\\musicasServer\\c.mp3");
+
+        System.out.println("Choose one song:");
+        //aqui fazia-se print da lista de musicas na base de dados..
+
+        String escolha = reader.nextLine();
+
+        new File("C:\\\\Users\\\\Duarte\\\\Desktop\\\\SD\\\\PROJETO\\\\META 1\\\\SD---Project\\\\musicasServer\\\\"+loggedUser.getUsername()).mkdirs();
+        String musicaEscolhida = "C:\\\\Users\\\\Duarte\\\\Desktop\\\\SD\\\\PROJETO\\\\META 1\\\\SD---Project\\\\musicasServer\\\\" +escolha + ".mp3";
+
+        //fazer o socket ligar primeiro no multi mas sem pedir pra aceitar
+        System.out.println(rmi.startServerSocket());
+        Socket socket = new Socket("0.0.0.0", 5041);
+        String print = rmi.downloadMusicRMI(musicaEscolhida);
+        byte[] b = new byte [1024];
+        InputStream is = socket.getInputStream();
+        FilePermission permission = new FilePermission("C:\\\\Users\\\\Duarte\\\\Desktop\\\\SD\\\\PROJETO\\\\META 1\\\\SD---Project\\\\musicasServer\\\\"+loggedUser.getUsername(),"write");
+        FileOutputStream fOutStream = new FileOutputStream("C:\\\\Users\\\\Duarte\\\\Desktop\\\\SD\\\\PROJETO\\\\META 1\\\\SD---Project\\\\musicasServer\\\\"+loggedUser.getUsername());
+        BufferedOutputStream bOutStream = new BufferedOutputStream(fOutStream);
+
+        int aux= 0;
+        while ((aux = is.read(b))!=-1){
+            System.out.println(b.length);
+            bOutStream.write(b, 0, aux);
+            if(is.available()==0){
+                break;
+            }
+        }
+
+        try{
+            Thread.sleep(2000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        is.close();
+        fOutStream.close();
+        bOutStream.flush();
+        bOutStream.close();
+        socket.close();
+
+        System.out.println("ficheiro 100% completo");
+
+        return print;
+    }
+
     private static String sendMusic(Hello rmi) throws IOException {
 
         ServerSocket socket = new ServerSocket(5000);
@@ -156,12 +206,13 @@ public class Client {
 
         }
         System.out.println("uff");
+        fInStream.close();
         outStream.flush();
-        socket.isClosed();
+        outStream.close();
+        socketAcept.close();
+        socket.close();
         return aux1[aux1.length-1];
     }
-
-    
 
     public static void login(Hello rmi, Scanner reader) throws IOException, NotBoundException {
         System.out.println("Insert your login('username-password'):");
@@ -264,7 +315,7 @@ public class Client {
                         makeEditor(rmi,reader);
                         break;
                     case "/download":
-                        //downloadMusic();
+                        System.out.println(downloadMusic(rmi, reader));
                         break;
                     case "/upload":
                         String musicName = sendMusic(rmi);

@@ -1,0 +1,2 @@
+check o que ta na ficha e
+ter em mente que preciso de um array e log de users. 

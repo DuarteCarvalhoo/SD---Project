@@ -37,6 +37,7 @@ public class MulticastServer extends Thread implements Serializable {
             }
             String aux2= "";
             Socket socketHelp= null;
+            ServerSocket auxSocket = null;
             while (true) {
                 System.out.println("_______________________________________________________________________________________________________");
                 byte[] bufferRec = new byte[256];
@@ -128,6 +129,17 @@ public class MulticastServer extends Thread implements Serializable {
                         String[] musicName = aux2.split("\\|");
                         receiveMusic(socketHelp, musicName[1]);
                         sendMsg("it worked out");
+                        break;
+                    case "type|openSocket":
+                        auxSocket = openSocket();
+                        System.out.println("oi");
+                        sendMsg("ServerSocket inicializada");
+                        break;
+                    case"type|downloadMusic":
+                        aux2 = aux[1];
+                        String[] direc = aux2.split("\\|");
+                        sendMsg(sendMusicMulticast(direc[1], auxSocket));
+                        break;
                     case "type|makeEditor":
                         boolean flagEditor = false;
                         String []parts = aux[1].split("\\|");
@@ -226,6 +238,43 @@ public class MulticastServer extends Thread implements Serializable {
         } finally {
             socket.close();
         }
+    }
+
+    public ServerSocket openSocket() throws IOException {
+        ServerSocket socket = new ServerSocket(5041);
+        return socket;
+    }
+
+    public static String sendMusicMulticast(String direc, ServerSocket socket) throws IOException {
+        Socket socketAcept = socket.accept();
+        File file = new File(direc);
+        FilePermission permission = new FilePermission(direc, "read");
+        FileInputStream fInStream = new FileInputStream(file);
+        OutputStream outStream = socketAcept.getOutputStream();
+
+        byte b[];
+        int current =0;
+        long len = file.length();
+        while(current!=len){
+            int size = 1024;
+            if(len - current >= size)
+                current += size;
+            else{
+                size = (int)(len - current);
+                current = (int) len;
+            }
+            b = new byte[size];
+            fInStream.read(b, 0, size);
+            outStream.write(b);
+            System.out.println("Sending file ... "+(current*100)/len+"% complete!");
+
+        }
+        fInStream.close();
+        outStream.flush();
+        outStream.close();
+        socketAcept.close();
+        socket.isClosed();
+        return "tudo okay no download";
     }
 
     private Socket ligarSocket(String address) throws IOException {

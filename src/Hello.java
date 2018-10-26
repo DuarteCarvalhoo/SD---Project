@@ -42,6 +42,10 @@ import java.rmi.RemoteException;
 public interface Hello extends Remote {
     String sayHello() throws RemoteException;
 
+    String downloadMusicRMI(String direc) throws RemoteException;
+
+    String startServerSocket() throws RemoteException;
+
     String startSocket(String clientAddress) throws RemoteException;
 
     String msgInput(String text) throws RemoteException;

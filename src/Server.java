@@ -109,6 +109,42 @@ public class Server implements Hello {
         return receiveMulticast();
     }
 
+    public String startServerSocket(){
+        MulticastSocket socket = null;
+        try {
+            socket = new MulticastSocket();
+            InetAddress group = InetAddress.getByName(MULTICAST_ADDRESS);
+            socket.joinGroup(group);
+            String aux = "type|openSocket;";
+            byte[] buffer = aux.getBytes();
+            DatagramPacket packet = new DatagramPacket(buffer, buffer.length, group, PORT);
+            socket.send(packet);
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            socket.close();
+        }
+        return receiveMulticast();
+    }
+
+    public String downloadMusicRMI(String direc){
+        MulticastSocket socket = null;
+        try {
+            socket = new MulticastSocket();
+            InetAddress group = InetAddress.getByName(MULTICAST_ADDRESS);
+            socket.joinGroup(group);
+            String aux = "type|downloadMusic;musicAddress|"+direc;
+            byte[] buffer = aux.getBytes();
+            DatagramPacket packet = new DatagramPacket(buffer, buffer.length, group, PORT);
+            socket.send(packet);
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            socket.close();
+        }
+        return receiveMulticast();
+    }
+
     public String checkEditorMaking(String name){
         MulticastSocket socket = null;
         //envia pra o multicast
@@ -229,7 +265,6 @@ public class Server implements Hello {
         //}
         return null;
     }
-
 
     public String checkLogout(User user) {
         System.out.println("Entrou no logout");
