@@ -96,6 +96,44 @@ public class Album implements Serializable{
         this.description = description;
     }
 
+    public String printMusics(ArrayList<Music> musics){
+        String finalString = "";
+        if(musics.isEmpty()){
+            finalString += "No musics to show.";
+        }
+        else{
+            for(Music music : musics){
+                finalString += music.toString();
+                finalString+="\n";
+            }
+        }
+        return finalString;
+    }
+
+    public String printCritics(ArrayList<Critic> critics){
+        String finalString = "";
+        if(critics.isEmpty()){
+            finalString += "No critics to show.";
+        }
+        else {
+            for (Critic critic : critics) {
+                finalString += critic.toString();
+                finalString += "\n";
+            }
+        }
+        return finalString;
+    }
+
+    @Override
+    public String toString(){
+        return
+                "Name: "+getName()+"\n"
+                +"Artist: "+getArtist().getName()+"\n"
+                +"Description: "+getDescription()+"\n"
+                +"Duration: "+getDuracao()+" segundos\n\n"
+                +printCritics(this.criticsList)+"\n\n"
+                +printMusics(this.musicsList);
+    }
 
 
 

@@ -312,37 +312,39 @@ public class Client {
         }
     }
 
-
-
     public static void menuDePesquisa(Hello rmi, Scanner reader) throws RemoteException{
         System.out.println("What do you want to search: Artist, Music, Album?");
-        String text = reader.nextLine();
+        boolean flagOK = false;
+        String text = "";
+        while(!flagOK){
+            text = reader.nextLine();
+            if(!text.equals("")){
+                flagOK=true;
+            }
+            else{
+                System.out.println("What do you want to search: Artist, Music, Album?");
+            }
+        }
         switch (text) {
             case "/artist":
+                flagOK = false;
+                String name = "";
                 System.out.println("Which artist you wanna show? ");
-                String name = reader.nextLine();
+                while(!flagOK){
+                    name = reader.nextLine();
+                    if(!name.equals("")){
+                        flagOK=true;
+                    }
+                    else{
+                        System.out.println("Which artist you wanna show? ");
+                    }
+                }
                 String response = rmi.showArtist(name);
                 String[] responseSplit = response.split(";");
+                String[] artistParts = responseSplit[1].split("\\|");
                 switch (responseSplit[0]) {
                     case "type|showArtistComplete":
-                        if (responseSplit.length > 3) {
-                            String[] nome = responseSplit[1].split("\\|");
-                            String[] genre = responseSplit[2].split("\\|");
-                            String[] description = responseSplit[3].split("\\|");
-                            String[] albunsParts = responseSplit[4].split("\\|");
-                            String albunsNamesFinais = "";
-                            int i;
-                            for(i=2;i<albunsParts.length;i++){
-                                albunsNamesFinais += (albunsParts[i] + ",");
-                            }
-                            System.out.println(nome[1]+"-"+genre[1]+"-"+description[1]+"-"+albunsNamesFinais);
-                        }
-                        else{
-                            String[] nome = responseSplit[1].split("\\|");
-                            String[] genre = responseSplit[2].split("\\|");
-                            String[] description = responseSplit[3].split("\\|");
-                            System.out.println(nome[1]+"-"+genre[1]+"-"+description[1]);
-                        }
+                        System.out.println(artistParts[1]);
                         break;
                     case "type|showArtistFail":
                         System.out.println("Artist not Shown.");
@@ -350,7 +352,28 @@ public class Client {
                 }
             case "Genero":
                 break;
-            case "Album":
+            case "/album":
+                flagOK = false;
+                String n = "";
+                System.out.println("Which album you wanna show? ");
+                while(!flagOK){
+                    n = reader.nextLine();
+                    if(!n.equals("")){
+                        flagOK=true;
+                    }
+                    else{
+                        System.out.println("Which album you wanna show? ");
+                    }
+                }
+                String resp = rmi.showAlbum(n);
+                String[] respSplit = resp.split(";");
+                if(respSplit.length>1){
+                    String[] s = respSplit[1].split("\\|");
+                    System.out.println(s[1]);
+                }
+                else{
+                    System.out.println("ERRO");
+                }
                 break;
             default:
                 System.out.println("Inseriu mal o comando. Por favor volte a tentar.");
@@ -410,7 +433,6 @@ public class Client {
                 //Something;
         }
     }
-
 
     public static void deleteMenu(Hello rmi, Scanner reader) throws RemoteException{
         System.out.println("What do you want to delete: Artist, Music, Album");
@@ -624,7 +646,6 @@ public class Client {
                 //something();
         }
     }
-
 
     public static void deleteArtist(Hello rmi,Scanner reader) throws RemoteException{
         System.out.println("Insert your data('name')");

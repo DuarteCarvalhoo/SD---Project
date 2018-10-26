@@ -66,9 +66,11 @@ public interface Hello extends Remote {
 
     String editArtistGenre(String name, String newGenre) throws RemoteException;
 
-    public String showArtist(String name) throws RemoteException;
+    String showArtist(String name) throws RemoteException;
 
     String editArtistDescription(String name, String newDescription) throws RemoteException;
 
     String createAlbum(String name, String artistName, String description, String duracao) throws RemoteException;
+
+    String showAlbum(String name) throws RemoteException;
 }

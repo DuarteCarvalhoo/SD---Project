@@ -296,6 +296,29 @@ public class Server implements Hello {
         return null;
     }
 
+    public String showAlbum(String name){
+        MulticastSocket socket = null;
+        //envia para o multicast
+        try {
+            socket = new MulticastSocket();
+            InetAddress group = InetAddress.getByName(MULTICAST_ADDRESS);
+            socket.joinGroup(group);
+            String aux = "type|showAlbum;Name|"+name; //protocol
+            byte[] buffer = aux.getBytes();
+            DatagramPacket packet = new DatagramPacket(buffer, buffer.length, group, PORT);
+            socket.send(packet);
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            socket.close();
+        }
+
+        //recebe do multicast
+        String msg = receiveMulticast();
+        if (msg != null) return msg;
+        return null;
+    }
+
     public String checkLogin(String login) {
         System.out.println("Entrou no Login");
         System.out.println(login);

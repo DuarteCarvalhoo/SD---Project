@@ -206,7 +206,7 @@ public class MulticastServer extends Thread implements Serializable {
 
                                 for (Artist a : artistsList) {
                                     if (a.getName().equals(aName[1])) {
-                                        a.getAlbuns().add(newAlbum);
+                                        a.getAlbums().add(newAlbum);
                                     }
                                 }
                                 sendMsg("type|createAlbumComplete");
@@ -285,25 +285,45 @@ public class MulticastServer extends Thread implements Serializable {
                     case "type|showArtist":
                         String[] nameArtist = aux[1].split("\\|");
                         String n = nameArtist[1];
-                        if(!checkArtistExists(n)){
+                        Artist art = new Artist();
+                        if(artistsList.isEmpty()){
                             sendMsg("type|showArtistFail");
-                            System.out.println("ERROR: Artist Not Found.");
+                            System.out.println("ERROR: No Artists on the database.");
                         }
-                        else{
-                            String albuns = "-No albuns";
-                            for(Artist a : artistsList){
-                                if(a.getName().equals(n)){
-                                    int i;
-                                    if(a.getAlbuns().size()>0){
-                                        String[] nomesAlbuns = new String[a.getAlbuns().size()];
-                                        for(i=0;i<a.getAlbuns().size();i++){
-                                            nomesAlbuns[i] = a.getAlbuns().get(i).getName();
-                                        }
-                                        albuns = printAlbunsProtocol(nomesAlbuns);
+                        else {
+                            if (!checkArtistExists(n)) {
+                                sendMsg("type|showArtistFail");
+                                System.out.println("ERROR: Artist Not Found.");
+                            } else {
+                                for(Artist a : artistsList){
+                                    if(a.getName().equals(n)){
+                                        art = a;
                                     }
-                                    sendMsg("type|showArtistComplete;"+"Name|"+a.getName()+";Genre|"+a.getGenre()+";Description|"+a.getDescription()+";Album|"+albuns);
-                                    System.out.println("SUCCESS: Artist Shown.");
                                 }
+                                sendMsg("type|showArtistComplete;Artist|"+art);
+                            }
+                        }
+                        break;
+                    case "type|showAlbum":
+                        Album album = new Album();
+                        String[] albumNameParts = aux[1].split("\\|");
+                        String albumName = albumNameParts[1];
+                        if(albunsList.isEmpty()){
+                            sendMsg("type|showAlbumFail");
+                            System.out.println("ERROR: No Albums in the database.");
+                        }
+                        else {
+                            for (Album a : albunsList) {
+                                if (a.getName().equals(albumName)) {
+                                    album = a;
+                                }
+                            }
+                            if(checkAlbumExists(albumName, album.getName())){
+                                sendMsg("type|albumAlreadyExists");
+                                System.out.println("ERROR: Album Not Found.");
+                            }
+                            else{
+                                sendMsg("type|showAlbumComplete"+";Album|"+album);
                             }
                         }
                         break;

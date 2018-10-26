@@ -10,6 +10,10 @@ public class Critic {
         return text;
     }
 
+    public String toString(){
+        return getScore() + " - " + getText();
+    }
+
     public Critic(double score, String text) {
         this.score = score;
         this.text = text;
