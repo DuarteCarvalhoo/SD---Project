@@ -39,6 +39,8 @@ public class Artist implements Serializable {
         this.genre = genre;
     }
 
+    public Artist(){}
+
     public String toString(){
         return getName()+"-"+getGenre()+"-"+getDescription();
     }

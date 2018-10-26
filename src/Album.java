@@ -1,13 +1,14 @@
+import java.io.Serializable;
 import java.util.*;
 
-public class Album {
+public class Album implements Serializable{
     private ArrayList<Music> musicsList = new ArrayList<>();
     private ArrayList<Critic> criticsList = new ArrayList<>();
     private double sum;
     private String name;
     private Artist artist;
     private String description;
-    private double duracao;
+    private String duracao;
 
 
     public void addCritic(Critic c){
@@ -83,11 +84,11 @@ public class Album {
         this.artist = artist;
     }
 
-    public double getDuracao() {
+    public String getDuracao() {
         return duracao;
     }
 
-    public void setDuracao(double duracao) {
+    public void setDuracao(String duracao) {
         this.duracao = duracao;
     }
 
@@ -97,8 +98,10 @@ public class Album {
 
 
 
-    public Album(ArrayList<Music> musicsList, Artist artist, String description, Double duracao) {
-        this.musicsList = musicsList;
+
+
+    public Album(String name, Artist artist, String description, String duracao) {
+        this.name = name;
         this.artist = artist;
         this.description = description;
         this.duracao = duracao;

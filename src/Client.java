@@ -39,6 +39,7 @@
 import com.sun.org.apache.xpath.internal.operations.Bool;
 
 import java.io.*;
+import java.lang.reflect.Array;
 import java.net.Socket;
 import java.rmi.NotBoundException;
 import java.rmi.Remote;
@@ -305,12 +306,13 @@ public class Client {
                             String[] nome = responseSplit[1].split("\\|");
                             String[] genre = responseSplit[2].split("\\|");
                             String[] description = responseSplit[3].split("\\|");
-                            String albuns = "";
+                            String[] albunsParts = responseSplit[4].split("\\|");
+                            String albunsNamesFinais = "";
                             int i;
-                            for(i=4;i<responseSplit.length;i++){
-                                albuns = responseSplit[i];
+                            for(i=2;i<albunsParts.length;i++){
+                                albunsNamesFinais += (albunsParts[i] + ",");
                             }
-                            System.out.println(nome[1]+"-"+genre[1]+"-"+description[1]+albuns);
+                            System.out.println(nome[1]+"-"+genre[1]+"-"+description[1]+"-"+albunsNamesFinais);
                         }
                         else{
                             String[] nome = responseSplit[1].split("\\|");
@@ -361,7 +363,7 @@ public class Client {
                 //createMusic();
                 break;
             case "/album":
-                //createAlbum();
+                createAlbum(rmi,reader);
                 break;
             default:
                 //Something;
@@ -416,6 +418,26 @@ public class Client {
                 break;
             case "type|createArtistComplete":
                 System.out.println("SUCCESS: Artist created successfully.");
+                break;
+            default:
+                //something;
+        }
+    }
+
+    public static void createAlbum(Hello rmi,Scanner reader) throws RemoteException{
+        System.out.println("Insert your data('name-artist-description-duracao')");
+        String text = reader.nextLine();
+        String[] data = text.split("-");
+        String response = rmi.createAlbum(data[0], data[1], data[2], data[3]);
+        switch (response){
+            case "type|albumExists":
+                System.out.println("Album already exists.");
+                break;
+            case "type|userNotFound":
+                System.out.println("User not found -> Album not created.");
+                break;
+            case "type|createAlbumComplete":
+                System.out.println("SUCCESS: Album created successfully.");
                 break;
             default:
                 //something;
