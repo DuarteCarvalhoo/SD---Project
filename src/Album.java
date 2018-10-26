@@ -1,13 +1,13 @@
+import java.io.Serializable;
 import java.util.*;
 
-public class Album {
-    private ArrayList<Music> musicsList;
+public class Album implements Serializable{
+    private ArrayList<Music> musicsList = new ArrayList<>();
     private ArrayList<Critic> criticsList = new ArrayList<>();
-    private double sum;
     private String name;
     private Artist artist;
     private String description;
-    private double duracao;
+    private String duracao;
 
 
     public void addCritic(Critic c){
@@ -35,15 +35,24 @@ public class Album {
     }
 
     public double getAverageScore() {
-        if(criticsList.isEmpty()){
-            return 0;
+        double soma = 0;
+        for(Critic c : criticsList){
+            soma+=c.getScore();
         }
-        else{
-            for(Critic critic : criticsList){
-                sum+=critic.getScore();
+        return (soma/criticsList.size());
+    }
+
+    public void addMusic(Music m){
+        this.musicsList.add(m);
+    }
+
+    public void removeMusic(Music m){
+        int i;
+        for(i=0;i<this.musicsList.size();i++){
+            if(this.musicsList.get(i).equals(m)){
+                this.musicsList.remove(this.musicsList.get(i));
             }
         }
-        return (sum/criticsList.size());
     }
 
     public String getDescription() {
@@ -58,10 +67,6 @@ public class Album {
         this.criticsList = criticsList;
     }
 
-    public void setSum(double sum) {
-        this.sum = sum;
-    }
-
     public void setName(String name) {
         this.name = name;
     }
@@ -70,11 +75,11 @@ public class Album {
         this.artist = artist;
     }
 
-    public double getDuracao() {
+    public String getDuracao() {
         return duracao;
     }
 
-    public void setDuracao(double duracao) {
+    public void setDuracao(String duracao) {
         this.duracao = duracao;
     }
 
@@ -82,10 +87,57 @@ public class Album {
         this.description = description;
     }
 
-    public Album(ArrayList<Music> musicsList, Artist artist, String description, Double duracao) {
-        this.musicsList = musicsList;
+    public String printMusics(ArrayList<Music> musics){
+        String finalString = "";
+        if(musics.isEmpty()){
+            finalString += "No musics to show.";
+        }
+        else{
+            for(Music music : musics){
+                finalString += music.toString();
+                finalString+="\n";
+            }
+        }
+        return finalString;
+    }
+
+    public String printCritics(ArrayList<Critic> critics){
+        String finalString = "";
+        if(critics.isEmpty()){
+            finalString += "No critics to show.";
+        }
+        else {
+            for (Critic critic : critics) {
+                finalString += critic.toString();
+                finalString += "\n";
+            }
+        }
+        return finalString;
+    }
+
+    @Override
+    public String toString(){
+        return
+                "Name: "+getName()+"\n"
+                        +"Artist: "+getArtist().getName()+"\n"
+                        +"Description: "+getDescription()+"\n"
+                        +"Score: "+getAverageScore()+"\n"
+                        +"Duration: "+getDuracao()+" segundos\n\n"
+                        +printCritics(this.criticsList)+"\n\n"
+                        +printMusics(this.musicsList);
+    }
+
+
+
+
+    public Album(String name, Artist artist, String description, String duracao) {
+        this.name = name;
         this.artist = artist;
         this.description = description;
         this.duracao = duracao;
+    }
+
+    public Album(){
+
     }
 }

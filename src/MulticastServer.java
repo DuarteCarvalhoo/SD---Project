@@ -12,6 +12,7 @@ public class MulticastServer extends Thread implements Serializable {
     private long SLEEP_TIME = 5000;
     private ArrayList<User> usersList = new ArrayList<>();
     private ArrayList<Artist> artistsList = new ArrayList<>();
+    private ArrayList<Album> albunsList = new ArrayList<>();
 
     public static void main(String[] args){
         MulticastServer server = new MulticastServer();
@@ -34,6 +35,9 @@ public class MulticastServer extends Thread implements Serializable {
             }
             if(artistsList.isEmpty()){
                 System.out.println("Artists arraylist empty!");
+            }
+            if(albunsList.isEmpty()){
+                System.out.println("Albuns arraylist empty!");
             }
             String aux2= "";
             Socket socketHelp= null;
@@ -187,6 +191,40 @@ public class MulticastServer extends Thread implements Serializable {
                             sendMsg("type|createArtistComplete");
                         }
                         break;
+                    case "type|createAlbum":
+                        Artist artist = new Artist();
+                        String[] namePa = aux[1].split("\\|");
+                        String[] aName = aux[2].split("\\|");
+                        String[] descripParts = aux[3].split("\\|");
+                        String[] duracaoParts = aux[4].split("\\|");
+                        if(checkAlbumExists(namePa[1],aName[1])){
+                            sendMsg("type|albumExists");
+                            System.out.println("ERRO: Album already exists.");
+                        }
+                        else{
+                            boolean flagAlbum = false;
+                            for(Artist a : artistsList){
+                                if(a.getName().equals(aName[1])){
+                                    artist = a;
+                                    flagAlbum=true;
+                                }
+                            }
+                            if(!flagAlbum){
+                                sendMsg("type|userNotFound");
+                            }
+                            else {
+                                Album newAlbum = new Album(namePa[1], artist, descripParts[1], duracaoParts[1]);
+                                albunsList.add(newAlbum);
+
+                                for (Artist a : artistsList) {
+                                    if (a.getName().equals(aName[1])) {
+                                        a.getAlbums().add(newAlbum);
+                                    }
+                                }
+                                sendMsg("type|createAlbumComplete");
+                            }
+                        }
+                        break;
                     case "type|editArtistName":
                         String[] nameBeforeParts = aux[1].split("\\|");
                         String[] nameAfterParts = aux[2].split("\\|");
@@ -257,18 +295,115 @@ public class MulticastServer extends Thread implements Serializable {
                         }
                         break;
                     case "type|showArtist":
-                        String[] nameArtist = aux[1].split("\\|");
+                        /*String[] nameArtist = aux[1].split("\\|");
                         String n = nameArtist[1];
                         if(!checkArtistExists(n)){
                             sendMsg("type|showArtistFail");
                             System.out.println("ERROR: Artist Not Found.");
                         }
                         else{
+                            String albuns = "-No albuns";
                             for(Artist a : artistsList){
                                 if(a.getName().equals(n)){
-                                    sendMsg("type|showArtistComplete;"+"Name|"+a.getName()+";Genre|"+a.getGenre()+";Description|"+a.getDescription());
+                                    int i;
+                                    if(a.getAlbums().size()>0){
+                                        String[] nomesAlbuns = new String[a.getAlbums().size()];
+                                        for(i=0;i<a.getAlbums().size();i++){
+                                            nomesAlbuns[i] = a.getAlbums().get(i).getName();
+                                        }
+                                        albuns = printAlbunsProtocol(nomesAlbuns);
+                                    }
+                                    sendMsg("type|showArtistComplete;"+"Name|"+a.getName()+";Genre|"+a.getGenre()+";Description|"+a.getDescription()+";Album|"+albuns);
                                     System.out.println("SUCCESS: Artist Shown.");
                                 }
+                            }
+                        }*/
+                        String[] nameArtist = aux[1].split("\\|");
+                        String n = nameArtist[1];
+                        Artist art = new Artist();
+                        if(artistsList.isEmpty()){
+                            sendMsg("type|showArtistFail");
+                            System.out.println("ERROR: No Artists on the database.");
+                        }
+                        else {
+                            if (!checkArtistExists(n)) {
+                                sendMsg("type|showArtistFail");
+                                System.out.println("ERROR: Artist Not Found.");
+                            } else {
+                                for(Artist a : artistsList){
+                                    if(a.getName().equals(n)){
+                                        art = a;
+                                    }
+                                }
+                                sendMsg("type|showArtistComplete;Artist|"+art);
+                            }
+                        }
+                        break;
+                    case "type|showArtistAlbums":
+                        String[] nameA = aux[1].split("\\|");
+                        String nA = nameA[1];
+                        Artist artista = new Artist();
+                        if(!checkArtistExists(nA)){
+                            sendMsg("type|showArtistAlbumsFail");
+                            System.out.println("ERROR: Artist Not Found.");
+                        }
+                        else{
+                            for(Artist a : artistsList){
+                                if(a.getName().equals(nA)){
+                                    artista = a;
+                                }
+                            }
+                            sendMsg("type|showArtistAlbumsComplete"+";Albums|"+artista.printAlbums(artista.getAlbums()));
+                            System.out.println("SUCCESS: Artist Albums Shown.");
+                        }
+                        break;
+                    case "type|makeCritic":
+                        Album newAlbum = new Album();
+                        String[] scoreParts = aux[1].split("\\|");
+                        String[] textParts = aux[2].split("\\|");
+                        String[] albumParts = aux[3].split("\\|");
+                        Critic c = new Critic(Double.parseDouble(scoreParts[1]),textParts[1]);
+                        if(albunsList.isEmpty()){
+                            sendMsg("type|criticFail");
+                            System.out.println("ERROR: No Albums in the database.");
+                        }
+                        else {
+                            for (Album a : albunsList) {
+                                if (a.getName().equals(albumParts[1])) {
+                                    newAlbum = a;
+                                }
+                            }
+                            if(checkAlbumExists(albumParts[1],newAlbum.getArtist().getName())){
+                                newAlbum.addCritic(c);
+                                sendMsg("type|criticComplete");
+                                System.out.println("Critic Complete.");
+                            }
+                            else{
+                                sendMsg("type|criticFail");
+                                System.out.println("Critic not Complete. Album not found.");
+                            }
+                        }
+                        break;
+                    case "type|showAlbum":
+                        Album album = new Album();
+                        String[] albumNameParts = aux[1].split("\\|");
+                        String albumName = albumNameParts[1];
+                        if(albunsList.isEmpty()){
+                            sendMsg("type|showAlbumFail");
+                            System.out.println("ERROR: No Albums in the database.");
+                        }
+                        else {
+                            for (Album a : albunsList) {
+                                if (a.getName().equals(albumName)) {
+                                    album = a;
+                                }
+                            }
+                            if(checkAlbumExists(albumName, album.getName())){
+                                sendMsg("type|albumAlreadyExists");
+                                System.out.println("ERROR: Album Not Found.");
+                            }
+                            else{
+                                sendMsg("type|showAlbumComplete"+";Album|"+album);
                             }
                         }
                         break;
@@ -281,6 +416,8 @@ public class MulticastServer extends Thread implements Serializable {
                             for (User u : usersList) {
                                 if (u.getUsername().equals(logoutUser)) {
                                     u.setOffline();
+                                    //readFiles();
+                                    writeFiles();
                                     sendMsg("type|logoutComplete");
                                     flagLogout = true;
                                 }
@@ -349,6 +486,15 @@ public class MulticastServer extends Thread implements Serializable {
         return socket;
     }
 
+    private String printAlbunsProtocol(String[] array){
+        String stringFinal = "";
+        int i;
+        for(i=0;i<array.length;i++){
+            stringFinal += "|"+array[i];
+        }
+        return stringFinal;
+    }
+
     private void receiveMusic(Socket socket, String musicName) throws IOException {
         byte[] b= new byte[1024];
         System.out.println("1");
@@ -414,6 +560,22 @@ public class MulticastServer extends Thread implements Serializable {
         return false;
     }
 
+    public boolean checkAlbumExists(String name, String artist){
+        if(albunsList.isEmpty()){
+            return false;
+        }
+        else {
+            for (Album album : albunsList) {
+                if (album.getName().equals(name)) {
+                    if(album.getArtist().getName().equals(artist)){
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
     private void sendMsg(String msg) throws IOException {
         MulticastSocket socket = new MulticastSocket();
         byte[] buffer = msg.getBytes();
@@ -436,6 +598,7 @@ public class MulticastServer extends Thread implements Serializable {
             ObjectInputStream objectIn = new ObjectInputStream(new BufferedInputStream(new FileInputStream("data.bin")));
             this.usersList = (ArrayList) objectIn.readObject();
             this.artistsList = (ArrayList) objectIn.readObject();
+            this.albunsList = (ArrayList<Album>) objectIn.readObject();
             objectIn.close();
             System.out.println("Read file successfully.");
         }
@@ -457,6 +620,7 @@ public class MulticastServer extends Thread implements Serializable {
             ObjectOutputStream fout = new ObjectOutputStream(out);
             fout.writeObject(this.usersList);
             fout.writeObject(this.artistsList);
+            fout.writeObject(this.albunsList);
             fout.close();
             out.close();
         }

@@ -1,4 +1,6 @@
-public class Critic {
+import java.io.Serializable;
+
+public class Critic implements Serializable {
     private double score;
     private String text;
 
@@ -8,6 +10,10 @@ public class Critic {
 
     public String getText() {
         return text;
+    }
+
+    public String toString(){
+        return getScore() + " - " + getText();
     }
 
     public Critic(double score, String text) {
