@@ -505,9 +505,10 @@ public class MulticastServer extends Thread implements Serializable {
         BufferedOutputStream bOutStream = new BufferedOutputStream(fOutStream);
 
         int aux= 0;
+        int cont= 0;
         System.out.println("4");
         while ((aux = is.read(b))!=-1){
-            System.out.println(b.length);
+            System.out.println(cont++);
             bOutStream.write(b, 0, aux);
             System.out.println("4.1");
             if(is.available()==0){

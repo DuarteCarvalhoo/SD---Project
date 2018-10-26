@@ -62,7 +62,7 @@ public class Client {
         //String host = (args.length < 1) ? null : args[0];
         Scanner reader = new Scanner(System.in);
         try {
-            Registry registry = LocateRegistry.getRegistry(7000);
+            Registry registry = LocateRegistry.getRegistry("localhost",7000);
             rmi =(Hello) registry.lookup("Hello");
             Hello stub = (Hello) registry.lookup("Hello");
             String response = stub.sayHello();
@@ -99,10 +99,6 @@ public class Client {
         System.out.println("Finished");
     }
 
-    /*public static void downloadMusic() throws IOException {
-        String adress = "localhost";
-        Socket s= new Socket(adress,5000);
-    }*/
 
     private static Hello changeRMI() throws RemoteException, NotBoundException {
         try {
@@ -182,7 +178,7 @@ public class Client {
         int current =0;
         long len = file.length();
         while(current!=len){
-            int size = 1024;
+            int size = 1024 * 1024;
 
             if(len - current >= size)
                 current += size;
