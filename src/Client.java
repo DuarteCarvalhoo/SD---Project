@@ -348,15 +348,27 @@ public class Client {
     }
 
     public static void menuDePesquisa(Hello rmi, Scanner reader) throws RemoteException{
-        System.out.println("O que deseja pesquisar?\n" +
-                "Artista\n" +
-                "Genero\n" +
-                "Album");
+        System.out.println("What do you want to search: Artist, Music, Album?");
         String text = reader.nextLine();
-        rmi.msgInput(text);
-        switch (text){
-            case "Artista":
-                break;
+        switch (text) {
+            case "/artist":
+                System.out.println("Which artist you wanna show? ");
+                String name = reader.nextLine();
+                String response = rmi.showArtist(name);
+                String[] responseSplit = response.split(";");
+                switch (responseSplit[0]) {
+                    case "type|showArtistComplete":
+                        if (responseSplit.length == 4) {
+                            String[] nome = responseSplit[1].split("\\|");
+                            String[] genre = responseSplit[2].split("\\|");
+                            String[] description = responseSplit[3].split("\\|");
+                            System.out.println(nome[1]+"-"+genre[1]+"-"+description[1]);
+                        }
+                        break;
+                    case "type|showArtistFail":
+                        System.out.println("Artist not Shown.");
+                        break;
+                }
             case "Genero":
                 break;
             case "Album":
@@ -374,7 +386,7 @@ public class Client {
                 createMenu(rmi,reader);
                 break;
             case "/edit":
-                //editMenu(rmi,reader);
+                editMenu(rmi,reader);
                 break;
             case "/delete":
                 deleteMenu(rmi,reader);
@@ -402,6 +414,25 @@ public class Client {
         }
     }
 
+    public static void editMenu(Hello rmi, Scanner reader) throws RemoteException{
+        System.out.println("What do you want to edit: Artist, Music, Album?");
+        String response = reader.nextLine();
+        switch(response){
+            case "/artist":
+                editArtist(rmi,reader);
+                break;
+            case "/music":
+                //createMusic();
+                break;
+            case "/album":
+                //createAlbum();
+                break;
+            default:
+                //Something;
+        }
+    }
+
+
     public static void deleteMenu(Hello rmi, Scanner reader) throws RemoteException{
         System.out.println("What do you want to delete: Artist, Music, Album");
         String response = reader.nextLine();
@@ -421,7 +452,7 @@ public class Client {
     }
 
     public static void createArtist(Hello rmi,Scanner reader) throws RemoteException{
-        System.out.println("Insert your data('name-genre-password')");
+        System.out.println("Insert your data('name-genre-description')");
         String text = reader.nextLine();
         String[] data = text.split("-");
         String response = rmi.createArtist(data[0], data[1], data[2]);
@@ -436,6 +467,79 @@ public class Client {
                 //something;
         }
     }
+
+    public static void editArtist(Hello rmi,Scanner reader) throws RemoteException{
+        System.out.println("What do you wanna change: Name, Genre, Description");
+        String text = reader.nextLine();
+        switch(text){
+            case "/name":
+                editName(rmi,reader);
+                break;
+            case "/genre":
+                editGenre(rmi,reader);
+                break;
+            case "/description":
+                editDescription(rmi,reader);
+                break;
+            default:
+                //something();
+        }
+    }
+
+    public static void editName(Hello rmi,Scanner reader) throws RemoteException{
+        System.out.println("Which artist you wanna change? ");
+        String artist = reader.nextLine();
+        System.out.println("To what name you wanna change it? ");
+        String nameAfter = reader.nextLine();
+        String response = rmi.editArtistName(artist,nameAfter);
+        switch(response){
+            case "type|nameChanged":
+                System.out.println("Name changed.");
+                break;
+            case "type|nameNotChanged":
+                System.out.println("Name not changed.");
+                break;
+            default:
+                //something();
+        }
+    }
+
+    public static void editGenre(Hello rmi,Scanner reader) throws RemoteException{
+        System.out.println("Which artist you wanna change? ");
+        String artist = reader.nextLine();
+        System.out.println("To what music genre you wanna change it? ");
+        String genre = reader.nextLine();
+        String response = rmi.editArtistGenre(artist,genre);
+        switch(response){
+            case "type|genreChanged":
+                System.out.println("Genre changed.");
+                break;
+            case "type|genreNotChanged":
+                System.out.println("Genre not changed.");
+                break;
+            default:
+                //something();
+        }
+    }
+
+    public static void editDescription(Hello rmi,Scanner reader) throws RemoteException{
+        System.out.println("Which artist you wanna change? ");
+        String artist = reader.nextLine();
+        System.out.println("To what description you wanna change it? ");
+        String description = reader.nextLine();
+        String response = rmi.editArtistDescription(artist,description);
+        switch(response){
+            case "type|descriptionChanged":
+                System.out.println("Description changed.");
+                break;
+            case "type|descriptionNotChanged":
+                System.out.println("Description not changed.");
+                break;
+            default:
+                //something();
+        }
+    }
+
 
     public static void deleteArtist(Hello rmi,Scanner reader) throws RemoteException{
         System.out.println("Insert your data('name')");
