@@ -223,7 +223,12 @@ public class Client {
             userData = reader.nextLine();
             userDataParts = userData.split("-");
             if(userDataParts.length==2){
-                flagOK=true;
+                if(userDataParts[0].trim().equals("")){
+                    System.out.print("Insert your login('username-password'): ");
+                }
+                else {
+                    flagOK = true;
+                }
             }
             else{
                 System.out.println("Insert your login('username-password'):");
@@ -268,7 +273,24 @@ public class Client {
 
     public static void registo(Hello rmi, Scanner reader) throws RemoteException {
         System.out.println("Insert your data('username-password')");
-        String txt = reader.nextLine();
+        boolean flagOK = false;
+        String txt = "";
+        String[] txtSplit;
+        while(!flagOK){
+            txt = reader.nextLine();
+            txtSplit = txt.split("-");
+            if(txtSplit.length==2){
+                if(txtSplit[0].trim().equals("")){
+                    System.out.println("Insert valida data ('username-password')");
+                }
+                else {
+                    flagOK = true;
+                }
+            }
+            else{
+                System.out.println("Insert valida data ('username-password')");
+            }
+        }
         txt = rmi.checkRegister(txt);
         switch (txt){
             case "type|usernameUsed":
@@ -276,7 +298,6 @@ public class Client {
                 break;
             case "type|registComplete":
                 System.out.println("Successful register.");
-                //menuPrincipal(rmi,reader);
                 break;
             default:
                 System.out.println("Something went wrong.");
@@ -299,7 +320,8 @@ public class Client {
                 }
                 else{
                     System.out.println("MENU PRINCIPAL:\n" +
-                        "Search\n" + "Upload\n" +
+                        "Search\n" +
+                        "Upload\n" +
                         "Make Critic\n"+
                         "Download\n\n" +
                         "Choose an option: ");}
@@ -320,13 +342,19 @@ public class Client {
                         menuDePesquisa(rmi, reader);
                         break;
                     case "/edit":
-                        editorMenu(rmi, reader);
+                        if(loggedUser.isEditor()){
+                            editorMenu(rmi, reader);
+                        }
+                        System.out.println("You don't have permission to do that.");
                         break;
                     case "/logout":
                         logout(rmi,reader);
                         return;
                     case "/makeeditor":
-                        makeEditor(rmi,reader);
+                        if(loggedUser.isEditor()){
+                            makeEditor(rmi,reader);
+                        }
+                        System.out.println("You don't have permission to do that.");
                         break;
                     case "/makecritic":
                         makeCritic(rmi,reader);
@@ -351,9 +379,19 @@ public class Client {
 
     public static void makeEditor(Hello rmi, Scanner reader) throws RemoteException{
         System.out.print("Insert user's name: ");
-        String name = reader.nextLine();
-        String response = rmi.checkEditorMaking(name);
+        boolean flagOK = false;
+        String name = "";
+        while(!flagOK){
+            name = reader.nextLine();
+            if(!name.equals("")){
+                flagOK = true;
+            }
+            else{
+                System.out.print("Insert user's name: ");
+            }
+        }
 
+        String response = rmi.checkEditorMaking(name);
         switch (response){
             case "type|makingEditorComplete":
                 System.out.println(name +" is now an editor.");
@@ -361,6 +399,8 @@ public class Client {
             case "type|makingEditorFail":
                 System.out.println("Making "+name+" an Editor didn't work.");
                 break;
+            default:
+                System.out.println("Something went wrong.");
         }
     }
 
@@ -402,16 +442,14 @@ public class Client {
         String response = rmi.makeCritic(score,text,album);
         switch (response){
             case "type|criticComplete":
-                System.out.println("Critic made.");
+                System.out.println("SUCCESS: Critic made.");
                 break;
             case "type|criticFail":
-                System.out.println("Critic not made.");
+                System.out.println("ERROR: Critic not made.");
                 break;
         }
 
     }
-
-
 
     public static void menuDePesquisa(Hello rmi, Scanner reader) throws RemoteException{
         System.out.println("What do you want to search: Artist, Music, Album?");
@@ -438,8 +476,10 @@ public class Client {
                         searchAlbumName(rmi, reader);
                         break;
                     case "/artistname":
-                        searchAlbumByArtistName(rmi, reader);
-                        searchAlbumName(rmi,reader);
+                        int i= searchAlbumByArtistName(rmi, reader);
+                        if(i==1){
+                            searchAlbumName(rmi,reader);
+                        }
                         break;
                     default:
                         System.out.println("Insert valid answer.");
@@ -451,7 +491,7 @@ public class Client {
         }
     }
 
-    public static void searchAlbumByArtistName(Hello rmi, Scanner reader) throws RemoteException {
+    public static int searchAlbumByArtistName(Hello rmi, Scanner reader) throws RemoteException {
         System.out.print("Insert user's name: ");
         boolean flagK = false;
         String nameA = "";
@@ -478,9 +518,11 @@ public class Client {
                 }
             }
             System.out.println("\nAlbums:"+albunsNamesFinais);
+            return 1;
         }
         else{
             System.out.println("No albums");
+            return 0;
         }
     }
 
@@ -500,6 +542,10 @@ public class Client {
         }
         String response = rmi.showArtist(name);
         String[] responseSplit = response.split(";");
+        if(!(responseSplit.length>1)){
+            System.out.println("Showing artist failed.");
+            return;
+        }
         String[] artistParts = responseSplit[1].split("\\|");
         switch (responseSplit[0]) {
             case "type|showArtistComplete":
@@ -550,7 +596,7 @@ public class Client {
             System.out.println(s[1]);
         }
         else{
-            System.out.println("ERRO");
+            System.out.println("ERROR: Show Album Failed.");
         }
     }
 
