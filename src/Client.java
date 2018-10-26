@@ -37,6 +37,7 @@
  */
 
 import com.sun.org.apache.xpath.internal.operations.Bool;
+import com.sun.xml.internal.ws.policy.privateutil.PolicyUtils;
 
 import java.io.*;
 import java.lang.reflect.Array;
@@ -158,7 +159,19 @@ public class Client {
 
     public static void login(Hello rmi, Scanner reader) throws IOException, NotBoundException {
         System.out.println("Insert your login('username-password'):");
-        String userData = reader.nextLine();
+        boolean flagOK = false;
+        String userData = "";
+        String[] userDataParts = new String[2];
+        while(!flagOK){
+            userData = reader.nextLine();
+            userDataParts = userData.split("-");
+            if(userDataParts.length==2){
+                flagOK=true;
+            }
+            else{
+                System.out.println("Insert your login('username-password'):");
+            }
+        }
         String txt = rmi.checkLogin(userData);
         String[] txtSplit = txt.split(";");
         switch (txtSplit[0]){
@@ -276,7 +289,17 @@ public class Client {
 
     public static void makeEditor(Hello rmi, Scanner reader) throws RemoteException{
         System.out.print("Insert user's name: ");
-        String name = reader.nextLine();
+        boolean flagOK = false;
+        String name = "";
+        while(!flagOK) {
+            name = reader.nextLine();
+            if (!name.equals("")){
+                flagOK = true;
+            }
+            else{
+                System.out.print("Insert user's name: ");
+            }
+        }
         String response = rmi.checkEditorMaking(name);
 
         switch (response){
@@ -408,9 +431,20 @@ public class Client {
     }
 
     public static void createArtist(Hello rmi,Scanner reader) throws RemoteException{
+        boolean flagOK = false;
         System.out.println("Insert your data('name-genre-description')");
-        String text = reader.nextLine();
-        String[] data = text.split("-");
+        String text = "";
+        String[]data = new String[3];
+        while(!flagOK) {
+            text = reader.nextLine();
+            data = text.split("-");
+            if(data.length == 3){
+                flagOK = true;
+            }
+            else{
+                System.out.println("Insert your data('name-genre-description')");
+            }
+        }
         String response = rmi.createArtist(data[0], data[1], data[2]);
         switch (response){
             case "type|artistExists":
@@ -426,8 +460,19 @@ public class Client {
 
     public static void createAlbum(Hello rmi,Scanner reader) throws RemoteException{
         System.out.println("Insert your data('name-artist-description-duracao')");
-        String text = reader.nextLine();
-        String[] data = text.split("-");
+        boolean flagOK = false;
+        String text = "";
+        String[]data = new String[4];
+        while(!flagOK) {
+            text = reader.nextLine();
+            data = text.split("-");
+            if(data.length == 4){
+                flagOK = true;
+            }
+            else{
+                System.out.println("Insert your data('name-artist-description-duracao')");
+            }
+        }
         String response = rmi.createAlbum(data[0], data[1], data[2], data[3]);
         switch (response){
             case "type|albumExists":
@@ -464,9 +509,29 @@ public class Client {
 
     public static void editName(Hello rmi,Scanner reader) throws RemoteException{
         System.out.println("Which artist you wanna change? ");
-        String artist = reader.nextLine();
+        boolean flagOK = false;
+        String artist = "";
+        String nameAfter="";
+        while(!flagOK) {
+            artist = reader.nextLine();
+            if (!artist.equals("")){
+                flagOK = true;
+            }
+            else{
+                System.out.println("Which artist you wanna change? ");
+            }
+        }
         System.out.println("To what name you wanna change it? ");
-        String nameAfter = reader.nextLine();
+        flagOK = false;
+        while(!flagOK) {
+            nameAfter = reader.nextLine();
+            if (!nameAfter.equals("")){
+                flagOK = true;
+            }
+            else{
+                System.out.println("To what name you wanna change it? ");
+            }
+        }
         String response = rmi.editArtistName(artist,nameAfter);
         switch(response){
             case "type|nameChanged":
@@ -482,10 +547,30 @@ public class Client {
 
     public static void editGenre(Hello rmi,Scanner reader) throws RemoteException{
         System.out.println("Which artist you wanna change? ");
-        String artist = reader.nextLine();
+        boolean flagOK = false;
+        String artist = "";
+        String genreAfter="";
+        while(!flagOK) {
+            artist = reader.nextLine();
+            if (!artist.equals("")){
+                flagOK = true;
+            }
+            else{
+                System.out.println("Which artist you wanna change? ");
+            }
+        }
         System.out.println("To what music genre you wanna change it? ");
-        String genre = reader.nextLine();
-        String response = rmi.editArtistGenre(artist,genre);
+        flagOK = false;
+        while(!flagOK) {
+            genreAfter = reader.nextLine();
+            if (!genreAfter.equals("")){
+                flagOK = true;
+            }
+            else{
+                System.out.println("To what music genre you wanna change it? ");
+            }
+        }
+        String response = rmi.editArtistGenre(artist,genreAfter);
         switch(response){
             case "type|genreChanged":
                 System.out.println("Genre changed.");
@@ -500,9 +585,33 @@ public class Client {
 
     public static void editDescription(Hello rmi,Scanner reader) throws RemoteException{
         System.out.println("Which artist you wanna change? ");
+        boolean flagOK = false;
+        String artist = "";
+        String description="";
+        while(!flagOK) {
+            artist = reader.nextLine();
+            if (!artist.equals("")){
+                flagOK = true;
+            }
+            else{
+                System.out.println("Which artist you wanna change? ");
+            }
+        }
+        System.out.println("To what description you wanna change it? ");
+        flagOK = false;
+        while(!flagOK) {
+            description = reader.nextLine();
+            if (!description.equals("")){
+                flagOK = true;
+            }
+            else{
+                System.out.println("To what description you wanna change it? ");
+            }
+        }
+        /*System.out.println("Which artist you wanna change? ");
         String artist = reader.nextLine();
         System.out.println("To what description you wanna change it? ");
-        String description = reader.nextLine();
+        String description = reader.nextLine();*/
         String response = rmi.editArtistDescription(artist,description);
         switch(response){
             case "type|descriptionChanged":
