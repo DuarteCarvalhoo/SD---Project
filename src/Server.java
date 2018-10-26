@@ -528,42 +528,43 @@ public class Server implements Hello {
         }
 
     public static void main (String[]args){
-            int aux = 0;
-            while (aux < 1) {
-                try {
-                    Hello connect = (Hello) LocateRegistry.getRegistry(7000).lookup("Hello");
-                    connect.ping();
-                    System.out.println("Pong");
-                    aux = 0;
-                } catch (NotBoundException e) {
-                    System.out.println("Not bound.");
-                    e.printStackTrace();
-                } catch (RemoteException e) {
-                    System.out.println("test try fail");
-                    aux++;
-                }
-
-                try {
-                    Thread.sleep(1000);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
+        System.setProperty("java.rmi.server.hostname", "IP da máquina");
+        int aux = 0;
+        while (aux < 1) {
+            try {
+                Hello connect = (Hello) LocateRegistry.getRegistry(7000).lookup("Hello");
+                connect.ping();
+                System.out.println("Pong");
+                aux = 0;
+            } catch (NotBoundException e) {
+                System.out.println("Not bound.");
+                e.printStackTrace();
+            } catch (RemoteException e) {
+                System.out.println("test try fail");
+                aux++;
             }
 
             try {
-                Server obj = new Server();
-                Hello stub = (Hello) UnicastRemoteObject.exportObject(obj, 0);
-
-                // Bind the remote object's stub in the registry
-                Registry registry = LocateRegistry.createRegistry(7000);
-                registry.rebind("Hello", stub);
-
-                System.err.println("Server ready");
-            } catch (Exception e) {
-                System.err.println("Server exception: " + e.toString());
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
                 e.printStackTrace();
             }
         }
+
+        try {
+            Server obj = new Server();
+            Hello stub = (Hello) UnicastRemoteObject.exportObject(obj, 0);
+
+            // Bind the remote object's stub in the registry
+            Registry registry = LocateRegistry.createRegistry(7000);
+            registry.rebind("Hello", stub);
+
+            System.err.println("Server ready");
+        } catch (Exception e) {
+            System.err.println("Server exception: " + e.toString());
+            e.printStackTrace();
+        }
+    }
 
 
 }

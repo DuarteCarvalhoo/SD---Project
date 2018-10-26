@@ -62,7 +62,7 @@ public class Client {
         //String host = (args.length < 1) ? null : args[0];
         Scanner reader = new Scanner(System.in);
         try {
-            Registry registry = LocateRegistry.getRegistry(7000);
+            Registry registry = LocateRegistry.getRegistry("localhost",7000);
             rmi =(Hello) registry.lookup("Hello");
             Hello stub = (Hello) registry.lookup("Hello");
             String response = stub.sayHello();
@@ -99,10 +99,6 @@ public class Client {
         System.out.println("Finished");
     }
 
-    /*public static void downloadMusic() throws IOException {
-        String adress = "localhost";
-        Socket s= new Socket(adress,5000);
-    }*/
 
     private static Hello changeRMI() throws RemoteException, NotBoundException {
         try {
@@ -119,17 +115,17 @@ public class Client {
 
     private static String downloadMusic(Hello rmi, Scanner reader) throws IOException {
         ArrayList<String> directorias = new ArrayList<>(); // é suposto ir buscar ao multicastServer;
-        directorias.add("C:\\Users\\Duarte\\Desktop\\SD\\PROJETO\\META 1\\SD---Project\\musicasServer\\a.mp3");
+        /*directorias.add("C:\\Users\\Duarte\\Desktop\\SD\\PROJETO\\META 1\\SD---Project\\musicasServer\\a.mp3");
         directorias.add("C:\\Users\\Duarte\\Desktop\\SD\\PROJETO\\META 1\\SD---Project\\musicasServer\\b.mp3");
-        directorias.add("C:\\Users\\Duarte\\Desktop\\SD\\PROJETO\\META 1\\SD---Project\\musicasServer\\c.mp3");
+        directorias.add("C:\\Users\\Duarte\\Desktop\\SD\\PROJETO\\META 1\\SD---Project\\musicasServer\\c.mp3");*/
 
         System.out.println("Choose one song:");
         //aqui fazia-se print da lista de musicas na base de dados..
 
         String escolha = reader.nextLine();
 
-        new File("C:\\\\Users\\\\Duarte\\\\Desktop\\\\SD\\\\PROJETO\\\\META 1\\\\SD---Project\\\\musicasServer\\\\"+loggedUser.getUsername()).mkdirs();
-        String musicaEscolhida = "C:\\\\Users\\\\Duarte\\\\Desktop\\\\SD\\\\PROJETO\\\\META 1\\\\SD---Project\\\\musicasServer\\\\" +escolha + ".mp3";
+        boolean boo = new File("./musicasServer/" + loggedUser.getUsername()).mkdirs();
+        String musicaEscolhida = "./musicasServer/" + escolha + ".mp3";
 
         //fazer o socket ligar primeiro no multi mas sem pedir pra aceitar
         System.out.println(rmi.startServerSocket());
@@ -137,28 +133,21 @@ public class Client {
         String print = rmi.downloadMusicRMI(musicaEscolhida);
         byte[] b = new byte [1024];
         InputStream is = socket.getInputStream();
-        FilePermission permission = new FilePermission("C:\\\\Users\\\\Duarte\\\\Desktop\\\\SD\\\\PROJETO\\\\META 1\\\\SD---Project\\\\musicasServer\\\\"+loggedUser.getUsername(),"write");
-        FileOutputStream fOutStream = new FileOutputStream("C:\\\\Users\\\\Duarte\\\\Desktop\\\\SD\\\\PROJETO\\\\META 1\\\\SD---Project\\\\musicasServer\\\\"+loggedUser.getUsername());
+        FileOutputStream fOutStream = new FileOutputStream("./musicasServer/"+loggedUser.getUsername()+"/"+escolha+".mp3");
         BufferedOutputStream bOutStream = new BufferedOutputStream(fOutStream);
 
         int aux= 0;
+        int cont=0;
         while ((aux = is.read(b))!=-1){
-            System.out.println(b.length);
             bOutStream.write(b, 0, aux);
             if(is.available()==0){
                 break;
             }
         }
-
-        try{
-            Thread.sleep(2000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
         is.close();
-        fOutStream.close();
         bOutStream.flush();
         bOutStream.close();
+        fOutStream.close();
         socket.close();
 
         System.out.println("ficheiro 100% completo");
@@ -189,7 +178,7 @@ public class Client {
         int current =0;
         long len = file.length();
         while(current!=len){
-            int size = 1024;
+            int size = 1024 * 1024;
 
             if(len - current >= size)
                 current += size;
