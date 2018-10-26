@@ -640,5 +640,5 @@ public class MulticastServer extends Thread implements Serializable {
         System.out.println("Lists wrote successfully.");
     }
 
-    
+
 }

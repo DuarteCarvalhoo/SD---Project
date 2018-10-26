@@ -400,7 +400,7 @@ public class Client {
     public static void makeCritic(Hello rmi, Scanner reader) throws  RemoteException{
         System.out.println("Which album you wanna make a critic to? ");
         String album = "";
-        String text = "";
+        String criticText = "";
         double score = 0.0;
         boolean flagOK = false;
         while(!flagOK){
@@ -412,23 +412,30 @@ public class Client {
                 System.out.println("Which album you wanna make a critic to? ");
             }
         }
-        while(!reader.hasNextDouble()){
-            System.out.println("Insert a valid decimal number for score: ");
-            score = reader.nextDouble();
-        }
-        System.out.println("Type your critic: ");
-        flagOK=false;
+        flagOK = false;
         while(!flagOK){
-            text = reader.nextLine();
+            System.out.print("Type your critic: ");
+            String text = reader.nextLine();
             if(!text.trim().equals("")){
                 flagOK = true;
+                criticText = text;
             }
             else{
                 System.out.println("Insert a valid critic: ");
             }
         }
+        while(true){
+            System.out.println("Insert a valid decimal number for score: ");
+            try {
+                String pont = reader.next();
+                score = Double.parseDouble(pont.trim());
+                break;
+            } catch (NumberFormatException ignore) {
+                System.out.println("Invalid input");
+            }
+        }
 
-        String response = rmi.makeCritic(score,text,album);
+        String response = rmi.makeCritic(score,criticText,album);
         switch (response.trim()){
             case "type|criticComplete":
                 System.out.println("SUCCESS: Critic made.");
