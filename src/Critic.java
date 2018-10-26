@@ -1,4 +1,6 @@
-public class Critic {
+import java.io.Serializable;
+
+public class Critic implements Serializable {
     private double score;
     private String text;
 

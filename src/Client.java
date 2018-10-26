@@ -235,6 +235,7 @@ public class Client {
                             "Search\n" +
                             "Edit\n" +
                             "Make editor\n" +
+                            "Make Critic\n"+
                             "Upload\n" +
                             "Download\n\n" +
                             "Choose an option: ");
@@ -242,6 +243,7 @@ public class Client {
                 else{
                     System.out.println("MENU PRINCIPAL:\n" +
                         "Search\n" + "Upload\n" +
+                        "Make Critic\n"+
                         "Download\n\n" +
                         "Choose an option: ");}
 
@@ -269,6 +271,9 @@ public class Client {
                     case "/makeeditor":
                         makeEditor(rmi,reader);
                         break;
+                    case "/makecritic":
+                        makeCritic(rmi,reader);
+                        break;
                     case "/download":
                         //downloadMusic();
                         break;
@@ -285,6 +290,53 @@ public class Client {
                 //e.printStackTrace();
             }
         }
+    }
+
+    public static void makeCritic(Hello rmi, Scanner reader) throws  RemoteException{
+        System.out.println("Which album you wanna make a critic to? ");
+        String album = "";
+        String text = "";
+        double score = 0.0;
+        boolean flagOK = false;
+        while(!flagOK){
+            album = reader.nextLine();
+            if(!album.equals("")){
+                flagOK = true;
+            }
+            else{
+                System.out.println("Which album you wanna make a critic to? ");
+            }
+        }
+        flagOK = false;
+        while(!flagOK){
+            System.out.println("Insert a valid decimal number for score: ");
+            if(reader.hasNextDouble()){
+                score = reader.nextDouble();
+                flagOK = true;
+            }
+        }
+        System.out.println("Type your critic: ");
+        flagOK=false;
+        while(!flagOK){
+            text = reader.nextLine();
+            if(!text.equals("")){
+                flagOK = true;
+            }
+            else{
+                System.out.println("Insert a valida critic: ");
+            }
+        }
+
+        String response = rmi.makeCritic(score,text,album);
+        switch (response){
+            case "type|criticComplete":
+                System.out.println("Critic made.");
+                break;
+            case "type|criticFail":
+                System.out.println("Critic not made.");
+                break;
+        }
+
     }
 
     public static void makeEditor(Hello rmi, Scanner reader) throws RemoteException{
@@ -345,11 +397,11 @@ public class Client {
                 }
                 String response = rmi.showArtist(name);
                 String[] responseSplit = response.split(";");
-                //String[] artistParts = responseSplit[1].split("\\|");
+                String[] artistParts = responseSplit[1].split("\\|");
                 switch (responseSplit[0]) {
                     case "type|showArtistComplete":
-                        //System.out.println(artistParts[1]); easy way, i don't if i can use it
-                        if (responseSplit.length > 3) {
+                        System.out.println(artistParts[1]); //easy way, i don't if i can use it
+                        /*if (responseSplit.length > 3) {
                             String[] nome = responseSplit[1].split("\\|");
                             String[] genre = responseSplit[2].split("\\|");
                             String[] description = responseSplit[3].split("\\|");
@@ -366,7 +418,7 @@ public class Client {
                             String[] genre = responseSplit[2].split("\\|");
                             String[] description = responseSplit[3].split("\\|");
                             System.out.println(nome[1]+"-"+genre[1]+"-"+description[1]);
-                        }
+                        }*/
                         break;
                     case "type|showArtistFail":
                         System.out.println("Artist not Shown.");

@@ -283,6 +283,29 @@ public class MulticastServer extends Thread implements Serializable {
                         }
                         break;
                     case "type|showArtist":
+                        /*String[] nameArtist = aux[1].split("\\|");
+                        String n = nameArtist[1];
+                        if(!checkArtistExists(n)){
+                            sendMsg("type|showArtistFail");
+                            System.out.println("ERROR: Artist Not Found.");
+                        }
+                        else{
+                            String albuns = "-No albuns";
+                            for(Artist a : artistsList){
+                                if(a.getName().equals(n)){
+                                    int i;
+                                    if(a.getAlbums().size()>0){
+                                        String[] nomesAlbuns = new String[a.getAlbums().size()];
+                                        for(i=0;i<a.getAlbums().size();i++){
+                                            nomesAlbuns[i] = a.getAlbums().get(i).getName();
+                                        }
+                                        albuns = printAlbunsProtocol(nomesAlbuns);
+                                    }
+                                    sendMsg("type|showArtistComplete;"+"Name|"+a.getName()+";Genre|"+a.getGenre()+";Description|"+a.getDescription()+";Album|"+albuns);
+                                    System.out.println("SUCCESS: Artist Shown.");
+                                }
+                            }
+                        }*/
                         String[] nameArtist = aux[1].split("\\|");
                         String n = nameArtist[1];
                         Artist art = new Artist();
@@ -301,6 +324,33 @@ public class MulticastServer extends Thread implements Serializable {
                                     }
                                 }
                                 sendMsg("type|showArtistComplete;Artist|"+art);
+                            }
+                        }
+                        break;
+                    case "type|makeCritic":
+                        Album newAlbum = new Album();
+                        String[] scoreParts = aux[1].split("\\|");
+                        String[] textParts = aux[2].split("\\|");
+                        String[] albumParts = aux[3].split("\\|");
+                        Critic c = new Critic(Double.parseDouble(scoreParts[1]),textParts[1]);
+                        if(albunsList.isEmpty()){
+                            sendMsg("type|criticFail");
+                            System.out.println("ERROR: No Albums in the database.");
+                        }
+                        else {
+                            for (Album a : albunsList) {
+                                if (a.getName().equals(albumParts[1])) {
+                                    newAlbum = a;
+                                }
+                            }
+                            if(checkAlbumExists(albumParts[1],newAlbum.getArtist().getName())){
+                                newAlbum.addCritic(c);
+                                sendMsg("type|criticComplete");
+                                System.out.println("Critic Complete.");
+                            }
+                            else{
+                                sendMsg("type|criticFail");
+                                System.out.println("Critic not Complete. Album not found.");
                             }
                         }
                         break;
@@ -446,7 +496,7 @@ public class MulticastServer extends Thread implements Serializable {
         else {
             for (Album album : albunsList) {
                 if (album.getName().equals(name)) {
-                    if(album.getArtist().equals(artist)){
+                    if(album.getArtist().getName().equals(artist)){
                         return true;
                     }
                 }

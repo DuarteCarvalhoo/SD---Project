@@ -4,7 +4,6 @@ import java.util.*;
 public class Album implements Serializable{
     private ArrayList<Music> musicsList = new ArrayList<>();
     private ArrayList<Critic> criticsList = new ArrayList<>();
-    private double sum;
     private String name;
     private Artist artist;
     private String description;
@@ -36,15 +35,11 @@ public class Album implements Serializable{
     }
 
     public double getAverageScore() {
-        if(criticsList.isEmpty()){
-            return 0;
+        double soma = 0;
+        for(Critic c : criticsList){
+            soma+=c.getScore();
         }
-        else{
-            for(Critic critic : criticsList){
-                sum+=critic.getScore();
-            }
-        }
-        return (sum/criticsList.size());
+        return (soma/criticsList.size());
     }
 
     public void addMusic(Music m){
@@ -70,10 +65,6 @@ public class Album implements Serializable{
 
     public void setCriticsList(ArrayList<Critic> criticsList) {
         this.criticsList = criticsList;
-    }
-
-    public void setSum(double sum) {
-        this.sum = sum;
     }
 
     public void setName(String name) {
@@ -130,6 +121,7 @@ public class Album implements Serializable{
                 "Name: "+getName()+"\n"
                 +"Artist: "+getArtist().getName()+"\n"
                 +"Description: "+getDescription()+"\n"
+                +"Score: "+getAverageScore()+"\n"
                 +"Duration: "+getDuracao()+" segundos\n\n"
                 +printCritics(this.criticsList)+"\n\n"
                 +printMusics(this.musicsList);

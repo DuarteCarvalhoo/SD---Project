@@ -55,6 +55,7 @@ public class Artist implements Serializable {
 
     public Artist(){}
 
+    @Override
     public String toString(){
         return "Name: "+getName()
                 +"\nGenre: "+getGenre()
