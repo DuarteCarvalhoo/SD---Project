@@ -175,6 +175,57 @@ public class MulticastServer extends Thread implements Serializable {
                             sendMsg("type|createArtistComplete");
                         }
                         break;
+                    case "type|editArtistName":
+                        String[] nameBeforeParts = aux[1].split("\\|");
+                        String[] nameAfterParts = aux[2].split("\\|");
+                        if(!checkArtistExists(nameBeforeParts[1])){
+                            sendMsg("type|nameNotChanged");
+                            System.out.println("ERROR: Artist Not Found -> Name Not Found.");
+                        }
+                        else{
+                            for(Artist a : artistsList){
+                                if(a.getName().equals(nameBeforeParts[1])){
+                                    a.setName(nameAfterParts[1]);
+                                    sendMsg("type|nameChanged");
+                                    System.out.println("SUCCESS: Name Changed.");
+                                }
+                            }
+                        }
+                        break;
+                    case "type|editArtistGenre":
+                        String[] artistNameParts = aux[1].split("\\|");
+                        String[] genreAfterParts = aux[2].split("\\|");
+                        if(!checkArtistExists(artistNameParts[1])){
+                            sendMsg("type|genreNotChanged");
+                            System.out.println("ERROR: Artist Not Found -> Genre Not Found.");
+                        }
+                        else{
+                            for(Artist a : artistsList){
+                                if(a.getName().equals(artistNameParts[1])){
+                                    a.setGenre(genreAfterParts[1]);
+                                    sendMsg("type|genreChanged");
+                                    System.out.println("SUCCESS: Genre Changed.");
+                                }
+                            }
+                        }
+                        break;
+                    case "type|editArtistDescription":
+                        String[] artistNamePartss = aux[1].split("\\|");
+                        String[] descriptionAfterParts = aux[2].split("\\|");
+                        if(!checkArtistExists(artistNamePartss[1])){
+                            sendMsg("type|descriptionNotChanged");
+                            System.out.println("ERROR: Artist Not Found -> Description Not Changed.");
+                        }
+                        else{
+                            for(Artist a : artistsList){
+                                if(a.getName().equals(artistNamePartss[1])){
+                                    a.setDescription(descriptionAfterParts[1]);
+                                    sendMsg("type|descriptionChanged");
+                                    System.out.println("SUCCESS: Description Changed.");
+                                }
+                            }
+                        }
+                        break;
                     case "type|deleteArtist":
                         String[] nameP = aux[1].split("\\|");
                         String name = nameP[1];
@@ -189,6 +240,22 @@ public class MulticastServer extends Thread implements Serializable {
                                     artistsList.remove(artistsList.get(i));
                                     sendMsg("type|deleteArtistComplete");
                                     System.out.println("SUCCESS: Artist deleted.");
+                                }
+                            }
+                        }
+                        break;
+                    case "type|showArtist":
+                        String[] nameArtist = aux[1].split("\\|");
+                        String n = nameArtist[1];
+                        if(!checkArtistExists(n)){
+                            sendMsg("type|showArtistFail");
+                            System.out.println("ERROR: Artist Not Found.");
+                        }
+                        else{
+                            for(Artist a : artistsList){
+                                if(a.getName().equals(n)){
+                                    sendMsg("type|showArtistComplete;"+"Name|"+a.getName()+";Genre|"+a.getGenre()+";Description|"+a.getDescription());
+                                    System.out.println("SUCCESS: Artist Shown.");
                                 }
                             }
                         }
