@@ -528,7 +528,7 @@ public class Server implements Hello {
         }
 
     public static void main (String[]args){
-        System.setProperty("java.rmi.server.hostname", "IP da máquina");
+        System.setProperty("localhost", "192.168.1.74");
         int aux = 0;
         while (aux < 1) {
             try {
