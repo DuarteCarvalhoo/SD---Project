@@ -288,27 +288,31 @@ public class Client {
     }
 
     public static void makeEditor(Hello rmi, Scanner reader) throws RemoteException{
-        System.out.print("Insert user's name: ");
-        boolean flagOK = false;
-        String name = "";
-        while(!flagOK) {
-            name = reader.nextLine();
-            if (!name.equals("")){
-                flagOK = true;
-            }
-            else{
-                System.out.print("Insert user's name: ");
-            }
+        if(!loggedUser.isEditor()){
+            System.out.println("You don't have permission to do this.");
         }
-        String response = rmi.checkEditorMaking(name);
+        else {
+            System.out.print("Insert user's name: ");
+            boolean flagOK = false;
+            String name = "";
+            while (!flagOK) {
+                name = reader.nextLine();
+                if (!name.equals("")) {
+                    flagOK = true;
+                } else {
+                    System.out.print("Insert user's name: ");
+                }
+            }
+            String response = rmi.checkEditorMaking(name);
 
-        switch (response){
-            case "type|makingEditorComplete":
-                System.out.println(name +" is now an editor.");
-                break;
-            case "type|makingEditorFail":
-                System.out.println("Making "+name+" an Editor didn't work.");
-                break;
+            switch (response) {
+                case "type|makingEditorComplete":
+                    System.out.println(name + " is now an editor.");
+                    break;
+                case "type|makingEditorFail":
+                    System.out.println("Making " + name + " an Editor didn't work.");
+                    break;
+            }
         }
     }
 
@@ -341,10 +345,28 @@ public class Client {
                 }
                 String response = rmi.showArtist(name);
                 String[] responseSplit = response.split(";");
-                String[] artistParts = responseSplit[1].split("\\|");
+                //String[] artistParts = responseSplit[1].split("\\|");
                 switch (responseSplit[0]) {
                     case "type|showArtistComplete":
-                        System.out.println(artistParts[1]);
+                        //System.out.println(artistParts[1]); easy way, i don't if i can use it
+                        if (responseSplit.length > 3) {
+                            String[] nome = responseSplit[1].split("\\|");
+                            String[] genre = responseSplit[2].split("\\|");
+                            String[] description = responseSplit[3].split("\\|");
+                            String[] albunsParts = responseSplit[4].split("\\|");
+                            String albunsNamesFinais = "";
+                            int i;
+                            for(i=2;i<albunsParts.length;i++){
+                                albunsNamesFinais += (albunsParts[i] + ",");
+                            }
+                            System.out.println("\nName: "+nome[1]+"\nGenre: "+genre[1]+"\nDescription: "+description[1]+"\nAlbums:"+albunsNamesFinais);
+                        }
+                        else{
+                            String[] nome = responseSplit[1].split("\\|");
+                            String[] genre = responseSplit[2].split("\\|");
+                            String[] description = responseSplit[3].split("\\|");
+                            System.out.println(nome[1]+"-"+genre[1]+"-"+description[1]);
+                        }
                         break;
                     case "type|showArtistFail":
                         System.out.println("Artist not Shown.");
@@ -381,20 +403,25 @@ public class Client {
     }
 
     public static void editorMenu(Hello rmi,Scanner reader) throws RemoteException{
-        System.out.println("What do you want to do: Create, Edit, Delete?");
-        String response = reader.nextLine();
-        switch (response){
-            case "/create":
-                createMenu(rmi,reader);
-                break;
-            case "/edit":
-                editMenu(rmi,reader);
-                break;
-            case "/delete":
-                deleteMenu(rmi,reader);
-                break;
-            default:
-                break;
+        if(!loggedUser.isEditor()){
+            System.out.println("You don't have permission to do this.");
+        }
+        else{
+            System.out.println("What do you want to do: Create, Edit, Delete?");
+            String response = reader.nextLine();
+            switch (response){
+                case "/create":
+                    createMenu(rmi,reader);
+                    break;
+                case "/edit":
+                    editMenu(rmi,reader);
+                    break;
+                case "/delete":
+                    deleteMenu(rmi,reader);
+                    break;
+                default:
+                    break;
+            }
         }
     }
 
