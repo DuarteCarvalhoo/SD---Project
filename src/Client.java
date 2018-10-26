@@ -301,7 +301,18 @@ public class Client {
                 String[] responseSplit = response.split(";");
                 switch (responseSplit[0]) {
                     case "type|showArtistComplete":
-                        if (responseSplit.length == 4) {
+                        if (responseSplit.length > 3) {
+                            String[] nome = responseSplit[1].split("\\|");
+                            String[] genre = responseSplit[2].split("\\|");
+                            String[] description = responseSplit[3].split("\\|");
+                            String albuns = "";
+                            int i;
+                            for(i=4;i<responseSplit.length;i++){
+                                albuns = responseSplit[i];
+                            }
+                            System.out.println(nome[1]+"-"+genre[1]+"-"+description[1]+albuns);
+                        }
+                        else{
                             String[] nome = responseSplit[1].split("\\|");
                             String[] genre = responseSplit[2].split("\\|");
                             String[] description = responseSplit[3].split("\\|");

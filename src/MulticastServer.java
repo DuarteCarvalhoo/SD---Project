@@ -252,9 +252,18 @@ public class MulticastServer extends Thread implements Serializable {
                             System.out.println("ERROR: Artist Not Found.");
                         }
                         else{
+                            String albuns = "-No albuns";
                             for(Artist a : artistsList){
                                 if(a.getName().equals(n)){
-                                    sendMsg("type|showArtistComplete;"+"Name|"+a.getName()+";Genre|"+a.getGenre()+";Description|"+a.getDescription());
+                                    int i;
+                                    if(a.getAlbuns().size()>0){
+                                        String[] nomesAlbuns = new String[a.getAlbuns().size()];
+                                        for(i=0;i<a.getAlbuns().size();i++){
+                                            nomesAlbuns[i] = a.getAlbuns().get(i).getName();
+                                        }
+                                        albuns = printAlbunsProtocol(nomesAlbuns);
+                                    }
+                                    sendMsg("type|showArtistComplete;"+"Name|"+a.getName()+";Genre|"+a.getGenre()+";Description|"+a.getDescription()+albuns);
                                     System.out.println("SUCCESS: Artist Shown.");
                                 }
                             }
@@ -269,6 +278,8 @@ public class MulticastServer extends Thread implements Serializable {
                             for (User u : usersList) {
                                 if (u.getUsername().equals(logoutUser)) {
                                     u.setOffline();
+                                    //readFiles();
+                                    writeFiles();
                                     sendMsg("type|logoutComplete");
                                     flagLogout = true;
                                 }
@@ -298,6 +309,15 @@ public class MulticastServer extends Thread implements Serializable {
     private Socket ligarSocket(String address) throws IOException {
         Socket socket = new Socket(address,5000);
         return socket;
+    }
+
+    private String printAlbunsProtocol(String[] array){
+        String stringFinal = "";
+        int i;
+        for(i=0;i<array.length;i++){
+            stringFinal += "Album|"+array[i]+";";
+        }
+        return stringFinal;
     }
 
     private void receiveMusic(Socket socket, String musicName) throws IOException {

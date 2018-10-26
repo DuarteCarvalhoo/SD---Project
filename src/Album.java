@@ -1,7 +1,7 @@
 import java.util.*;
 
 public class Album {
-    private ArrayList<Music> musicsList;
+    private ArrayList<Music> musicsList = new ArrayList<>();
     private ArrayList<Critic> criticsList = new ArrayList<>();
     private double sum;
     private String name;
@@ -46,6 +46,19 @@ public class Album {
         return (sum/criticsList.size());
     }
 
+    public void addMusic(Music m){
+        this.musicsList.add(m);
+    }
+
+    public void removeMusic(Music m){
+        int i;
+        for(i=0;i<this.musicsList.size();i++){
+            if(this.musicsList.get(i).equals(m)){
+                this.musicsList.remove(this.musicsList.get(i));
+            }
+        }
+    }
+
     public String getDescription() {
         return description;
     }
@@ -82,10 +95,16 @@ public class Album {
         this.description = description;
     }
 
+
+
     public Album(ArrayList<Music> musicsList, Artist artist, String description, Double duracao) {
         this.musicsList = musicsList;
         this.artist = artist;
         this.description = description;
         this.duracao = duracao;
+    }
+
+    public Album(){
+
     }
 }

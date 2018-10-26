@@ -1,7 +1,9 @@
 import java.io.Serializable;
+import java.util.ArrayList;
 
 public class Artist implements Serializable {
     private String name,description, genre;
+    private ArrayList<Album> albuns = new ArrayList<>();
 
     public String getName() {
         return name;
@@ -25,6 +27,10 @@ public class Artist implements Serializable {
 
     public void setGenre(String genre) {
         this.genre = genre;
+    }
+
+    public ArrayList<Album> getAlbuns() {
+        return albuns;
     }
 
     public Artist(String name, String genre, String description) {
