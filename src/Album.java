@@ -119,12 +119,12 @@ public class Album implements Serializable{
     public String toString(){
         return
                 "Name: "+getName()+"\n"
-                +"Artist: "+getArtist().getName()+"\n"
-                +"Description: "+getDescription()+"\n"
-                +"Score: "+getAverageScore()+"\n"
-                +"Duration: "+getDuracao()+" segundos\n\n"
-                +printCritics(this.criticsList)+"\n\n"
-                +printMusics(this.musicsList);
+                        +"Artist: "+getArtist().getName()+"\n"
+                        +"Description: "+getDescription()+"\n"
+                        +"Score: "+getAverageScore()+"\n"
+                        +"Duration: "+getDuracao()+" segundos\n\n"
+                        +printCritics(this.criticsList)+"\n\n"
+                        +printMusics(this.musicsList);
     }
 
 

@@ -383,74 +383,129 @@ public class Client {
         }
         switch (text) {
             case "/artist":
-                flagOK = false;
-                String name = "";
-                System.out.println("Which artist you wanna show? ");
-                while(!flagOK){
-                    name = reader.nextLine();
-                    if(!name.equals("")){
-                        flagOK=true;
-                    }
-                    else{
-                        System.out.println("Which artist you wanna show? ");
-                    }
-                }
-                String response = rmi.showArtist(name);
-                String[] responseSplit = response.split(";");
-                String[] artistParts = responseSplit[1].split("\\|");
-                switch (responseSplit[0]) {
-                    case "type|showArtistComplete":
-                        System.out.println(artistParts[1]); //easy way, i don't if i can use it
-                        /*if (responseSplit.length > 3) {
-                            String[] nome = responseSplit[1].split("\\|");
-                            String[] genre = responseSplit[2].split("\\|");
-                            String[] description = responseSplit[3].split("\\|");
-                            String[] albunsParts = responseSplit[4].split("\\|");
-                            String albunsNamesFinais = "";
-                            int i;
-                            for(i=2;i<albunsParts.length;i++){
-                                albunsNamesFinais += (albunsParts[i] + ",");
-                            }
-                            System.out.println("\nName: "+nome[1]+"\nGenre: "+genre[1]+"\nDescription: "+description[1]+"\nAlbums:"+albunsNamesFinais);
-                        }
-                        else{
-                            String[] nome = responseSplit[1].split("\\|");
-                            String[] genre = responseSplit[2].split("\\|");
-                            String[] description = responseSplit[3].split("\\|");
-                            System.out.println(nome[1]+"-"+genre[1]+"-"+description[1]);
-                        }*/
-                        break;
-                    case "type|showArtistFail":
-                        System.out.println("Artist not Shown.");
-                        break;
-                }
-            case "Genero":
+                searchArtist(rmi, reader);
                 break;
             case "/album":
-                flagOK = false;
-                String n = "";
-                System.out.println("Which album you wanna show? ");
-                while(!flagOK){
-                    n = reader.nextLine();
-                    if(!n.equals("")){
-                        flagOK=true;
-                    }
-                    else{
-                        System.out.println("Which album you wanna show? ");
-                    }
-                }
-                String resp = rmi.showAlbum(n);
-                String[] respSplit = resp.split(";");
-                if(respSplit.length>1){
-                    String[] s = respSplit[1].split("\\|");
-                    System.out.println(s[1]);
-                }
-                else{
-                    System.out.println("ERRO");
+                System.out.println("How do you wanna search for albums: Album Name or Artist Name?");
+                String answer = reader.nextLine();
+                switch (answer){
+                    case "/albumname":
+                        searchAlbumName(rmi, reader);
+                        break;
+                    case "/artistname":
+                        searchAlbumByArtistName(rmi, reader);
+                        searchAlbumName(rmi,reader);
+                        break;
+                    default:
+                        System.out.println("Insert valid answer.");
+
                 }
                 break;
             default:
                 System.out.println("Inseriu mal o comando. Por favor volte a tentar.");
+        }
+    }
+
+    public static void searchAlbumByArtistName(Hello rmi, Scanner reader) throws RemoteException {
+        System.out.print("Insert user's name: ");
+        boolean flagK = false;
+        String nameA = "";
+        while (!flagK) {
+            nameA = reader.nextLine();
+            if (!nameA.equals("")) {
+                flagK = true;
+            } else {
+                System.out.print("Insert user's name: ");
+            }
+        }
+        String re = rmi.showArtistAlbums(nameA);
+        String[] responseSplit = re.split(";");
+        if (responseSplit.length > 1) {
+            String[] albunsParts = responseSplit[1].split("\\|");
+            String albunsNamesFinais = "";
+            int i;
+            for(i=1;i<albunsParts.length;i++){
+                if(i!=albunsParts.length-1){
+                    albunsNamesFinais += (albunsParts[i] + ",");
+                }
+                else{
+                    albunsNamesFinais += (albunsParts[i]);
+                }
+            }
+            System.out.println("\nAlbums:"+albunsNamesFinais);
+        }
+        else{
+            System.out.println("No albums");
+        }
+    }
+
+    public static void searchArtist(Hello rmi, Scanner reader) throws RemoteException {
+        boolean flagOK;
+        flagOK = false;
+        String name = "";
+        System.out.println("Which artist you wanna show? ");
+        while(!flagOK){
+            name = reader.nextLine();
+            if(!name.equals("")){
+                flagOK=true;
+            }
+            else{
+                System.out.println("Which artist you wanna show? ");
+            }
+        }
+        String response = rmi.showArtist(name);
+        String[] responseSplit = response.split(";");
+        String[] artistParts = responseSplit[1].split("\\|");
+        switch (responseSplit[0]) {
+            case "type|showArtistComplete":
+                System.out.println(artistParts[1]); //easy way, i don't if i can use it
+                /*if (responseSplit.length > 3) {
+                    String[] nome = responseSplit[1].split("\\|");
+                    String[] genre = responseSplit[2].split("\\|");
+                    String[] description = responseSplit[3].split("\\|");
+                    String[] albunsParts = responseSplit[4].split("\\|");
+                    String albunsNamesFinais = "";
+                    int i;
+                    for(i=2;i<albunsParts.length;i++){
+                        albunsNamesFinais += (albunsParts[i] + ",");
+                    }
+                    System.out.println("\nName: "+nome[1]+"\nGenre: "+genre[1]+"\nDescription: "+description[1]+"\nAlbums:"+albunsNamesFinais);
+                }
+                else{
+                    String[] nome = responseSplit[1].split("\\|");
+                    String[] genre = responseSplit[2].split("\\|");
+                    String[] description = responseSplit[3].split("\\|");
+                    System.out.println(nome[1]+"-"+genre[1]+"-"+description[1]);
+                }*/
+                break;
+            case "type|showArtistFail":
+                System.out.println("Artist not Shown.");
+                break;
+        }
+    }
+
+    public static void searchAlbumName(Hello rmi, Scanner reader) throws RemoteException {
+        boolean flagOK;
+        flagOK = false;
+        String n = "";
+        System.out.println("Which album you wanna show? ");
+        while(!flagOK){
+            n = reader.nextLine();
+            if(!n.equals("")){
+                flagOK=true;
+            }
+            else{
+                System.out.println("Which album you wanna show? ");
+            }
+        }
+        String resp = rmi.showAlbum(n);
+        String[] respSplit = resp.split(";");
+        if(respSplit.length>1){
+            String[] s = respSplit[1].split("\\|");
+            System.out.println(s[1]);
+        }
+        else{
+            System.out.println("ERRO");
         }
     }
 

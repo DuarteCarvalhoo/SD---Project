@@ -327,6 +327,24 @@ public class MulticastServer extends Thread implements Serializable {
                             }
                         }
                         break;
+                    case "type|showArtistAlbums":
+                        String[] nameA = aux[1].split("\\|");
+                        String nA = nameA[1];
+                        Artist artista = new Artist();
+                        if(!checkArtistExists(nA)){
+                            sendMsg("type|showArtistAlbumsFail");
+                            System.out.println("ERROR: Artist Not Found.");
+                        }
+                        else{
+                            for(Artist a : artistsList){
+                                if(a.getName().equals(nA)){
+                                    artista = a;
+                                }
+                            }
+                            sendMsg("type|showArtistAlbumsComplete"+";Albums|"+artista.printAlbums(artista.getAlbums()));
+                            System.out.println("SUCCESS: Artist Albums Shown.");
+                        }
+                        break;
                     case "type|makeCritic":
                         Album newAlbum = new Album();
                         String[] scoreParts = aux[1].split("\\|");
