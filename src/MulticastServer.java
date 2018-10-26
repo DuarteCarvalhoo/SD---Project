@@ -500,7 +500,7 @@ public class MulticastServer extends Thread implements Serializable {
         System.out.println("1");
         InputStream is = socket.getInputStream();
         System.out.println("2");
-        FileOutputStream fOutStream = new FileOutputStream("C:\\Users\\Duarte\\Desktop\\SD\\PROJETO\\META 1\\SD---Project\\musicasServer\\" + musicName);
+        FileOutputStream fOutStream = new FileOutputStream("./musicasServer/" + musicName);
         System.out.println("3");
         BufferedOutputStream bOutStream = new BufferedOutputStream(fOutStream);
 
