@@ -71,7 +71,11 @@ public class Server implements Hello {
     }
     
     public void removeOnlineUser(User aux){
-        userOnlines.remove(aux);
+        for(int i=0; i<userOnlines.size();i++){
+            if(userOnlines.get(i).equals(aux)){
+                userOnlines.remove(userOnlines.get(i));
+            }
+        }
     }
 
     public String startSocket(String clientAddress){
@@ -213,8 +217,12 @@ public class Server implements Hello {
                         break;
                     }
                 }
+                aux2.makeEditor();
                 aux2.msg(">> You are now an editor!");
             } catch (RemoteException e) { //o user ta off
+                System.out.println("remoteE");
+            }
+            catch (NullPointerException ex){
                 try{
                     String mensage = ">> You are now an editor!";
                     socket = new MulticastSocket();

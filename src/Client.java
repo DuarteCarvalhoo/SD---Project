@@ -345,8 +345,8 @@ public class Client extends UnicastRemoteObject implements ClientHello{
                 rmi.addOnlineUser(loggedUser);
                 menuPrincipal(rmi,reader);
                 ArrayList<String> printNotif = loggedUser.getNotifications();
-                for(int i=0;i<printNotif.size();i++){
-                    System.out.println(printNotif.get(i));
+                for (String aPrintNotif : printNotif) {
+                    System.out.println(aPrintNotif);
                 }
                 loggedUser.cleanNotification();
                 break;
@@ -626,6 +626,11 @@ public class Client extends UnicastRemoteObject implements ClientHello{
 
     public void msg(String aux){
         System.out.println(aux);
+    }
+
+
+    public void makeEditor() throws RemoteException {
+        loggedUser.makeEditor();
     }
 
     public static void menuDePesquisa(Hello rmi, Scanner reader) throws RemoteException{

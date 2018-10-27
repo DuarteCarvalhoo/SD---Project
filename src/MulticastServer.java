@@ -239,9 +239,11 @@ public class MulticastServer extends Thread implements Serializable {
                         String mensagem = aux[2];
                         String[] nameUser = aux2.split("\\|");
                         String[] notif = mensagem.split("\\|");
-                        for (int i=0; i<usersList.size(); i++){
-                            if(usersList.get(i).getUsername().equals(nameUser[1])){
-                                usersList.get(i).addNotification(notif[1]);
+                        System.out.println("User: "+nameUser[1]+"Notif: "+notif[1]);
+                        for (User anUsersList : usersList) {
+                            if (anUsersList.getUsername().equals(nameUser[1])) {
+                                System.out.println("inside if");
+                                anUsersList.addNotification(notif[1]);
                                 break;
                             }
                         }
