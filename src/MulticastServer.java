@@ -250,6 +250,16 @@ public class MulticastServer extends Thread implements Serializable {
                             }
                         }
                         break;
+                    /*case"type|sendNotif":
+                        aux2 = aux[1];
+                        String[] nome = aux2.split("\\|");
+                        for (int i=0; i<usersList.size(); i++) {
+                            if (usersList.get(i).getUsername().equals(nome[1])) {
+                                for(int j=0; j<user)
+                                sendMsg(usersList.get(i);
+                            }
+                        }
+                     */
                     case "type|createArtist":
                         String[] nameParts1 = aux[1].split("\\|");
                         String[] genreParts1 = aux[2].split("\\|");
