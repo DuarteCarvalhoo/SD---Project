@@ -37,7 +37,9 @@
  */
 
 import com.sun.org.apache.xpath.internal.operations.Bool;
+import com.sun.scenario.effect.impl.sw.sse.SSEBlend_SRC_OUTPeer;
 
+import javax.swing.*;
 import java.io.*;
 import java.lang.reflect.Array;
 import java.net.Socket;
@@ -55,8 +57,7 @@ import java.net.*;
 public class Client extends UnicastRemoteObject implements ClientHello{
 
     private static User loggedUser = new User();
-    private Client() throws RemoteException {
-    }
+    private Client() throws RemoteException {}
     private static ClientHello client;
 
     static {
@@ -110,6 +111,7 @@ public class Client extends UnicastRemoteObject implements ClientHello{
         }
         reader.close();
         System.out.println("Finished");
+        return ;
     }
 
     private static Hello changeRMI() throws RemoteException, NotBoundException {
@@ -342,12 +344,13 @@ public class Client extends UnicastRemoteObject implements ClientHello{
                 }
                 System.out.println("Welcome!");
                 loggedUser.setClientInterface(client);
-                rmi.addOnlineUser(loggedUser);
-                menuPrincipal(rmi,reader);
                 ArrayList<String> printNotif = loggedUser.getNotifications();
                 for (String aPrintNotif : printNotif) {
                     System.out.println(aPrintNotif);
                 }
+                rmi.addOnlineUser(loggedUser);
+                menuPrincipal(rmi,reader);
+                System.out.println("olaaaaaa");
                 loggedUser.cleanNotification();
                 break;
             case "type|loginFail":
@@ -401,6 +404,7 @@ public class Client extends UnicastRemoteObject implements ClientHello{
                 break;
             case "type|registComplete":
                 System.out.println("Successful register.");
+                loggedUser.setClientInterface(client);
                 break;
             default:
                 System.out.println("Something went wrong.");

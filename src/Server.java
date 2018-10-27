@@ -208,11 +208,14 @@ public class Server implements Hello {
             socket.close();
         }
         String msg = receiveMulticast();
+        System.out.println(msg + "antes do if");
         if(msg.equals("type|makingEditorComplete")){
             ClientHello aux2 = null;
+            System.out.println("entrei no if");
             try {
                 for (int i=0;i<userOnlines.size();i++) {
-                    if(userOnlines.get(i).getUsername().equals(name)){
+                    if (userOnlines.get(i).getUsername().equals(name)) {
+                        System.out.println("entrei noutro");
                         aux2 = userOnlines.get(i).getInterface();
                         break;
                     }
@@ -236,7 +239,11 @@ public class Server implements Hello {
                     e1.printStackTrace();
                 } catch (IOException e1) {
                     e1.printStackTrace();
+                }finally {
+                    socket.close();
                 }
+            } catch (RemoteException e) {
+                e.printStackTrace();
             }
         }
         return msg;
