@@ -41,8 +41,6 @@ import java.rmi.RemoteException;
 
 public interface Hello extends Remote {
 
-    String sayHello() throws RemoteException;
-
     void addOnlineUser(User aux) throws RemoteException;
 
     void removeOnlineUser(User aux) throws RemoteException;

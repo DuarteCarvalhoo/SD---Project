@@ -9,7 +9,6 @@ import java.util.logging.Logger;
 public class MulticastServer extends Thread implements Serializable {
     private String MULTICAST_ADDRESS = "224.0.224.0";
     private int PORT = 4321;
-    private long SLEEP_TIME = 5000;
     private ArrayList<User> usersList = new ArrayList<>();
     private ArrayList<Artist> artistsList = new ArrayList<>();
     private ArrayList<Album> albunsList = new ArrayList<>();
@@ -22,6 +21,7 @@ public class MulticastServer extends Thread implements Serializable {
 
     public MulticastServer(){ super ("Server " + (long) (Math.random()*1000));}
 
+    ////////////// RECEBER E TRATAR O PROTOCOL /////////////
     public void run() {
         MulticastSocket socket = null;
         //System.out.println(this.getName() + "run...");
@@ -51,7 +51,6 @@ public class MulticastServer extends Thread implements Serializable {
                 System.out.print("De: " + packetRec.getAddress().getHostAddress() + ":" + packetRec.getPort() + " com a mensagem: ");
                 String msg = new String(packetRec.getData(), 0, packetRec.getLength());
                 System.out.println(msg);
-                //try { sleep((long) (Math.random() * SLEEP_TIME)); } catch (InterruptedException e) { }
                 String[] aux = msg.split(";");
                 switch (aux[0]) {
                     case "type|login":
@@ -527,6 +526,7 @@ public class MulticastServer extends Thread implements Serializable {
         }
     }
 
+    ////////////// DOWNLOAD E UPLOAD /////////////
     public ServerSocket openSocket() throws IOException {
         ServerSocket socket = new ServerSocket(5041);
         return socket;
@@ -569,33 +569,6 @@ public class MulticastServer extends Thread implements Serializable {
         return socket;
     }
 
-    private String printAlbunsProtocol(String[] array){
-        String stringFinal = "";
-        int i;
-        for(i=0;i<array.length;i++){
-            stringFinal += "|"+array[i];
-        }
-        return stringFinal;
-    }
-
-    private User returnsUser(String username){
-        for(User u : usersList){
-            if(u.getUsername().trim().equals(username)){
-                return u;
-            }
-        }
-        return null;
-    }
-
-    private Artist returnsArtist(String artistName){
-        for(Artist artist : artistsList){
-            if(artist.getName().trim().equals(artistName)){
-                return artist;
-            }
-        }
-        return null;
-    }
-
     private void receiveMusic(Socket socket, String musicName) throws IOException {
         byte[] b= new byte[1024];
         System.out.println("1");
@@ -621,6 +594,41 @@ public class MulticastServer extends Thread implements Serializable {
         socket.close();
 
         System.out.println("ficheiro 100% completo");
+    }
+
+    ////////////// ENVIO DO PROTOCOL /////////////
+    private void sendMsg(String msg) throws IOException {
+        MulticastSocket socket = new MulticastSocket();
+        byte[] buffer = msg.getBytes();
+
+        InetAddress group = InetAddress.getByName(MULTICAST_ADDRESS);
+        DatagramPacket packet = new DatagramPacket(buffer, buffer.length, group, PORT);
+        try {
+            TimeUnit.MILLISECONDS.sleep(50);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        socket.send(packet);
+        socket.close();
+    }
+
+    ////////////// FUNÇOES AUXILIAR /////////////
+    private User returnsUser(String username){
+        for(User u : usersList){
+            if(u.getUsername().trim().equals(username)){
+                return u;
+            }
+        }
+        return null;
+    }
+
+    private Artist returnsArtist(String artistName){
+        for(Artist artist : artistsList){
+            if(artist.getName().trim().equals(artistName)){
+                return artist;
+            }
+        }
+        return null;
     }
 
     public boolean checkUsernameLogin(String username, String password){
@@ -694,21 +702,7 @@ public class MulticastServer extends Thread implements Serializable {
         return false;
     }
 
-    private void sendMsg(String msg) throws IOException {
-        MulticastSocket socket = new MulticastSocket();
-        byte[] buffer = msg.getBytes();
-
-        InetAddress group = InetAddress.getByName(MULTICAST_ADDRESS);
-        DatagramPacket packet = new DatagramPacket(buffer, buffer.length, group, PORT);
-        try {
-            TimeUnit.MILLISECONDS.sleep(50);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-        socket.send(packet);
-        socket.close();
-    }
-
+    ////////////// READ AND WRITE FILES /////////////
     private void readFiles(){
         System.out.println("Reading.");
         ArrayList<User> users = new ArrayList<>();
