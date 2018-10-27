@@ -42,30 +42,41 @@ import java.io.*;
 import java.lang.reflect.Array;
 import java.net.Socket;
 import java.rmi.NotBoundException;
+import java.rmi.RMISecurityManager;
 import java.rmi.Remote;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
+import java.rmi.server.UnicastRemoteObject;
 import java.util.ArrayList;
 import java.util.Scanner;
 import java.rmi.registry.Registry;
 import java.net.*;
 
-public class Client implements ClientHello{
+public class Client extends UnicastRemoteObject implements ClientHello{
 
     private static User loggedUser = new User();
-    private static ArrayList<User> users = new ArrayList<>();
-    private Client() {}
+    private Client() throws RemoteException {
+    }
+    private static ClientHello client;
+
+    static {
+        try {
+            client = new Client();
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        }
+    }
 
     public static void main(String[] args) throws IOException, NotBoundException {
         String text = "";
         Hello rmi = null;
-        ClientHello rmi2 = null;
         //String host = (args.length < 1) ? null : args[0];
         Scanner reader = new Scanner(System.in);
+        System.getProperties().put("java.security.policy", "policy.all");
+        System.setSecurityManager(new RMISecurityManager());
         try {
             Registry registry = LocateRegistry.getRegistry("localhost",7000);
             rmi =(Hello) registry.lookup("Hello");
-            //rmi2 = (ClientHello) registry.lookup("ClientHello");
             Hello stub = (Hello) registry.lookup("Hello");
             String response = stub.sayHello();
             System.out.println("response: " + response);
@@ -301,9 +312,17 @@ public class Client implements ClientHello{
                     String[] editor = txtSplit[3].split("\\|");
                     String[] online = txtSplit[4].split("\\|");
                     loggedUser = new User(username[1], password[1], Boolean.parseBoolean(editor[1]), Boolean.parseBoolean(online[1]));
+
                 }
                 System.out.println("Welcome!");
                 menuPrincipal(rmi,reader);
+                loggedUser.setClientInterface(client);
+                rmi.addOnlineUser(loggedUser);
+                ArrayList<String> printNotif = loggedUser.getNotifications();
+                for(int i=0;i<printNotif.size();i++){
+                    System.out.println(printNotif.get(i));
+                }
+                loggedUser.cleanNotification();
                 break;
             case "type|loginFail":
                 System.out.println("Login failed.");
@@ -318,6 +337,7 @@ public class Client implements ClientHello{
         switch(txt.trim()){
             case "type|logoutComplete":
                 System.out.println("Logged out successfully.");
+                rmi.removeOnlineUser(loggedUser);
                 loggedUser = new User();
                 break;
             case "type|logoutFail":
@@ -530,8 +550,8 @@ public class Client implements ClientHello{
 
     }
 
-    public String notificationEditor(){
-        return "no erro";
+    public String msg(String aux){
+        return aux;
     }
 
     public static void menuDePesquisa(Hello rmi, Scanner reader) throws RemoteException{
@@ -987,4 +1007,4 @@ public class Client implements ClientHello{
         }
     }
 
-    }
+}

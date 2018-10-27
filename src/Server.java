@@ -39,10 +39,7 @@
 import com.sun.xml.internal.ws.policy.privateutil.PolicyUtils;
 
 import java.io.*;
-import java.net.DatagramPacket;
-import java.net.InetAddress;
-import java.net.MulticastSocket;
-import java.net.Socket;
+import java.net.*;
 import java.rmi.AccessException;
 import java.rmi.NotBoundException;
 import java.rmi.registry.Registry;
@@ -54,6 +51,7 @@ import java.util.ArrayList;
 public class Server implements Hello {
     private String MULTICAST_ADDRESS = "224.0.224.0";
     private int PORT = 4321;
+    private ArrayList<User> userOnlines = new ArrayList<>();
 
 
     public Server() {
@@ -66,6 +64,14 @@ public class Server implements Hello {
     public String msgInput(String text) {
         System.out.println("escreveu uma mensagem: " + text);
         return " ";
+    }
+
+    public void addOnlineUser(User aux){
+        userOnlines.add(aux);
+    }
+    
+    public void removeOnlineUser(User aux){
+        userOnlines.remove(aux);
     }
 
     public String startSocket(String clientAddress){
@@ -160,9 +166,33 @@ public class Server implements Hello {
             socket.close();
         }
         String msg = receiveMulticast();
-        //if(msg.equals("type|makingEditorComplete")){
-          //  rmi2.notificationEditor();
-        //}
+        if(msg.equals("type|makingEditorComplete")){
+            ClientHello aux2 = null;
+            try {
+                for (int i=0;i<userOnlines.size();i++) {
+                    if(userOnlines.get(i).getUsername().equals(name)){
+                        aux2 = userOnlines.get(i).getInterface();
+                        break;
+                    }
+                }
+                aux2.msg("és agora um editor!");
+            } catch (RemoteException e) { //o user ta off
+                try{
+                    String mensage = "és agora um editor!";
+                    socket = new MulticastSocket();
+                    InetAddress group = InetAddress.getByName(MULTICAST_ADDRESS);
+                    socket.joinGroup(group);
+                    String aux3 = "type|addNotification;user|"+name+";mensagem|"+mensage; //protocol
+                    byte[] buffer = aux3.getBytes();
+                    DatagramPacket packet = new DatagramPacket(buffer, buffer.length, group, PORT);
+                    socket.send(packet);
+                } catch (UnknownHostException e1) {
+                    e1.printStackTrace();
+                } catch (IOException e1) {
+                    e1.printStackTrace();
+                }
+            }
+        }
         return msg;
     }
 

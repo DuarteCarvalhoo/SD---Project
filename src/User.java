@@ -6,11 +6,20 @@ public class User implements Serializable{
     private String password;
     private boolean online = false;
     private boolean editor = false;
+    private ClientHello clientInterface;
     private ArrayList<String> downloadableMusics = new ArrayList<>();
+    private ArrayList<String> notifications = new ArrayList<>();
 
+    public void setClientInterface(ClientHello aux){
+        clientInterface = aux;
+    }
 
     public String getUsername() {
         return username;
+    }
+
+    public ClientHello getInterface(){
+        return clientInterface;
     }
 
     public String printDownloadableMusics(){
@@ -50,6 +59,18 @@ public class User implements Serializable{
 
     public ArrayList<String> getDownloadableMusics() {
         return downloadableMusics;
+    }
+
+    public void addNotification(String newNotif){
+        notifications.add(newNotif);
+    }
+
+    public ArrayList<String> getNotifications(){
+        return notifications;
+    }
+
+    public void cleanNotification (){
+        notifications = new ArrayList<String>();
     }
 
     public boolean checkPassword(String password){
