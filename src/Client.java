@@ -53,7 +53,6 @@ import java.net.*;
 public class Client {
 
     private static User loggedUser = new User();
-    private static ArrayList<User> users = new ArrayList<>();
     private Client() {}
 
     public static void main(String[] args) throws IOException, NotBoundException {
@@ -114,11 +113,6 @@ public class Client {
     }
 
     private static String downloadMusic(Hello rmi, Scanner reader) throws IOException {
-        ArrayList<String> directorias = new ArrayList<>(); // é suposto ir buscar ao multicastServer;
-        /*directorias.add("C:\\Users\\Duarte\\Desktop\\SD\\PROJETO\\META 1\\SD---Project\\musicasServer\\a.mp3");
-        directorias.add("C:\\Users\\Duarte\\Desktop\\SD\\PROJETO\\META 1\\SD---Project\\musicasServer\\b.mp3");
-        directorias.add("C:\\Users\\Duarte\\Desktop\\SD\\PROJETO\\META 1\\SD---Project\\musicasServer\\c.mp3");*/
-
         System.out.println("Choose one song:");
         if(loggedUser.printDownloadableMusics().equals("No musics to show.")){
                 return "Can't download any musics.";
@@ -301,6 +295,18 @@ public class Client {
                     String[] online = txtSplit[4].split("\\|");
                     loggedUser = new User(username[1], password[1], Boolean.parseBoolean(editor[1]), Boolean.parseBoolean(online[1]));
                 }
+                else if(txtSplit.length > 5){
+                    String[] username = txtSplit[1].split("\\|");
+                    String[] password = txtSplit[2].split("\\|");
+                    String[] editor = txtSplit[3].split("\\|");
+                    String[] online = txtSplit[4].split("\\|");
+                    String[] downloads = txtSplit[5].split("\\|");
+                    ArrayList<String> downloadableMusics = new ArrayList<>();
+                    for(int i=1;i<downloads.length;i++){
+                        downloadableMusics.add(downloads[i]);
+                    }
+                    loggedUser = new User(username[1], password[1], Boolean.parseBoolean(editor[1]), Boolean.parseBoolean(online[1]),downloadableMusics);
+                }
                 System.out.println("Welcome!");
                 menuPrincipal(rmi,reader);
                 break;
@@ -370,6 +376,7 @@ public class Client {
                             "Edit\n" +
                             "Make editor\n" +
                             "Make Critic\n"+
+                            "Share music\n"+
                             "Upload\n" +
                             "Download\n\n" +
                             "Choose an option: ");
@@ -379,6 +386,7 @@ public class Client {
                         "Search\n" +
                         "Upload\n" +
                         "Make Critic\n"+
+                        "Share music\n"+
                         "Download\n\n" +
                         "Choose an option: ");}
 
@@ -396,6 +404,42 @@ public class Client {
                 switch(text.trim()){
                     case "/search":
                         menuDePesquisa(rmi, reader);
+                        break;
+                    case "/share":
+                        String music ="";
+                        String userName="";
+                        boolean flagOK = false;
+                        System.out.println("Which music you wanna share?");
+                        loggedUser.printDownloadableMusics();
+                        while(!flagOK){
+                            music = reader.nextLine();
+                            if(!music.trim().equals("")){
+                                flagOK=true;
+                            }
+                            else{
+                                System.out.println("Which music you wanna share?");
+                            }
+                        }
+                        flagOK = false;
+                        System.out.println("With who you wanna share it?");
+                        while(!flagOK){
+                            userName = reader.nextLine();
+                            if(!userName.trim().equals("")){
+                                flagOK=true;
+                            }
+                            else{
+                                System.out.println("With who you wanna share it?");
+                            }
+                        }
+                        String resposta = rmi.shareMusic(music,userName);
+                        switch (resposta){
+                            case "type|isAlreadyDownloadable":
+                                System.out.println("User already had access to the song.");
+                                break;
+                            case "type|musicShareCompleted":
+                                System.out.println("Music shared.");
+                                break;
+                        }
                         break;
                     case "/edit":
                         if(loggedUser.isEditor()){
