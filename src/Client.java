@@ -341,9 +341,9 @@ public class Client extends UnicastRemoteObject implements ClientHello{
                     loggedUser = new User(username[1], password[1], Boolean.parseBoolean(editor[1]), Boolean.parseBoolean(online[1]),downloadableMusics);
                 }
                 System.out.println("Welcome!");
-                menuPrincipal(rmi,reader);
                 loggedUser.setClientInterface(client);
                 rmi.addOnlineUser(loggedUser);
+                menuPrincipal(rmi,reader);
                 ArrayList<String> printNotif = loggedUser.getNotifications();
                 for(int i=0;i<printNotif.size();i++){
                     System.out.println(printNotif.get(i));
@@ -624,8 +624,8 @@ public class Client extends UnicastRemoteObject implements ClientHello{
 
     }
 
-    public String msg(String aux){
-        return aux;
+    public void msg(String aux){
+        System.out.println(aux);
     }
 
     public static void menuDePesquisa(Hello rmi, Scanner reader) throws RemoteException{
