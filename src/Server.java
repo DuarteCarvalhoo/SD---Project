@@ -36,6 +36,7 @@
  * maintenance of any nuclear facility.
  */
 
+import com.sun.scenario.effect.impl.sw.sse.SSEBlend_SRC_OUTPeer;
 import com.sun.xml.internal.ws.policy.privateutil.PolicyUtils;
 
 import java.io.*;
@@ -53,10 +54,51 @@ public class Server implements Hello {
     private int PORT = 4321;
     private ArrayList<User> userOnlines = new ArrayList<>();
 
-
-    public Server() {
+    public static void main(String[] args){
+        new Server();
     }
 
+    public Server() {
+        String ip = readIPFile();
+        readOnlineUsers();
+        //System.setProperty("localhost", "192.168.1.74");
+        System.setProperty("java.rmi.server.hostname", ip);
+        int aux = 0;
+        while (aux < 1) {
+            try {
+                Hello connect = (Hello) LocateRegistry.getRegistry(7000).lookup("Hello");
+                connect.ping();
+                System.out.println("Pong");
+                aux = 0;
+            } catch (NotBoundException e) {
+                System.out.println("Not bound.");
+                e.printStackTrace();
+            } catch (RemoteException e) {
+                System.out.println("test try fail");
+                aux++;
+            }
+
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+
+        try {
+            Server obj = new Server();
+            Hello stub = (Hello) UnicastRemoteObject.exportObject(obj, 0);
+
+            // Bind the remote object's stub in the registry
+            Registry registry = LocateRegistry.createRegistry(7000);
+            registry.rebind("Hello", stub);
+
+            System.err.println("Server ready");
+        } catch (Exception e) {
+            System.err.println("Server exception: " + e.toString());
+            e.printStackTrace();
+        }
+    }
     public String sayHello() {
         return "Hello, world!";
     }
@@ -151,23 +193,6 @@ public class Server implements Hello {
         return msg;
     }
 
-    public String closeServerSocket() {
-        MulticastSocket socket = null;
-        try {
-            socket = new MulticastSocket();
-            InetAddress group = InetAddress.getByName(MULTICAST_ADDRESS);
-            socket.joinGroup(group);
-            String aux = "type|closeSocket;";
-            byte[] buffer = aux.getBytes();
-            DatagramPacket packet = new DatagramPacket(buffer, buffer.length, group, PORT);
-            socket.send(packet);
-        } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            socket.close();
-        }
-        return receiveMulticast();
-    }
 
     public String downloadMusicRMI(String direc){
         MulticastSocket socket = null;
@@ -220,7 +245,7 @@ public class Server implements Hello {
                 }
                 aux2.msg(">> You are now an editor!");
             } catch (NullPointerException e) { //o user ta off
-                System.out.println("tou remoteexpetion");
+                System.out.println("tou remote expetion");
                 try{
                     String mensage = ">> You are now an editor!";
                     socket = new MulticastSocket();
@@ -230,8 +255,10 @@ public class Server implements Hello {
                     byte[] buffer = aux3.getBytes();
                     DatagramPacket packet = new DatagramPacket(buffer, buffer.length, group, PORT);
                     socket.send(packet);
+
+                    msg = receiveMulticast();
                 } catch (UnknownHostException e1) {
-                    e1.printStackTrace();                } catch (IOException e1) {
+                    e1.printStackTrace();    }catch (IOException e1) {
                     e1.printStackTrace();
                 }finally {
                     socket.close();
@@ -621,46 +648,24 @@ public class Server implements Hello {
         return ip;
     }
 
-    public static void main (String[]args){
-        String ip = readIPFile();
-        //System.setProperty("localhost", "192.168.1.74");
-        System.setProperty("java.rmi.server.hostname", ip);
-        int aux = 0;
-        while (aux < 1) {
-            try {
-                Hello connect = (Hello) LocateRegistry.getRegistry(7000).lookup("Hello");
-                connect.ping();
-                System.out.println("Pong");
-                aux = 0;
-            } catch (NotBoundException e) {
-                System.out.println("Not bound.");
-                e.printStackTrace();
-            } catch (RemoteException e) {
-                System.out.println("test try fail");
-                aux++;
-            }
-
-            try {
-                Thread.sleep(1000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }
-
+    public void readOnlineUsers(){
+        System.out.println("Reading online users.");
         try {
-            Server obj = new Server();
-            Hello stub = (Hello) UnicastRemoteObject.exportObject(obj, 0);
-
-            // Bind the remote object's stub in the registry
-            Registry registry = LocateRegistry.createRegistry(7000);
-            registry.rebind("Hello", stub);
-
-            System.err.println("Server ready");
-        } catch (Exception e) {
-            System.err.println("Server exception: " + e.toString());
+            ObjectInputStream objectIn = new ObjectInputStream(new BufferedInputStream(new FileInputStream("data.bin")));
+            this.userOnlines = (ArrayList) objectIn.readObject();
+            objectIn.close();
+            System.out.println("Read file successfully.");
+        }
+        catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            System.out.println("Empty file!");
+        }
+        catch (ClassNotFoundException e) {
             e.printStackTrace();
         }
     }
 
-
 }
+
+
