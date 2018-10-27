@@ -71,6 +71,6 @@ public class Music implements Serializable {
     }
 
     public String toString(){
-        return "Music: "+getTitle();
+        return getArtist() +" - " + getTitle();
     }
 }

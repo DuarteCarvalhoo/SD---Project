@@ -120,7 +120,12 @@ public class Client {
         directorias.add("C:\\Users\\Duarte\\Desktop\\SD\\PROJETO\\META 1\\SD---Project\\musicasServer\\c.mp3");*/
 
         System.out.println("Choose one song:");
-        //aqui fazia-se print da lista de musicas na base de dados..
+        if(loggedUser.printDownloadableMusics().equals("No musics to show.")){
+                return "Can't download any musics.";
+        }
+        else{
+            System.out.println(loggedUser.printDownloadableMusics());
+        }
 
         String escolha = reader.nextLine();
 
@@ -419,16 +424,25 @@ public class Client {
                         break;
                     case "/upload":
                         String[] musicInfo = sendMusic(rmi,reader);
-                        String response = rmi.sendMusicRMI(musicInfo);
-                        String[] responseSpli = response.split("\\|");
+                        String response = rmi.sendMusicRMI(musicInfo,loggedUser.getUsername());
+                        String[] responseSpli = response.split(";");
                         switch (responseSpli[0]){
-                            case"it worked out":
-                                System.out.println("\n\n"+responseSpli[1]);
+                            case "type|userNotFound":
+                                System.out.println("ERROR: User Not Found.");
+                                break;
+                            case "type|artistNotFound":
+                                System.out.println("ERROR: Artist Not Found.");
+                                break;
+                            case"type|sendMusicComplete":
+                                if(responseSpli.length>1){
+                                    String[] s = responseSpli[1].split("\\|");
+                                    loggedUser.addDownloadableMusic(s[1]);
+                                }
                                 break;
                         }
                         break;
                     default:
-                        System.out.println("Este comando não faz nada. Para sair escreva 'leave'");
+                        System.out.println("Este comando não faz nada. Para sair escreva '/logout'");
                 }
             }
             catch(RemoteException e){

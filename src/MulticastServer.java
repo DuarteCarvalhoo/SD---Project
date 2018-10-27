@@ -136,18 +136,45 @@ public class MulticastServer extends Thread implements Serializable {
                         sendMsg("Music saving on the server.");
                         break;
                     case "type|sendMusic":
+                        User loggedUser;
+                        Artist artisT;
+                        String[] loggedUserParts = aux[8].split("\\|");
                         String[] pathParts = aux[1].split("\\|");
                         String[] nameParts = aux[2].split("\\|");
                         String[] composerParts = aux[3].split("\\|");
                         String[] artistParts = aux[4].split("\\|");
-                        String[] durationParts = aux[4].split("\\|");
-                        String[] albumParts = aux[5].split("\\|");
-                        String[] genreParts = aux[6].split("\\|");
+                        String[] durationParts = aux[5].split("\\|");
+                        String[] albumParts = aux[6].split("\\|");
+                        String[] genreParts = aux[7].split("\\|");
                         Music music = new Music(pathParts[1],nameParts[1],composerParts[1],artistParts[1],durationParts[1],albumParts[1],genreParts[1]);
-                        musicsList.add(music);
-                        writeFiles();
-                        receiveMusic(socketHelp, nameParts[1]);
-                        sendMsg("it worked out|"+musicsList);
+                        if(checkUsernameRegister(loggedUserParts[1])!=1){
+                            sendMsg("type|userNotFound");
+                        }
+                        else if(!checkArtistExists(artistParts[1])){
+                            sendMsg("type|artistNotFound");
+                        }
+                        else if(!checkAlbumExists(albumParts[1],artistParts[1])){
+                            sendMsg("type|albumNotFound");
+                        }
+                        else if(checkMusicExists(nameParts[1],artistParts[1])){
+                            sendMsg("type|musicExists");
+                        }
+                        else{
+                            musicsList.add(music);
+                            artisT = returnsArtist(artistParts[1]);
+                            for(Album album2 : artisT.getAlbums()){
+                                if(album2.getName().trim().equals(albumParts[1])){
+                                    album2.addMusic(music);
+                                    System.out.println("Music added to artist's album.");
+                                }
+                            }
+                            loggedUser = returnsUser(loggedUserParts[1]);
+                            loggedUser.addDownloadableMusic(music.getTitle());
+                            System.out.println("Music added to downloadable musics");
+                            writeFiles();
+                            receiveMusic(socketHelp, nameParts[1]);
+                            sendMsg("type|sendMusicComplete;MusicAdded|"+music.getTitle());
+                        }
                         break;
                     case "type|openSocket":
                         auxSocket = openSocket();
@@ -225,18 +252,24 @@ public class MulticastServer extends Thread implements Serializable {
                                 }
                             }
                             if(!flagAlbum){
-                                sendMsg("type|userNotFound");
+                                sendMsg("type|albumNotFound");
                             }
                             else {
                                 Album newAlbum = new Album(namePa[1], artist, descripParts[1], duracaoParts[1]);
                                 albunsList.add(newAlbum);
 
+                                boolean flagAddToArtist = false;
                                 for (Artist a : artistsList) {
                                     if (a.getName().equals(aName[1])) {
                                         a.getAlbums().add(newAlbum);
+                                        sendMsg("type|createAlbumComplete");
+                                        flagAddToArtist = true;
                                     }
                                 }
-                                sendMsg("type|createAlbumComplete");
+                                if(!flagAddToArtist){
+                                    sendMsg("type|createAlbumFailed");
+                                    System.out.println("Falhou.");
+                                }
                             }
                         }
                         break;
@@ -510,6 +543,24 @@ public class MulticastServer extends Thread implements Serializable {
         return stringFinal;
     }
 
+    private User returnsUser(String username){
+        for(User u : usersList){
+            if(u.getUsername().trim().equals(username)){
+                return u;
+            }
+        }
+        return null;
+    }
+
+    private Artist returnsArtist(String artistName){
+        for(Artist artist : artistsList){
+            if(artist.getName().trim().equals(artistName)){
+                return artist;
+            }
+        }
+        return null;
+    }
+
     private void receiveMusic(Socket socket, String musicName) throws IOException {
         byte[] b= new byte[1024];
         System.out.println("1");
@@ -570,6 +621,22 @@ public class MulticastServer extends Thread implements Serializable {
             for (Artist artist : artistsList) {
                 if (artist.getName().equals(name)) {
                     return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    public boolean checkMusicExists(String name,String artistName){
+        if(musicsList.isEmpty()){
+            return false;
+        }
+        else {
+            for (Music music : musicsList) {
+                if (music.getTitle().equals(name)){
+                    if(music.getArtist().equals(artistName)){
+                        return true;
+                    }
                 }
             }
         }
