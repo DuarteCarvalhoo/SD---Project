@@ -30,8 +30,26 @@ public class User implements Serializable{
         else{
             for(String music : getDownloadableMusics()){
                 finalString += music;
-                finalString += ",";
-                finalString+="\n";
+                finalString += "|";
+            }
+        }
+        return finalString;
+    }
+
+    public String printDownloadableMusics(){
+        String finalString = "";
+        if(getDownloadableMusics().isEmpty()){
+            finalString += "No musics to show.";
+        }
+        else{
+            for(int i=0;i<getDownloadableMusics().size();i++){
+                if(i==getDownloadableMusics().size()-1){
+                    finalString += getDownloadableMusics().get(i);
+                }
+                else{
+                    finalString += getDownloadableMusics().get(i);
+                    finalString += ",";
+                }
             }
         }
         return finalString;
@@ -125,5 +143,13 @@ public class User implements Serializable{
     public User(){
         this.username = "none";
         this.password = "none";
+    }
+
+    public User(String username, String password, boolean editor, boolean online, ArrayList<String> downloadableMusics) {
+        this.username = username;
+        this.password = password;
+        this.editor = editor;
+        this.online = online;
+        this.downloadableMusics = downloadableMusics;
     }
 }

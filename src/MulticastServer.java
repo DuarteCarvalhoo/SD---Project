@@ -77,7 +77,7 @@ public class MulticastServer extends Thread implements Serializable {
                                             System.out.println("ERRO: Login não completo.");
                                         } else {
                                             u.setOnline();
-                                            sendMsg("type|loginComplete;username|" + u.getUsername() + ";password|" + u.getPassword() + ";editor|" + u.isEditor() + ";online|" + u.isOnline());
+                                            sendMsg("type|loginComplete;username|" + u.getUsername() + ";password|" + u.getPassword() + ";editor|" + u.isEditor() + ";online|" + u.isOnline()+";Downloads|"+u.printDownloadableMusicsLogin());
                                             System.out.println("SUCESSO: Login Completo");
                                             flag = true;
                                         }
@@ -174,6 +174,24 @@ public class MulticastServer extends Thread implements Serializable {
                             writeFiles();
                             receiveMusic(socketHelp, nameParts[1]);
                             sendMsg("type|sendMusicComplete;MusicAdded|"+music.getTitle());
+                        }
+                        break;
+                    case "type|shareMusic":
+                        User userW;
+                        String[] userParts = aux[1].split("\\|");
+                        String[] musicParts = aux[2].split("\\|");
+                        userW = returnsUser(userParts[1]);
+                        boolean flagS = false;
+                        for(String musicS : userW.getDownloadableMusics()){
+                            if(musicS.trim().equals(musicParts[1])){
+                                sendMsg("type|isAlreadyDownloadable");
+                                System.out.println("ERRO: User already has permission to do that.");
+                                flagS = true;
+                            }
+                        }
+                        if(!flagS){
+                            userW.addDownloadableMusic(musicParts[1]);
+                            sendMsg("type|musicShareCompleted");
                         }
                         break;
                     case "type|openSocket":

@@ -126,11 +126,6 @@ public class Client extends UnicastRemoteObject implements ClientHello{
     }
 
     private static String downloadMusic(Hello rmi, Scanner reader) throws IOException {
-        ArrayList<String> directorias = new ArrayList<>(); // é suposto ir buscar ao multicastServer;
-        /*directorias.add("C:\\Users\\Duarte\\Desktop\\SD\\PROJETO\\META 1\\SD---Project\\musicasServer\\a.mp3");
-        directorias.add("C:\\Users\\Duarte\\Desktop\\SD\\PROJETO\\META 1\\SD---Project\\musicasServer\\b.mp3");
-        directorias.add("C:\\Users\\Duarte\\Desktop\\SD\\PROJETO\\META 1\\SD---Project\\musicasServer\\c.mp3");*/
-
         System.out.println("Choose one song:");
         if(loggedUser.printDownloadableMusics().equals("No musics to show.")){
                 return "Can't download any musics.";
@@ -139,7 +134,22 @@ public class Client extends UnicastRemoteObject implements ClientHello{
             System.out.println(loggedUser.printDownloadableMusics());
         }
 
-        String escolha = reader.nextLine();
+        boolean flagEditor = false;
+        String escolha = "";
+        while(!flagEditor){
+            escolha = reader.nextLine();
+            for(String music : loggedUser.getDownloadableMusics()){
+                music = music.replaceAll(".mp3","");
+                if(music.equals(escolha)){
+                    flagEditor = true;
+                }
+            }
+
+            if(!flagEditor){
+                System.out.println("Choose one valid song: ");
+            }
+        }
+
 
         boolean boo = new File("./musicasServer/" + loggedUser.getUsername()).mkdirs();
         String musicaEscolhida = "./musicasServer/" + escolha + ".mp3";
@@ -172,7 +182,7 @@ public class Client extends UnicastRemoteObject implements ClientHello{
         return print;
     }
 
-    private static String[] sendMusic(Hello rmi,Scanner reader) throws IOException {
+    private static String[] sendMusic(Hello rmi,Scanner reader) throws IOException, FileNotFoundException {
         String[] musicInfo = new String[7];
         int auxi = 0;
         ServerSocket socket = new ServerSocket(5000);
@@ -182,7 +192,11 @@ public class Client extends UnicastRemoteObject implements ClientHello{
         Socket socketAcept = socket.accept();
         System.out.println("Write down the directory of your music: (example:'C:\\music\\example.wav').");
         Scanner direc = new Scanner(System.in);
-        String auxx = direc.nextLine();
+        String auxx;
+        while(true){
+            auxx = direc.nextLine();
+            break;
+        }
         musicInfo[auxi] = auxx;
         auxi++;
         File file = new File(auxx);
@@ -314,6 +328,18 @@ public class Client extends UnicastRemoteObject implements ClientHello{
                     loggedUser = new User(username[1], password[1], Boolean.parseBoolean(editor[1]), Boolean.parseBoolean(online[1]));
 
                 }
+                else if(txtSplit.length > 5){
+                    String[] username = txtSplit[1].split("\\|");
+                    String[] password = txtSplit[2].split("\\|");
+                    String[] editor = txtSplit[3].split("\\|");
+                    String[] online = txtSplit[4].split("\\|");
+                    String[] downloads = txtSplit[5].split("\\|");
+                    ArrayList<String> downloadableMusics = new ArrayList<>();
+                    for(int i=1;i<downloads.length;i++){
+                        downloadableMusics.add(downloads[i]);
+                    }
+                    loggedUser = new User(username[1], password[1], Boolean.parseBoolean(editor[1]), Boolean.parseBoolean(online[1]),downloadableMusics);
+                }
                 System.out.println("Welcome!");
                 menuPrincipal(rmi,reader);
                 loggedUser.setClientInterface(client);
@@ -391,6 +417,7 @@ public class Client extends UnicastRemoteObject implements ClientHello{
                             "Edit\n" +
                             "Make editor\n" +
                             "Make Critic\n"+
+                            "Share music\n"+
                             "Upload\n" +
                             "Download\n\n" +
                             "Choose an option: ");
@@ -400,6 +427,7 @@ public class Client extends UnicastRemoteObject implements ClientHello{
                         "Search\n" +
                         "Upload\n" +
                         "Make Critic\n"+
+                        "Share music\n"+
                         "Download\n\n" +
                         "Choose an option: ");}
 
@@ -417,6 +445,42 @@ public class Client extends UnicastRemoteObject implements ClientHello{
                 switch(text.trim()){
                     case "/search":
                         menuDePesquisa(rmi, reader);
+                        break;
+                    case "/share":
+                        String music ="";
+                        String userName="";
+                        boolean flagOK = false;
+                        System.out.println("Which music you wanna share?");
+                        loggedUser.printDownloadableMusics();
+                        while(!flagOK){
+                            music = reader.nextLine();
+                            if(!music.trim().equals("")){
+                                flagOK=true;
+                            }
+                            else{
+                                System.out.println("Which music you wanna share?");
+                            }
+                        }
+                        flagOK = false;
+                        System.out.println("With who you wanna share it?");
+                        while(!flagOK){
+                            userName = reader.nextLine();
+                            if(!userName.trim().equals("")){
+                                flagOK=true;
+                            }
+                            else{
+                                System.out.println("With who you wanna share it?");
+                            }
+                        }
+                        String resposta = rmi.shareMusic(music,userName);
+                        switch (resposta){
+                            case "type|isAlreadyDownloadable":
+                                System.out.println("User already had access to the song.");
+                                break;
+                            case "type|musicShareCompleted":
+                                System.out.println("Music shared.");
+                                break;
+                        }
                         break;
                     case "/edit":
                         if(loggedUser.isEditor()){
@@ -444,7 +508,17 @@ public class Client extends UnicastRemoteObject implements ClientHello{
                         System.out.println(downloadMusic(rmi, reader));
                         break;
                     case "/upload":
-                        String[] musicInfo = sendMusic(rmi,reader);
+                        String[] musicInfo = new String[7];
+                        while(true){
+                            try{
+                                musicInfo = sendMusic(rmi,reader);
+                                break;
+                            }
+                            catch (FileNotFoundException e){
+                                System.out.println("Insert valid file!");
+                                menuPrincipal(rmi,reader);
+                            }
+                        }
                         String response = rmi.sendMusicRMI(musicInfo,loggedUser.getUsername());
                         String[] responseSpli = response.split(";");
                         switch (responseSpli[0]){

@@ -131,6 +131,26 @@ public class Server implements Hello {
         return receiveMulticast();
     }
 
+    public String shareMusic(String music, String userName){
+        MulticastSocket socket = null;
+        //envia pra o multicast
+        try {
+            socket = new MulticastSocket();
+            InetAddress group = InetAddress.getByName(MULTICAST_ADDRESS);
+            socket.joinGroup(group);
+            String aux = "type|shareMusic;withUser|"+userName+";Music|"+music; //protocol
+            byte[] buffer = aux.getBytes();
+            DatagramPacket packet = new DatagramPacket(buffer, buffer.length, group, PORT);
+            socket.send(packet);
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            socket.close();
+        }
+        String msg = receiveMulticast();
+        return msg;
+    }
+
     public String downloadMusicRMI(String direc){
         MulticastSocket socket = null;
         try {
