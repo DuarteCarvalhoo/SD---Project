@@ -22,7 +22,7 @@ public class User implements Serializable{
         return clientInterface;
     }
 
-    public String printDownloadableMusics(){
+    public String printDownloadableMusicsLogin(){
         String finalString = "";
         if(getDownloadableMusics().isEmpty()){
             finalString += "No musics to show.";

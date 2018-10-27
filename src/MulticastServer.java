@@ -242,6 +242,11 @@ public class MulticastServer extends Thread implements Serializable {
                         for (int i=0; i<usersList.size(); i++){
                             if(usersList.get(i).getUsername().equals(nameUser[1])){
                                 usersList.get(i).addNotification(notif[1]);
+                                for(int j=0;j<usersList.get(i).getNotifications().size();j++){
+                                    System.out.println(usersList.get(i).getNotifications().get(j));
+                                }
+                                System.out.println(usersList.get(i).getUsername());
+                                System.out.println("check");
                                 break;
                             }
                         }

@@ -37,7 +37,9 @@
  */
 
 import com.sun.org.apache.xpath.internal.operations.Bool;
+import com.sun.scenario.effect.impl.sw.sse.SSEBlend_SRC_OUTPeer;
 
+import javax.swing.*;
 import java.io.*;
 import java.lang.reflect.Array;
 import java.net.Socket;
@@ -55,8 +57,7 @@ import java.net.*;
 public class Client extends UnicastRemoteObject implements ClientHello{
 
     private static User loggedUser = new User();
-    private Client() throws RemoteException {
-    }
+    private Client() throws RemoteException {}
     private static ClientHello client;
 
     static {
@@ -110,6 +111,7 @@ public class Client extends UnicastRemoteObject implements ClientHello{
         }
         reader.close();
         System.out.println("Finished");
+        return ;
     }
 
     private static Hello changeRMI() throws RemoteException, NotBoundException {
@@ -341,13 +343,16 @@ public class Client extends UnicastRemoteObject implements ClientHello{
                     loggedUser = new User(username[1], password[1], Boolean.parseBoolean(editor[1]), Boolean.parseBoolean(online[1]),downloadableMusics);
                 }
                 System.out.println("Welcome!");
-                menuPrincipal(rmi,reader);
                 loggedUser.setClientInterface(client);
-                rmi.addOnlineUser(loggedUser);
                 ArrayList<String> printNotif = loggedUser.getNotifications();
+                System.out.println(printNotif.size());
                 for(int i=0;i<printNotif.size();i++){
+                    System.out.println("estou aqui");
                     System.out.println(printNotif.get(i));
                 }
+                rmi.addOnlineUser(loggedUser);
+                menuPrincipal(rmi,reader);
+                System.out.println("olaaaaaa");
                 loggedUser.cleanNotification();
                 break;
             case "type|loginFail":
@@ -401,6 +406,7 @@ public class Client extends UnicastRemoteObject implements ClientHello{
                 break;
             case "type|registComplete":
                 System.out.println("Successful register.");
+                loggedUser.setClientInterface(client);
                 break;
             default:
                 System.out.println("Something went wrong.");
@@ -624,8 +630,8 @@ public class Client extends UnicastRemoteObject implements ClientHello{
 
     }
 
-    public String msg(String aux){
-        return aux;
+    public void msg(String aux){
+        System.out.println(aux);
     }
 
     public static void menuDePesquisa(Hello rmi, Scanner reader) throws RemoteException{

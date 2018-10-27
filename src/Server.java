@@ -186,17 +186,22 @@ public class Server implements Hello {
             socket.close();
         }
         String msg = receiveMulticast();
+        System.out.println(msg + "antes do if");
         if(msg.equals("type|makingEditorComplete")){
             ClientHello aux2 = null;
+            System.out.println("entrei no if");
             try {
                 for (int i=0;i<userOnlines.size();i++) {
-                    if(userOnlines.get(i).getUsername().equals(name)){
+                    if (userOnlines.get(i).getUsername().equals(name)) {
+                        System.out.println("entrei noutro");
                         aux2 = userOnlines.get(i).getInterface();
+                        aux2.msg("és agora um editor!");
                         break;
                     }
                 }
                 aux2.msg("és agora um editor!");
-            } catch (RemoteException e) { //o user ta off
+            } catch (NullPointerException e) { //o user ta off
+                System.out.println("tou remoteexpetion");
                 try{
                     String mensage = "és agora um editor!";
                     socket = new MulticastSocket();
@@ -210,7 +215,11 @@ public class Server implements Hello {
                     e1.printStackTrace();
                 } catch (IOException e1) {
                     e1.printStackTrace();
+                }finally {
+                    socket.close();
                 }
+            } catch (RemoteException e) {
+                e.printStackTrace();
             }
         }
         return msg;
