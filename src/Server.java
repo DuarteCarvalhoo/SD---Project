@@ -54,8 +54,6 @@ public class Server implements Hello {
     private int PORT = 4321;
     private ArrayList<User> userOnlines = new ArrayList<>();
 
-    public Server() {}
-
     public static void main(String[] args){
         ///////////CONEXÃO DO SERVER///////////
         String ip = readIPFile();
@@ -108,10 +106,10 @@ public class Server implements Hello {
             System.out.println("Read file successfully.");
         } catch (FileNotFoundException e) {
             e.printStackTrace();
-        } catch (IOException e) {
-            System.out.println("Empty file!");
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
+        } catch (IOException e) {
+
         }
     }*/
 
