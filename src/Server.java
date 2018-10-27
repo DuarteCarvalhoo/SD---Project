@@ -36,6 +36,7 @@
  * maintenance of any nuclear facility.
  */
 
+import com.sun.scenario.effect.impl.sw.sse.SSEBlend_SRC_OUTPeer;
 import com.sun.xml.internal.ws.policy.privateutil.PolicyUtils;
 
 import java.io.*;
@@ -53,13 +54,14 @@ public class Server implements Hello {
     private int PORT = 4321;
     private ArrayList<User> userOnlines = new ArrayList<>();
 
-
-    public Server() {
+    public static void main(String[] args){
+        new Server();
     }
 
-    ////////////// CONEXAO DO SERVER /////////////
-    public static void main (String[]args){
+    public Server() {
+        ///////////CONEXÃO DO SERVER///////////
         String ip = readIPFile();
+        readOnlineUsers();
         //System.setProperty("localhost", "192.168.1.74");
         System.setProperty("java.rmi.server.hostname", ip);
         int aux = 0;
@@ -95,6 +97,23 @@ public class Server implements Hello {
             System.err.println("Server ready");
         } catch (Exception e) {
             System.err.println("Server exception: " + e.toString());
+            e.printStackTrace();
+        }
+    }
+
+    public void readOnlineUsers() {
+        System.out.println("Reading.");
+        ArrayList<User> users = new ArrayList<>();
+        try {
+            ObjectInputStream objectIn = new ObjectInputStream(new BufferedInputStream(new FileInputStream("data.bin")));
+            this.userOnlines = (ArrayList) objectIn.readObject();
+            objectIn.close();
+            System.out.println("Read file successfully.");
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            System.out.println("Empty file!");
+        } catch (ClassNotFoundException e) {
             e.printStackTrace();
         }
     }
@@ -624,8 +643,9 @@ public class Server implements Hello {
             socket.close();
             return msg;
 
-        } catch (IOException e) {
-            e.printStackTrace();
+        }
+        catch (IOException e) {
+            System.out.println("Empty file!");
         }
         finally {
             socket.close();
@@ -633,5 +653,6 @@ public class Server implements Hello {
         return null;
     }
 
-
 }
+
+
