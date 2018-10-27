@@ -54,15 +54,12 @@ public class Server implements Hello {
     private int PORT = 4321;
     private ArrayList<User> userOnlines = new ArrayList<>();
 
-    public static void main(String[] args){
-        new Server();
-    }
+    public Server() {}
 
-    public Server() {
+    public static void main(String[] args){
         ///////////CONEXÃO DO SERVER///////////
         String ip = readIPFile();
-        readOnlineUsers();
-        //System.setProperty("localhost", "192.168.1.74");
+
         System.setProperty("java.rmi.server.hostname", ip);
         int aux = 0;
         while (aux < 1) {
@@ -101,7 +98,7 @@ public class Server implements Hello {
         }
     }
 
-    public void readOnlineUsers() {
+    /*public void readOnlineUsers() {
         System.out.println("Reading.");
         ArrayList<User> users = new ArrayList<>();
         try {
@@ -116,7 +113,7 @@ public class Server implements Hello {
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
         }
-    }
+    }*/
 
     public static String readIPFile() {
         String line = null;
