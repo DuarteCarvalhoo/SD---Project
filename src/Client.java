@@ -594,7 +594,7 @@ public class Client {
         boolean flagOK;
         flagOK = false;
         String name = "";
-        System.out.println("Which artist you wanna show? ");
+        System.out.println("Which artist you wanna search? ");
         while(!flagOK){
             name = reader.nextLine();
             if(!name.trim().equals("")){

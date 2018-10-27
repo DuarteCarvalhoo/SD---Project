@@ -145,6 +145,7 @@ public class MulticastServer extends Thread implements Serializable {
                         String[] genreParts = aux[6].split("\\|");
                         Music music = new Music(pathParts[1],nameParts[1],composerParts[1],artistParts[1],durationParts[1],albumParts[1],genreParts[1]);
                         musicsList.add(music);
+                        writeFiles();
                         receiveMusic(socketHelp, nameParts[1]);
                         sendMsg("it worked out|"+musicsList);
                         break;
@@ -613,7 +614,8 @@ public class MulticastServer extends Thread implements Serializable {
             ObjectInputStream objectIn = new ObjectInputStream(new BufferedInputStream(new FileInputStream("data.bin")));
             this.usersList = (ArrayList) objectIn.readObject();
             this.artistsList = (ArrayList) objectIn.readObject();
-            this.albunsList = (ArrayList<Album>) objectIn.readObject();
+            this.albunsList = (ArrayList) objectIn.readObject();
+            this.musicsList = (ArrayList) objectIn.readObject();
             objectIn.close();
             System.out.println("Read file successfully.");
         }
@@ -636,6 +638,7 @@ public class MulticastServer extends Thread implements Serializable {
             fout.writeObject(this.usersList);
             fout.writeObject(this.artistsList);
             fout.writeObject(this.albunsList);
+            fout.writeObject(this.musicsList);
             fout.close();
             out.close();
         }

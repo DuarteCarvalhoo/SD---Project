@@ -525,26 +525,26 @@ public class Server implements Hello {
             return "pong";
         }
 
-    public static String[] readIPFile() {
+    public static String readIPFile() {
         String line = null;
-        String[] lineSplit = new String[2];
+        String ip = "";
         try {
             FileReader fileR = new FileReader("ip local.txt");
             BufferedReader bufferedR = new BufferedReader(fileR);
             while((line=bufferedR.readLine()) !=null){
-                lineSplit = line.split("\\|");
+                ip = line;
             }
         } catch (FileNotFoundException e){
             System.out.println("Not found");
         } catch (IOException e) {
             e.printStackTrace();
         }
-        return lineSplit;
+        return ip;
     }
     public static void main (String[]args){
-        String data[] = readIPFile();
+        String ip = readIPFile();
         //System.setProperty("localhost", "192.168.1.74");
-        System.setProperty(data[0], data[1]);
+        System.setProperty("java.rmi.server.hostname", ip);
         int aux = 0;
         while (aux < 1) {
             try {
