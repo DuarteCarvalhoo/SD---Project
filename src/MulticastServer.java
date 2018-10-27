@@ -560,7 +560,7 @@ public class MulticastServer extends Thread implements Serializable {
         outStream.flush();
         outStream.close();
         socketAcept.close();
-        socket.isClosed();
+        socket.close();
         return "tudo okay no download";
     }
 

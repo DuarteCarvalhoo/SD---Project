@@ -231,8 +231,7 @@ public class Server implements Hello {
                     DatagramPacket packet = new DatagramPacket(buffer, buffer.length, group, PORT);
                     socket.send(packet);
                 } catch (UnknownHostException e1) {
-                    e1.printStackTrace();
-                } catch (IOException e1) {
+                    e1.printStackTrace();                } catch (IOException e1) {
                     e1.printStackTrace();
                 }finally {
                     socket.close();
