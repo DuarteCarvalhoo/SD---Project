@@ -92,12 +92,18 @@ public class MulticastServer extends Thread implements Serializable {
                         //funçao pra confirmar se o user existe, se a pw ta certa e por fim enviar a resposta
                         break;
                     case "type|register":
-                        aux2 = aux[1];
-                        String[] registerUsernameParts = aux2.split("\\|");
-                        String[] registerPasswordParts = aux[2].split("\\|");
-                        String username = registerUsernameParts[1];
-                        String password = registerPasswordParts[1];
-                        System.out.println("USERNAME: " + username + " PASSWORD: " + password);
+                        String username;
+                        String password;
+                        try {
+                            aux2 = aux[1];
+                            String[] registerUsernameParts = aux2.split("\\|");
+                            String[] registerPasswordParts = aux[2].split("\\|");
+                            username = registerUsernameParts[1];
+                            password = registerPasswordParts[1];
+                            System.out.println("USERNAME: " + username + " PASSWORD: " + password);
+                        }catch (Exception e){
+                            return;
+                        }
                         int usernameUsed = checkUsernameRegister(username);
                         if (usernameUsed == 1) {
                             sendMsg("type|usernameUsed");
@@ -633,4 +639,6 @@ public class MulticastServer extends Thread implements Serializable {
         }
         System.out.println("Lists wrote successfully.");
     }
+
+
 }
