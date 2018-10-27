@@ -59,6 +59,7 @@ public class Server implements Hello {
     }
 
     public Server() {
+        ///////////CONEXÃO DO SERVER///////////
         String ip = readIPFile();
         readOnlineUsers();
         //System.setProperty("localhost", "192.168.1.74");
@@ -100,44 +101,19 @@ public class Server implements Hello {
         }
     }
 
-    ////////////// CONEXAO DO SERVER /////////////
-    public static void main (String[]args){
-        String ip = readIPFile();
-        //System.setProperty("localhost", "192.168.1.74");
-        System.setProperty("java.rmi.server.hostname", ip);
-        int aux = 0;
-        while (aux < 1) {
-            try {
-                Hello connect = (Hello) LocateRegistry.getRegistry(7000).lookup("Hello");
-                connect.ping();
-                System.out.println("Pong");
-                aux = 0;
-            } catch (NotBoundException e) {
-                System.out.println("Not bound.");
-                e.printStackTrace();
-            } catch (RemoteException e) {
-                System.out.println("test try fail");
-                aux++;
-            }
-
-            try {
-                Thread.sleep(1000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }
-
+    public void readOnlineUsers() {
+        System.out.println("Reading.");
+        ArrayList<User> users = new ArrayList<>();
         try {
-            Server obj = new Server();
-            Hello stub = (Hello) UnicastRemoteObject.exportObject(obj, 0);
-
-            // Bind the remote object's stub in the registry
-            Registry registry = LocateRegistry.createRegistry(7000);
-            registry.rebind("Hello", stub);
-
-            System.err.println("Server ready");
-        } catch (Exception e) {
-            System.err.println("Server exception: " + e.toString());
+            ObjectInputStream objectIn = new ObjectInputStream(new BufferedInputStream(new FileInputStream("data.bin")));
+            this.userOnlines = (ArrayList) objectIn.readObject();
+            objectIn.close();
+            System.out.println("Read file successfully.");
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            System.out.println("Empty file!");
+        } catch (ClassNotFoundException e) {
             e.printStackTrace();
         }
     }
@@ -667,9 +643,8 @@ public class Server implements Hello {
             socket.close();
             return msg;
 
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
+        }
+        catch (IOException e) {
             System.out.println("Empty file!");
         }
         finally {
