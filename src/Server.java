@@ -99,80 +99,159 @@ public class Server implements Hello {
             e.printStackTrace();
         }
     }
-    public String sayHello() {
-        return "Hello, world!";
+
+    ////////////// CONEXAO DO SERVER /////////////
+    public static void main (String[]args){
+        String ip = readIPFile();
+        //System.setProperty("localhost", "192.168.1.74");
+        System.setProperty("java.rmi.server.hostname", ip);
+        int aux = 0;
+        while (aux < 1) {
+            try {
+                Hello connect = (Hello) LocateRegistry.getRegistry(7000).lookup("Hello");
+                connect.ping();
+                System.out.println("Pong");
+                aux = 0;
+            } catch (NotBoundException e) {
+                System.out.println("Not bound.");
+                e.printStackTrace();
+            } catch (RemoteException e) {
+                System.out.println("test try fail");
+                aux++;
+            }
+
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+
+        try {
+            Server obj = new Server();
+            Hello stub = (Hello) UnicastRemoteObject.exportObject(obj, 0);
+
+            // Bind the remote object's stub in the registry
+            Registry registry = LocateRegistry.createRegistry(7000);
+            registry.rebind("Hello", stub);
+
+            System.err.println("Server ready");
+        } catch (Exception e) {
+            System.err.println("Server exception: " + e.toString());
+            e.printStackTrace();
+        }
     }
 
-    public String msgInput(String text) {
-        System.out.println("escreveu uma mensagem: " + text);
-        return " ";
+    public static String readIPFile() {
+        String line = null;
+        String ip = "";
+        try {
+            FileReader fileR = new FileReader("ip local.txt");
+            BufferedReader bufferedR = new BufferedReader(fileR);
+            while((line=bufferedR.readLine()) !=null){
+                ip = line;
+            }
+        } catch (FileNotFoundException e){
+            System.out.println("Not found");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return ip;
+    }
+
+    public String ping() {
+        return "pong";
+    }
+
+    ///////////// REGISTO, LOGIN, LOGOUT /////////////
+    public String checkLogin(String login) {
+        System.out.println("Entrou no Login");
+        String[] newLogin = login.split("-");
+        MulticastSocket socket = null;
+        //envia pra o multicast
+        try {
+            socket = new MulticastSocket();
+            InetAddress group = InetAddress.getByName(MULTICAST_ADDRESS);
+            socket.joinGroup(group);
+            String aux = "type|login;username|" + newLogin[0] + ";password|" + newLogin[1]; //protocol
+            System.out.println(aux); //ver como ficou
+            byte[] buffer = aux.getBytes();
+            DatagramPacket packet = new DatagramPacket(buffer, buffer.length, group, PORT);
+            socket.send(packet);
+            //recebe do multicast
+            String msg = receiveMulticast();
+            return msg;
+        } catch (IOException e) {
+            e.printStackTrace();
+        }finally {
+            socket.close();
+        }
+
+        return "ups";
+    }
+
+    public String checkRegister(String register) {
+        System.out.println("Está no registo.");
+        String[] newRegisto = register.split("-");
+        MulticastSocket socket = null;
+
+        try {
+            socket = new MulticastSocket();
+            InetAddress group = InetAddress.getByName(MULTICAST_ADDRESS);
+            socket.joinGroup(group);
+            String aux = "type|register;username|" + newRegisto[0] + ";password|" + newRegisto[1]; //protocol
+            System.out.println(aux); //ver como ficou
+            byte[] buffer = aux.getBytes();
+            DatagramPacket packet = new DatagramPacket(buffer, buffer.length, group, PORT);
+            socket.send(packet);
+            //recebe do multicast
+            String msg = receiveMulticast();
+            if (msg != null) return msg;
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            socket.close();
+        }
+        return "ups";
+    }
+
+    public String checkLogout(User user) {
+        System.out.println("Entrou no logout");
+        MulticastSocket socket = null;
+        //envia pra o multicast
+        try {
+            socket = new MulticastSocket();
+            InetAddress group = InetAddress.getByName(MULTICAST_ADDRESS);
+            socket.joinGroup(group);
+            String aux = "type|logout;username|" + user.getUsername(); //protocol
+            System.out.println(aux); //ver como ficou
+            byte[] buffer = aux.getBytes();
+            DatagramPacket packet = new DatagramPacket(buffer, buffer.length, group, PORT);
+            socket.send(packet);
+            //recebe do multicast
+            String msg = receiveMulticast();
+            if (msg != null) return msg;
+            socket.leaveGroup(group);
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            socket.close();
+        }
+
+
+
+        return "ups";
     }
 
     public void addOnlineUser(User aux){
         userOnlines.add(aux);
     }
-    
+
     public void removeOnlineUser(User aux){
         userOnlines.remove(aux);
     }
 
-    public String startSocket(String clientAddress){
-        MulticastSocket socket = null;
-        //envia pra o multicast
-        try {
-            socket = new MulticastSocket();
-            InetAddress group = InetAddress.getByName(MULTICAST_ADDRESS);
-            socket.joinGroup(group);
-            String aux = "type|turnOnSocket;address|"+clientAddress; //protocol
-            byte[] buffer = aux.getBytes();
-            DatagramPacket packet = new DatagramPacket(buffer, buffer.length, group, PORT);
-            socket.send(packet);
-        } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            socket.close();
-        }
-        return receiveMulticast();
-    }
-
-    public String sendMusicRMI(String[] musicInfo,String loggedUser){
-        MulticastSocket socket = null;
-        //envia pra o multicast
-        try {
-            socket = new MulticastSocket();
-            InetAddress group = InetAddress.getByName(MULTICAST_ADDRESS);
-            socket.joinGroup(group);
-            String aux = "type|sendMusic;musicPath|"+musicInfo[0]+";musicName|"+musicInfo[1]+";musicComposer|"+musicInfo[2]+";musicArtist|"+musicInfo[3]+";musicDuration|"+musicInfo[4]+";musicAlbum|"+musicInfo[5]+";musicGenre|"+musicInfo[6]+";loggedUser|"+loggedUser;//protocol
-            byte[] buffer = aux.getBytes();
-            DatagramPacket packet = new DatagramPacket(buffer, buffer.length, group, PORT);
-            socket.send(packet);
-        } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            socket.close();
-        }
-        String msg = receiveMulticast();
-        return msg;
-    }
-
-    public String startServerSocket(){
-        MulticastSocket socket = null;
-        try {
-            socket = new MulticastSocket();
-            InetAddress group = InetAddress.getByName(MULTICAST_ADDRESS);
-            socket.joinGroup(group);
-            String aux = "type|openSocket;";
-            byte[] buffer = aux.getBytes();
-            DatagramPacket packet = new DatagramPacket(buffer, buffer.length, group, PORT);
-            socket.send(packet);
-        } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            socket.close();
-        }
-        return receiveMulticast();
-    }
-
+    ////////////// PARTILHA DE MUSICA /////////////
     public String shareMusic(String music, String userName){
         MulticastSocket socket = null;
         //envia pra o multicast
@@ -193,91 +272,15 @@ public class Server implements Hello {
         return msg;
     }
 
-
-    public String downloadMusicRMI(String direc){
-        MulticastSocket socket = null;
-        try {
-            socket = new MulticastSocket();
-            InetAddress group = InetAddress.getByName(MULTICAST_ADDRESS);
-            socket.joinGroup(group);
-            String aux = "type|downloadMusic;musicAddress|"+direc;
-            byte[] buffer = aux.getBytes();
-            DatagramPacket packet = new DatagramPacket(buffer, buffer.length, group, PORT);
-            socket.send(packet);
-        } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            socket.close();
-        }
-        return receiveMulticast();
-    }
-
-    public String checkEditorMaking(String name, Hello rmi){
-        MulticastSocket socket = null;
-        //envia pra o multicast
-        try {
-            socket = new MulticastSocket();
-            InetAddress group = InetAddress.getByName(MULTICAST_ADDRESS);
-            socket.joinGroup(group);
-            String aux = "type|makeEditor;User|"+name; //protocol
-            byte[] buffer = aux.getBytes();
-            DatagramPacket packet = new DatagramPacket(buffer, buffer.length, group, PORT);
-            socket.send(packet);
-        } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            socket.close();
-        }
-        String msg = receiveMulticast();
-        System.out.println(msg + "antes do if");
-        if(msg.equals("type|makingEditorComplete")){
-            System.out.println("entrou na parte do server");
-            ClientHello aux2 = null;
-            System.out.println("entrei no if");
-            try {
-                for (int i=0;i<userOnlines.size();i++) {
-                    if (userOnlines.get(i).getUsername().equals(name)) {
-                        System.out.println("entrei noutro");
-                        aux2 = userOnlines.get(i).getInterface();
-                        System.out.println("criou interface client");
-                        break;
-                    }
-                }
-                aux2.msg(">> You are now an editor!");
-            } catch (NullPointerException e) { //o user ta off
-                System.out.println("tou remote expetion");
-                try{
-                    String mensage = ">> You are now an editor!";
-                    socket = new MulticastSocket();
-                    InetAddress group = InetAddress.getByName(MULTICAST_ADDRESS);
-                    socket.joinGroup(group);
-                    String aux3 = "type|addNotification;user|"+name+";mensagem|"+mensage; //protocol
-                    byte[] buffer = aux3.getBytes();
-                    DatagramPacket packet = new DatagramPacket(buffer, buffer.length, group, PORT);
-                    socket.send(packet);
-
-                    msg = receiveMulticast();
-                } catch (UnknownHostException e1) {
-                    e1.printStackTrace();    }catch (IOException e1) {
-                    e1.printStackTrace();
-                }finally {
-                    socket.close();
-                }
-            } catch (RemoteException e) {
-                e.printStackTrace();
-            }
-        }
-        return msg;
-    }
-
-    public String createArtist(String name, String genre, String description){
+    ///////////// PESQUISA!! /////////////
+    public String showArtist(String name){
         MulticastSocket socket = null;
         //envia para o multicast
         try {
             socket = new MulticastSocket();
             InetAddress group = InetAddress.getByName(MULTICAST_ADDRESS);
             socket.joinGroup(group);
-            String aux = "type|createArtist;Name|"+name+";Description|"+description+";Genre|"+genre; //protocol
+            String aux = "type|showArtist;Name|"+name; //protocol
             byte[] buffer = aux.getBytes();
             DatagramPacket packet = new DatagramPacket(buffer, buffer.length, group, PORT);
             socket.send(packet);
@@ -293,14 +296,14 @@ public class Server implements Hello {
         return null;
     }
 
-    public String createAlbum(String name, String artistName, String description, String duracao){
+    public String showArtistAlbums(String name){
         MulticastSocket socket = null;
         //envia para o multicast
         try {
             socket = new MulticastSocket();
             InetAddress group = InetAddress.getByName(MULTICAST_ADDRESS);
             socket.joinGroup(group);
-            String aux = "type|createAlbum;Name|"+name+";ArtistName|"+artistName+";Description|"+description+";Duracao|"+duracao; //protocol
+            String aux = "type|showArtistAlbums;Name|"+name; //protocol
             byte[] buffer = aux.getBytes();
             DatagramPacket packet = new DatagramPacket(buffer, buffer.length, group, PORT);
             socket.send(packet);
@@ -313,10 +316,33 @@ public class Server implements Hello {
         //recebe do multicast
         String msg = receiveMulticast();
         if (msg != null) return msg;
-
         return null;
     }
 
+    public String showAlbum(String name){
+        MulticastSocket socket = null;
+        //envia para o multicast
+        try {
+            socket = new MulticastSocket();
+            InetAddress group = InetAddress.getByName(MULTICAST_ADDRESS);
+            socket.joinGroup(group);
+            String aux = "type|showAlbum;Name|"+name; //protocol
+            byte[] buffer = aux.getBytes();
+            DatagramPacket packet = new DatagramPacket(buffer, buffer.length, group, PORT);
+            socket.send(packet);
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            socket.close();
+        }
+
+        //recebe do multicast
+        String msg = receiveMulticast();
+        if (msg != null) return msg;
+        return null;
+    }
+
+    ///////////// EDITAR!! /////////////
     public String editArtistName(String nameBefore, String nameAfter){
         MulticastSocket socket = null;
         //envia para o multicast
@@ -389,6 +415,55 @@ public class Server implements Hello {
         return null;
     }
 
+    ///////////// CRIAR!! /////////////
+    public String createArtist(String name, String genre, String description){
+        MulticastSocket socket = null;
+        //envia para o multicast
+        try {
+            socket = new MulticastSocket();
+            InetAddress group = InetAddress.getByName(MULTICAST_ADDRESS);
+            socket.joinGroup(group);
+            String aux = "type|createArtist;Name|"+name+";Description|"+description+";Genre|"+genre; //protocol
+            byte[] buffer = aux.getBytes();
+            DatagramPacket packet = new DatagramPacket(buffer, buffer.length, group, PORT);
+            socket.send(packet);
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            socket.close();
+        }
+
+        //recebe do multicast
+        String msg = receiveMulticast();
+        if (msg != null) return msg;
+        return null;
+    }
+
+    public String createAlbum(String name, String artistName, String description, String duracao){
+        MulticastSocket socket = null;
+        //envia para o multicast
+        try {
+            socket = new MulticastSocket();
+            InetAddress group = InetAddress.getByName(MULTICAST_ADDRESS);
+            socket.joinGroup(group);
+            String aux = "type|createAlbum;Name|"+name+";ArtistName|"+artistName+";Description|"+description+";Duracao|"+duracao; //protocol
+            byte[] buffer = aux.getBytes();
+            DatagramPacket packet = new DatagramPacket(buffer, buffer.length, group, PORT);
+            socket.send(packet);
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            socket.close();
+        }
+
+        //recebe do multicast
+        String msg = receiveMulticast();
+        if (msg != null) return msg;
+
+        return null;
+    }
+
+    ///////////// DELETE /////////////
     public String deleteArtist(String name){
         MulticastSocket socket = null;
         //envia para o multicast
@@ -413,14 +488,15 @@ public class Server implements Hello {
         return null;
     }
 
-    public String showArtist(String name){
+    ///////////// TORNAR EDITOR /////////////
+    public String checkEditorMaking(String name, Hello rmi){
         MulticastSocket socket = null;
-        //envia para o multicast
+        //envia pra o multicast
         try {
             socket = new MulticastSocket();
             InetAddress group = InetAddress.getByName(MULTICAST_ADDRESS);
             socket.joinGroup(group);
-            String aux = "type|showArtist;Name|"+name; //protocol
+            String aux = "type|makeEditor;User|"+name; //protocol
             byte[] buffer = aux.getBytes();
             DatagramPacket packet = new DatagramPacket(buffer, buffer.length, group, PORT);
             socket.send(packet);
@@ -429,59 +505,47 @@ public class Server implements Hello {
         } finally {
             socket.close();
         }
-
-        //recebe do multicast
         String msg = receiveMulticast();
-        if (msg != null) return msg;
-        return null;
-    }
-
-    public String showArtistAlbums(String name){
-        MulticastSocket socket = null;
-        //envia para o multicast
-        try {
-            socket = new MulticastSocket();
-            InetAddress group = InetAddress.getByName(MULTICAST_ADDRESS);
-            socket.joinGroup(group);
-            String aux = "type|showArtistAlbums;Name|"+name; //protocol
-            byte[] buffer = aux.getBytes();
-            DatagramPacket packet = new DatagramPacket(buffer, buffer.length, group, PORT);
-            socket.send(packet);
-        } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            socket.close();
+        System.out.println(msg + "antes do if");
+        if(msg.equals("type|makingEditorComplete")){
+            System.out.println("entrou na parte do server");
+            ClientHello aux2 = null;
+            System.out.println("entrei no if");
+            try {
+                for (int i=0;i<userOnlines.size();i++) {
+                    if (userOnlines.get(i).getUsername().equals(name)) {
+                        System.out.println("entrei noutro");
+                        aux2 = userOnlines.get(i).getInterface();
+                        System.out.println("criou interface client");
+                        break;
+                    }
+                }
+                aux2.msg(">> You are now an editor!");
+            } catch (NullPointerException e) { //o user ta off
+                System.out.println("tou remoteexpetion");
+                try{
+                    String mensage = ">> You are now an editor!";
+                    socket = new MulticastSocket();
+                    InetAddress group = InetAddress.getByName(MULTICAST_ADDRESS);
+                    socket.joinGroup(group);
+                    String aux3 = "type|addNotification;user|"+name+";mensagem|"+mensage; //protocol
+                    byte[] buffer = aux3.getBytes();
+                    DatagramPacket packet = new DatagramPacket(buffer, buffer.length, group, PORT);
+                    socket.send(packet);
+                } catch (UnknownHostException e1) {
+                    e1.printStackTrace();                } catch (IOException e1) {
+                    e1.printStackTrace();
+                }finally {
+                    socket.close();
+                }
+            } catch (RemoteException e) {
+                e.printStackTrace();
+            }
         }
-
-        //recebe do multicast
-        String msg = receiveMulticast();
-        if (msg != null) return msg;
-        return null;
+        return msg;
     }
 
-    public String showAlbum(String name){
-        MulticastSocket socket = null;
-        //envia para o multicast
-        try {
-            socket = new MulticastSocket();
-            InetAddress group = InetAddress.getByName(MULTICAST_ADDRESS);
-            socket.joinGroup(group);
-            String aux = "type|showAlbum;Name|"+name; //protocol
-            byte[] buffer = aux.getBytes();
-            DatagramPacket packet = new DatagramPacket(buffer, buffer.length, group, PORT);
-            socket.send(packet);
-        } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            socket.close();
-        }
-
-        //recebe do multicast
-        String msg = receiveMulticast();
-        if (msg != null) return msg;
-        return null;
-    }
-
+    ////////////// FAZER CRITICA /////////////
     public String makeCritic(double score, String text, String album){
         MulticastSocket socket = null;
         //envia para o multicast
@@ -505,33 +569,87 @@ public class Server implements Hello {
         return null;
     }
 
-    public String checkLogin(String login) {
-        System.out.println("Entrou no Login");
-        System.out.println(login);
-        String[] newLogin = login.split("-");
+    ////////////// DOWNLOAD E UPLOAD E MUSICAS /////////////
+    public String startSocket(String clientAddress){
         MulticastSocket socket = null;
         //envia pra o multicast
         try {
             socket = new MulticastSocket();
             InetAddress group = InetAddress.getByName(MULTICAST_ADDRESS);
             socket.joinGroup(group);
-            String aux = "type|login;username|" + newLogin[0] + ";password|" + newLogin[1]; //protocol
-            System.out.println(aux); //ver como ficou
+            String aux = "type|turnOnSocket;address|"+clientAddress; //protocol
             byte[] buffer = aux.getBytes();
             DatagramPacket packet = new DatagramPacket(buffer, buffer.length, group, PORT);
             socket.send(packet);
-            //recebe do multicast
-            String msg = receiveMulticast();
-            return msg;
-            //socket.leaveGroup(group);
-            //falta receber a resposta se ja existe ou nao, se a pw ta bem etc...
         } catch (IOException e) {
             e.printStackTrace();
-        }finally {
+        } finally {
             socket.close();
         }
+        return receiveMulticast();
+    }
 
-        return "ups";
+    public String sendMusicRMI(String[] musicInfo,String loggedUser){
+        MulticastSocket socket = null;
+        //envia pra o multicast
+        try {
+            socket = new MulticastSocket();
+            InetAddress group = InetAddress.getByName(MULTICAST_ADDRESS);
+            socket.joinGroup(group);
+            String aux = "type|sendMusic;musicPath|"+musicInfo[0]+";musicName|"+musicInfo[1]+";musicComposer|"+musicInfo[2]+";musicArtist|"+musicInfo[3]+";musicDuration|"+musicInfo[4]+";musicAlbum|"+musicInfo[5]+";musicGenre|"+musicInfo[6]+";loggedUser|"+loggedUser;//protocol
+            byte[] buffer = aux.getBytes();
+            DatagramPacket packet = new DatagramPacket(buffer, buffer.length, group, PORT);
+            socket.send(packet);
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            socket.close();
+        }
+        String msg = receiveMulticast();
+        return msg;
+    }
+
+    public String startServerSocket(){
+        MulticastSocket socket = null;
+        try {
+            socket = new MulticastSocket();
+            InetAddress group = InetAddress.getByName(MULTICAST_ADDRESS);
+            socket.joinGroup(group);
+            String aux = "type|openSocket;";
+            byte[] buffer = aux.getBytes();
+            DatagramPacket packet = new DatagramPacket(buffer, buffer.length, group, PORT);
+            socket.send(packet);
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            socket.close();
+        }
+        return receiveMulticast();
+    }
+
+    public String downloadMusicRMI(String direc){
+        MulticastSocket socket = null;
+        try {
+            socket = new MulticastSocket();
+            InetAddress group = InetAddress.getByName(MULTICAST_ADDRESS);
+            socket.joinGroup(group);
+            String aux = "type|downloadMusic;musicAddress|"+direc;
+            byte[] buffer = aux.getBytes();
+            DatagramPacket packet = new DatagramPacket(buffer, buffer.length, group, PORT);
+            socket.send(packet);
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            socket.close();
+        }
+        return receiveMulticast();
+    }
+
+
+    ////////////// FUNCOES AUXILIARES /////////////
+    public String msgInput(String text) {
+        System.out.println("escreveu uma mensagem: " + text);
+        return " ";
     }
 
     private String receiveMulticast() {
@@ -551,119 +669,13 @@ public class Server implements Hello {
 
         } catch (IOException e) {
             e.printStackTrace();
-        }
-        //finally {
-        //    socket.close();
-        //}
-        return null;
-    }
-
-    public String checkLogout(User user) {
-        System.out.println("Entrou no logout");
-        System.out.println(user.getUsername());
-        MulticastSocket socket = null;
-        //envia pra o multicast
-        try {
-            socket = new MulticastSocket();
-            InetAddress group = InetAddress.getByName(MULTICAST_ADDRESS);
-            socket.joinGroup(group);
-            String aux = "type|logout;username|" + user.getUsername(); //protocol
-            System.out.println(aux); //ver como ficou
-            byte[] buffer = aux.getBytes();
-            DatagramPacket packet = new DatagramPacket(buffer, buffer.length, group, PORT);
-            socket.send(packet);
-            //recebe do multicast
-            String msg = receiveMulticast();
-            if (msg != null) return msg;
-            socket.leaveGroup(group);
-        } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            socket.close();
-        }
-
-
-
-        return "ups";
-    }
-
-    public String checkRegister(String register) {
-            System.out.println("Está no registo.");
-            String[] newRegisto = register.split("-");
-            MulticastSocket socket = null;
-
-            try {
-                socket = new MulticastSocket();
-                InetAddress group = InetAddress.getByName(MULTICAST_ADDRESS);
-                socket.joinGroup(group);
-                String aux = "type|register;username|" + newRegisto[0] + ";password|" + newRegisto[1]; //protocol
-                System.out.println(aux); //ver como ficou
-                byte[] buffer = aux.getBytes();
-                DatagramPacket packet = new DatagramPacket(buffer, buffer.length, group, PORT);
-                socket.send(packet);
-                //recebe do multicast
-                String msg = receiveMulticast();
-                if (msg != null) return msg;
-            } catch (IOException e) {
-                e.printStackTrace();
-            } finally {
-                socket.close();
-            }
-
-
-        /*
-        if(newRegisto.length != 3){
-            return "preencheu mal os campos por favor tente de novo";
-        }
-        if (usernamesTodos.contains(newRegisto[0])) {
-            return "usado";
-        } else if (!newRegisto[1].equals(newRegisto[2])) {
-            return "wrongPW";
-        } else if (newRegisto[1].equals(newRegisto[2])) {
-            usernamesTodos.add(newRegisto[0]);
-            //registar o user
-            return "registado";
-        }*/
-            return "ups";
-    }
-
-    public String ping() {
-            return "pong";
-        }
-
-    public static String readIPFile() {
-        String line = null;
-        String ip = "";
-        try {
-            FileReader fileR = new FileReader("ip local.txt");
-            BufferedReader bufferedR = new BufferedReader(fileR);
-            while((line=bufferedR.readLine()) !=null){
-                ip = line;
-            }
-        } catch (FileNotFoundException e){
-            System.out.println("Not found");
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return ip;
-    }
-
-    public void readOnlineUsers(){
-        System.out.println("Reading online users.");
-        try {
-            ObjectInputStream objectIn = new ObjectInputStream(new BufferedInputStream(new FileInputStream("data.bin")));
-            this.userOnlines = (ArrayList) objectIn.readObject();
-            objectIn.close();
-            System.out.println("Read file successfully.");
-        }
-        catch (FileNotFoundException e) {
-            e.printStackTrace();
         } catch (IOException e) {
             System.out.println("Empty file!");
         }
-        catch (ClassNotFoundException e) {
-            e.printStackTrace();
+        finally {
+            socket.close();
         }
+        return null;
     }
 
 }
