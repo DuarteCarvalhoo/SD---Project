@@ -205,19 +205,15 @@ public class Server implements Hello {
         }
         String msg = receiveMulticast();
         if(msg.equals("type|makingEditorComplete")){
-            System.out.println("entrou na parte do server");
             ClientHello aux2 = null;
             try {
                 for (int i=0;i<userOnlines.size();i++) {
                     if(userOnlines.get(i).getUsername().equals(name)){
                         aux2 = userOnlines.get(i).getInterface();
-                        System.out.println("criou interface client");
                         break;
                     }
                 }
-                System.out.println("1");
                 aux2.msg(">> You are now an editor!");
-                System.out.println("2");
             } catch (RemoteException e) { //o user ta off
                 try{
                     String mensage = ">> You are now an editor!";

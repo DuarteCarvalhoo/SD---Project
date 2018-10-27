@@ -84,7 +84,7 @@ public class Client extends UnicastRemoteObject implements ClientHello{
             System.err.println("Client exception: " + e.toString());
             e.printStackTrace();
         }
-        while(!text.trim().equals("quit")){
+        while(!text.trim().equals("/quit")){
             try{
                 System.out.println("Escreva a sua mensagem:");
                 text = reader.nextLine();
@@ -99,8 +99,8 @@ public class Client extends UnicastRemoteObject implements ClientHello{
                     case "/user":
                         System.out.println(loggedUser.getUsername());
                         break;
-                    default:
-                        System.out.println("Este comando não faz nada. Para sair escreva 'quit'");
+                    case "/quit":
+                        return;
                 }
             }
             catch(RemoteException e){
