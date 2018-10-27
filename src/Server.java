@@ -151,6 +151,24 @@ public class Server implements Hello {
         return msg;
     }
 
+    public String closeServerSocket() {
+        MulticastSocket socket = null;
+        try {
+            socket = new MulticastSocket();
+            InetAddress group = InetAddress.getByName(MULTICAST_ADDRESS);
+            socket.joinGroup(group);
+            String aux = "type|closeSocket;";
+            byte[] buffer = aux.getBytes();
+            DatagramPacket packet = new DatagramPacket(buffer, buffer.length, group, PORT);
+            socket.send(packet);
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            socket.close();
+        }
+        return receiveMulticast();
+    }
+
     public String downloadMusicRMI(String direc){
         MulticastSocket socket = null;
         try {
@@ -188,6 +206,7 @@ public class Server implements Hello {
         String msg = receiveMulticast();
         System.out.println(msg + "antes do if");
         if(msg.equals("type|makingEditorComplete")){
+            System.out.println("entrou na parte do server");
             ClientHello aux2 = null;
             System.out.println("entrei no if");
             try {
@@ -195,15 +214,15 @@ public class Server implements Hello {
                     if (userOnlines.get(i).getUsername().equals(name)) {
                         System.out.println("entrei noutro");
                         aux2 = userOnlines.get(i).getInterface();
-                        aux2.msg("és agora um editor!");
+                        System.out.println("criou interface client");
                         break;
                     }
                 }
-                aux2.msg("és agora um editor!");
+                aux2.msg(">> You are now an editor!");
             } catch (NullPointerException e) { //o user ta off
                 System.out.println("tou remoteexpetion");
                 try{
-                    String mensage = "és agora um editor!";
+                    String mensage = ">> You are now an editor!";
                     socket = new MulticastSocket();
                     InetAddress group = InetAddress.getByName(MULTICAST_ADDRESS);
                     socket.joinGroup(group);
@@ -245,7 +264,6 @@ public class Server implements Hello {
         //recebe do multicast
         String msg = receiveMulticast();
         if (msg != null) return msg;
-
         return null;
     }
 
