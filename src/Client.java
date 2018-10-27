@@ -50,7 +50,7 @@ import java.util.Scanner;
 import java.rmi.registry.Registry;
 import java.net.*;
 
-public class Client {
+public class Client implements ClientHello{
 
     private static User loggedUser = new User();
     private static ArrayList<User> users = new ArrayList<>();
@@ -59,11 +59,13 @@ public class Client {
     public static void main(String[] args) throws IOException, NotBoundException {
         String text = "";
         Hello rmi = null;
+        ClientHello rmi2 = null;
         //String host = (args.length < 1) ? null : args[0];
         Scanner reader = new Scanner(System.in);
         try {
             Registry registry = LocateRegistry.getRegistry("localhost",7000);
             rmi =(Hello) registry.lookup("Hello");
+            //rmi2 = (ClientHello) registry.lookup("ClientHello");
             Hello stub = (Hello) registry.lookup("Hello");
             String response = stub.sayHello();
             System.out.println("response: " + response);
@@ -98,7 +100,6 @@ public class Client {
         reader.close();
         System.out.println("Finished");
     }
-
 
     private static Hello changeRMI() throws RemoteException, NotBoundException {
         try {
@@ -383,7 +384,7 @@ public class Client {
             }
         }
 
-        String response = rmi.checkEditorMaking(name);
+        String response = rmi.checkEditorMaking(name, rmi);
         switch (response.trim()){
             case "type|makingEditorComplete":
                 System.out.println(name +" is now an editor.");
@@ -444,6 +445,10 @@ public class Client {
                 break;
         }
 
+    }
+
+    public String notificationEditor(){
+        return "no erro";
     }
 
     public static void menuDePesquisa(Hello rmi, Scanner reader) throws RemoteException{

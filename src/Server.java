@@ -142,7 +142,7 @@ public class Server implements Hello {
         return receiveMulticast();
     }
 
-    public String checkEditorMaking(String name){
+    public String checkEditorMaking(String name, Hello rmi){
         MulticastSocket socket = null;
         //envia pra o multicast
         try {
@@ -159,6 +159,9 @@ public class Server implements Hello {
             socket.close();
         }
         String msg = receiveMulticast();
+        //if(msg.equals("type|makingEditorComplete")){
+          //  rmi2.notificationEditor();
+        //}
         return msg;
     }
 
@@ -540,10 +543,11 @@ public class Server implements Hello {
         }
         return lineSplit;
     }
+
     public static void main (String[]args){
         String data[] = readIPFile();
         //System.setProperty("localhost", "192.168.1.74");
-        System.setProperty(data[0], data[1]);
+        System.setProperty("java.rmi.server.hostname", data[1]);
         int aux = 0;
         while (aux < 1) {
             try {

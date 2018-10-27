@@ -1,5 +1,6 @@
 import java.rmi.Remote;
+import java.rmi.RemoteException;
 
 public interface ClientHello extends Remote {
-    String noti
+    String notificationEditor() throws RemoteException;
 }
