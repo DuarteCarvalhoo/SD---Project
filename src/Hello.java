@@ -81,4 +81,6 @@ public interface Hello extends Remote {
     String makeCritic(double score, String text, String album) throws RemoteException;
 
     String showArtistAlbums(String name) throws RemoteException;
+
+    String shareMusic(String music, String userName) throws RemoteException;
 }
