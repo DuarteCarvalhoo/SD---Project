@@ -30,11 +30,40 @@ public class User implements Serializable{
         else{
             for(String music : getDownloadableMusics()){
                 finalString += music;
-                finalString += "|";
+                finalString += ",";
             }
         }
         return finalString;
     }
+
+    public String printDownloadableNotificationsLogin(){
+        String finalString = "";
+        if(getDownloadableMusics().isEmpty()){
+            finalString += "No notifications to show.";
+        }
+        else{
+            for(String music : getDownloadableMusics()){
+                finalString += music;
+                finalString += ",";
+            }
+        }
+        return finalString;
+    }
+
+    public String printDownloadableNotifications(){
+        String finalString = "";
+        if(getDownloadableMusics().isEmpty()){
+            finalString += "No notifications to show.";
+        }
+        else{
+            for(String music : getDownloadableMusics()){
+                finalString += music;
+                finalString += ",";
+            }
+        }
+        return finalString;
+    }
+
 
     public String printDownloadableMusics(){
         String finalString = "";
@@ -151,5 +180,14 @@ public class User implements Serializable{
         this.editor = editor;
         this.online = online;
         this.downloadableMusics = downloadableMusics;
+    }
+
+    public User(String username, String password, boolean editor, boolean online, ArrayList<String> downloadableMusics,ArrayList<String> hasnotifications) {
+        this.username = username;
+        this.password = password;
+        this.editor = editor;
+        this.online = online;
+        this.downloadableMusics = downloadableMusics;
+        this.notifications = hasnotifications;
     }
 }

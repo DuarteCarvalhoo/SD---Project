@@ -77,7 +77,7 @@ public class MulticastServer extends Thread implements Serializable {
                                             System.out.println("ERRO: Login não completo.");
                                         } else {
                                             u.setOnline();
-                                            sendMsg("type|loginComplete;username|" + u.getUsername() + ";password|" + u.getPassword() + ";editor|" + u.isEditor() + ";online|" + u.isOnline()+";Downloads|"+u.printDownloadableMusicsLogin());
+                                            sendMsg("type|loginComplete;username|" + u.getUsername() + ";password|" + u.getPassword() + ";editor|" + u.isEditor() + ";online|" + u.isOnline()+";Downloads|"+u.printDownloadableMusicsLogin()+"|"+u.printDownloadableNotificationsLogin());
                                             System.out.println("SUCESSO: Login Completo");
                                             flag = true;
                                         }
@@ -247,6 +247,7 @@ public class MulticastServer extends Thread implements Serializable {
                                 break;
                             }
                         }
+                        writeFiles();
                         break;
                     case "type|createArtist":
                         String[] nameParts1 = aux[1].split("\\|");
@@ -557,7 +558,7 @@ public class MulticastServer extends Thread implements Serializable {
         outStream.flush();
         outStream.close();
         socketAcept.close();
-        socket.isClosed();
+        socket.close();
         return "tudo okay no download";
     }
 

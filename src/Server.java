@@ -222,8 +222,6 @@ public class Server implements Hello {
                 }
                 aux2.makeEditor();
                 aux2.msg(">> You are now an editor!");
-            } catch (RemoteException e) { //o user ta off
-                System.out.println("remoteE");
             }
             catch (NullPointerException ex){
                 try{

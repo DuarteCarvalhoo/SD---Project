@@ -330,7 +330,7 @@ public class Client extends UnicastRemoteObject implements ClientHello{
                     loggedUser = new User(username[1], password[1], Boolean.parseBoolean(editor[1]), Boolean.parseBoolean(online[1]));
 
                 }
-                else if(txtSplit.length > 5){
+                else if(txtSplit.length == 6){
                     String[] username = txtSplit[1].split("\\|");
                     String[] password = txtSplit[2].split("\\|");
                     String[] editor = txtSplit[3].split("\\|");
@@ -341,6 +341,23 @@ public class Client extends UnicastRemoteObject implements ClientHello{
                         downloadableMusics.add(downloads[i]);
                     }
                     loggedUser = new User(username[1], password[1], Boolean.parseBoolean(editor[1]), Boolean.parseBoolean(online[1]),downloadableMusics);
+                }
+                else if(txtSplit.length == 7){
+                    String[] username = txtSplit[1].split("\\|");
+                    String[] password = txtSplit[2].split("\\|");
+                    String[] editor = txtSplit[3].split("\\|");
+                    String[] online = txtSplit[4].split("\\|");
+                    String[] downloads = txtSplit[5].split("\\|");
+                    String[] notifications = txtSplit[6].split("\\|");
+                    ArrayList<String> downloadableMusics = new ArrayList<>();
+                    ArrayList<String> hasNotifications = new ArrayList<>();
+                    for(int i=1;i<downloads.length;i++){
+                        downloadableMusics.add(downloads[i]);
+                    }
+                    for(int i=0;i<downloads.length;i++){
+                        hasNotifications.add(notifications[i]);
+                    }
+                    loggedUser = new User(username[1], password[1], Boolean.parseBoolean(editor[1]), Boolean.parseBoolean(online[1]),downloadableMusics,hasNotifications);
                 }
                 System.out.println("Welcome!");
                 loggedUser.setClientInterface(client);
