@@ -56,7 +56,7 @@ public interface Hello extends Remote {
 
     String checkLogout(User user) throws RemoteException;
 
-    String sendMusicRMI(String musicName) throws RemoteException;
+    String sendMusicRMI(String[] musicInfo, String loggedUser) throws RemoteException;
 
     String ping() throws RemoteException;
 

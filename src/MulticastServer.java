@@ -13,6 +13,7 @@ public class MulticastServer extends Thread implements Serializable {
     private ArrayList<User> usersList = new ArrayList<>();
     private ArrayList<Artist> artistsList = new ArrayList<>();
     private ArrayList<Album> albunsList = new ArrayList<>();
+    private ArrayList<Music> musicsList = new ArrayList<>();
 
     public static void main(String[] args){
         MulticastServer server = new MulticastServer();
@@ -135,10 +136,45 @@ public class MulticastServer extends Thread implements Serializable {
                         sendMsg("Music saving on the server.");
                         break;
                     case "type|sendMusic":
-                        aux2 = aux[1];
-                        String[] musicName = aux2.split("\\|");
-                        receiveMusic(socketHelp, musicName[1]);
-                        sendMsg("it worked out");
+                        User loggedUser;
+                        Artist artisT;
+                        String[] loggedUserParts = aux[8].split("\\|");
+                        String[] pathParts = aux[1].split("\\|");
+                        String[] nameParts = aux[2].split("\\|");
+                        String[] composerParts = aux[3].split("\\|");
+                        String[] artistParts = aux[4].split("\\|");
+                        String[] durationParts = aux[5].split("\\|");
+                        String[] albumParts = aux[6].split("\\|");
+                        String[] genreParts = aux[7].split("\\|");
+                        Music music = new Music(pathParts[1],nameParts[1],composerParts[1],artistParts[1],durationParts[1],albumParts[1],genreParts[1]);
+                        if(checkUsernameRegister(loggedUserParts[1])!=1){
+                            sendMsg("type|userNotFound");
+                        }
+                        else if(!checkArtistExists(artistParts[1])){
+                            sendMsg("type|artistNotFound");
+                        }
+                        else if(!checkAlbumExists(albumParts[1],artistParts[1])){
+                            sendMsg("type|albumNotFound");
+                        }
+                        else if(checkMusicExists(nameParts[1],artistParts[1])){
+                            sendMsg("type|musicExists");
+                        }
+                        else{
+                            musicsList.add(music);
+                            artisT = returnsArtist(artistParts[1]);
+                            for(Album album2 : artisT.getAlbums()){
+                                if(album2.getName().trim().equals(albumParts[1])){
+                                    album2.addMusic(music);
+                                    System.out.println("Music added to artist's album.");
+                                }
+                            }
+                            loggedUser = returnsUser(loggedUserParts[1]);
+                            loggedUser.addDownloadableMusic(music.getTitle());
+                            System.out.println("Music added to downloadable musics");
+                            writeFiles();
+                            receiveMusic(socketHelp, nameParts[1]);
+                            sendMsg("type|sendMusicComplete;MusicAdded|"+music.getTitle());
+                        }
                         break;
                     case "type|openSocket":
                         auxSocket = openSocket();
@@ -181,19 +217,19 @@ public class MulticastServer extends Thread implements Serializable {
                         }
                         break;
                     case "type|createArtist":
-                        String[] nameParts = aux[1].split("\\|");
-                        String[] genreParts = aux[2].split("\\|");
+                        String[] nameParts1 = aux[1].split("\\|");
+                        String[] genreParts1 = aux[2].split("\\|");
                         String[] descriptionParts = aux[3].split("\\|");
-                        boolean artistExists = checkArtistExists(nameParts[1]);
+                        boolean artistExists = checkArtistExists(nameParts1[1]);
                         if (artistExists) {
                             sendMsg("type|artistExists");
                             System.out.println("ERRO: Artist already exists.");
                         }
                         else {
-                            Artist newArtist = new Artist(nameParts[1],descriptionParts[1],genreParts[1]);
+                            Artist newArtist = new Artist(nameParts1[1],descriptionParts[1],genreParts1[1]);
                             artistsList.add(newArtist);
                             writeFiles();
-                            System.out.println("SUCESSO: Adicionou ao arraylist com nome '" + nameParts[1] + "', genre '" + genreParts[1] + "' e descrição '"+descriptionParts[1]+"'");
+                            System.out.println("SUCESSO: Adicionou ao arraylist com nome '" + nameParts1[1] + "', genre '" + genreParts1[1] + "' e descrição '"+descriptionParts[1]+"'");
                             sendMsg("type|createArtistComplete");
                         }
                         break;
@@ -216,18 +252,24 @@ public class MulticastServer extends Thread implements Serializable {
                                 }
                             }
                             if(!flagAlbum){
-                                sendMsg("type|userNotFound");
+                                sendMsg("type|albumNotFound");
                             }
                             else {
                                 Album newAlbum = new Album(namePa[1], artist, descripParts[1], duracaoParts[1]);
                                 albunsList.add(newAlbum);
 
+                                boolean flagAddToArtist = false;
                                 for (Artist a : artistsList) {
                                     if (a.getName().equals(aName[1])) {
                                         a.getAlbums().add(newAlbum);
+                                        sendMsg("type|createAlbumComplete");
+                                        flagAddToArtist = true;
                                     }
                                 }
-                                sendMsg("type|createAlbumComplete");
+                                if(!flagAddToArtist){
+                                    sendMsg("type|createAlbumFailed");
+                                    System.out.println("Falhou.");
+                                }
                             }
                         }
                         break;
@@ -367,7 +409,7 @@ public class MulticastServer extends Thread implements Serializable {
                         Album newAlbum = new Album();
                         String[] scoreParts = aux[1].split("\\|");
                         String[] textParts = aux[2].split("\\|");
-                        String[] albumParts = aux[3].split("\\|");
+                        String[] albumParts1 = aux[3].split("\\|");
                         Critic c = new Critic(Double.parseDouble(scoreParts[1]),textParts[1]);
                         if(albunsList.isEmpty()){
                             sendMsg("type|criticFail");
@@ -375,11 +417,11 @@ public class MulticastServer extends Thread implements Serializable {
                         }
                         else {
                             for (Album a : albunsList) {
-                                if (a.getName().equals(albumParts[1])) {
+                                if (a.getName().equals(albumParts1[1])) {
                                     newAlbum = a;
                                 }
                             }
-                            if(checkAlbumExists(albumParts[1],newAlbum.getArtist().getName())){
+                            if(checkAlbumExists(albumParts1[1],newAlbum.getArtist().getName())){
                                 newAlbum.addCritic(c);
                                 sendMsg("type|criticComplete");
                                 System.out.println("Critic Complete.");
@@ -501,6 +543,24 @@ public class MulticastServer extends Thread implements Serializable {
         return stringFinal;
     }
 
+    private User returnsUser(String username){
+        for(User u : usersList){
+            if(u.getUsername().trim().equals(username)){
+                return u;
+            }
+        }
+        return null;
+    }
+
+    private Artist returnsArtist(String artistName){
+        for(Artist artist : artistsList){
+            if(artist.getName().trim().equals(artistName)){
+                return artist;
+            }
+        }
+        return null;
+    }
+
     private void receiveMusic(Socket socket, String musicName) throws IOException {
         byte[] b= new byte[1024];
         System.out.println("1");
@@ -567,6 +627,22 @@ public class MulticastServer extends Thread implements Serializable {
         return false;
     }
 
+    public boolean checkMusicExists(String name,String artistName){
+        if(musicsList.isEmpty()){
+            return false;
+        }
+        else {
+            for (Music music : musicsList) {
+                if (music.getTitle().equals(name)){
+                    if(music.getArtist().equals(artistName)){
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
     public boolean checkAlbumExists(String name, String artist){
         if(albunsList.isEmpty()){
             return false;
@@ -605,7 +681,8 @@ public class MulticastServer extends Thread implements Serializable {
             ObjectInputStream objectIn = new ObjectInputStream(new BufferedInputStream(new FileInputStream("data.bin")));
             this.usersList = (ArrayList) objectIn.readObject();
             this.artistsList = (ArrayList) objectIn.readObject();
-            this.albunsList = (ArrayList<Album>) objectIn.readObject();
+            this.albunsList = (ArrayList) objectIn.readObject();
+            this.musicsList = (ArrayList) objectIn.readObject();
             objectIn.close();
             System.out.println("Read file successfully.");
         }
@@ -628,6 +705,7 @@ public class MulticastServer extends Thread implements Serializable {
             fout.writeObject(this.usersList);
             fout.writeObject(this.artistsList);
             fout.writeObject(this.albunsList);
+            fout.writeObject(this.musicsList);
             fout.close();
             out.close();
         }

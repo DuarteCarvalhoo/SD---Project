@@ -87,14 +87,14 @@ public class Server implements Hello {
         return receiveMulticast();
     }
 
-    public String sendMusicRMI(String musicName){
+    public String sendMusicRMI(String[] musicInfo,String loggedUser){
         MulticastSocket socket = null;
         //envia pra o multicast
         try {
             socket = new MulticastSocket();
             InetAddress group = InetAddress.getByName(MULTICAST_ADDRESS);
             socket.joinGroup(group);
-            String aux = "type|sendMusic;musicName|"+musicName; //protocol
+            String aux = "type|sendMusic;musicPath|"+musicInfo[0]+";musicName|"+musicInfo[1]+";musicComposer|"+musicInfo[2]+";musicArtist|"+musicInfo[3]+";musicDuration|"+musicInfo[4]+";musicAlbum|"+musicInfo[5]+";musicGenre|"+musicInfo[6]+";loggedUser|"+loggedUser;//protocol
             byte[] buffer = aux.getBytes();
             DatagramPacket packet = new DatagramPacket(buffer, buffer.length, group, PORT);
             socket.send(packet);
@@ -103,7 +103,8 @@ public class Server implements Hello {
         } finally {
             socket.close();
         }
-        return receiveMulticast();
+        String msg = receiveMulticast();
+        return msg;
     }
 
     public String startServerSocket(){
@@ -527,27 +528,27 @@ public class Server implements Hello {
             return "pong";
         }
 
-    public static String[] readIPFile() {
+    public static String readIPFile() {
         String line = null;
-        String[] lineSplit = new String[2];
+        String ip = "";
         try {
             FileReader fileR = new FileReader("ip local.txt");
             BufferedReader bufferedR = new BufferedReader(fileR);
             while((line=bufferedR.readLine()) !=null){
-                lineSplit = line.split("\\|");
+                ip = line;
             }
         } catch (FileNotFoundException e){
             System.out.println("Not found");
         } catch (IOException e) {
             e.printStackTrace();
         }
-        return lineSplit;
+        return ip;
     }
 
     public static void main (String[]args){
-        String data[] = readIPFile();
+        String ip = readIPFile();
         //System.setProperty("localhost", "192.168.1.74");
-        System.setProperty("java.rmi.server.hostname", data[1]);
+        System.setProperty("java.rmi.server.hostname", ip);
         int aux = 0;
         while (aux < 1) {
             try {

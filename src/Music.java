@@ -1,5 +1,17 @@
-public class Music {
-    private String composer,artist,title,duration,style,album,genre;
+import java.io.Serializable;
+
+public class Music implements Serializable {
+    private String path,title,composer,artist,album,genre;
+    private int duration;
+
+    public String getPath() {
+        return path;
+    }
+
+    public void setPath(String path) {
+        this.path = path;
+    }
+
     public String getComposer() {
         return composer;
     }
@@ -12,14 +24,6 @@ public class Music {
         return title;
     }
 
-    public String getDuration() {
-        return duration;
-    }
-
-    public String getStyle() {
-        return style;
-    }
-
     public void setComposer(String composer) {
         this.composer = composer;
     }
@@ -30,14 +34,6 @@ public class Music {
 
     public void setTitle(String title) {
         this.title = title;
-    }
-
-    public void setDuration(String duration) {
-        this.duration = duration;
-    }
-
-    public void setStyle(String style) {
-        this.style = style;
     }
 
     public String getAlbum() {
@@ -56,13 +52,25 @@ public class Music {
         this.genre = genre;
     }
 
-    public Music(String composer, String artist, String title, String duration, String style, String album, String genre) {
+    public int getDuration() {
+        return duration;
+    }
+
+    public void setDuration(int duration) {
+        this.duration = duration;
+    }
+
+    public Music(String path, String title, String composer, String artist, String duration, String album, String genre) {
+        this.path = path;
+        this.title = title;
         this.composer = composer;
         this.artist = artist;
-        this.title = title;
-        this.duration = duration;
-        this.style = style;
+        this.duration = Integer.parseInt(duration);
         this.album = album;
         this.genre = genre;
+    }
+
+    public String toString(){
+        return getArtist() +" - " + getTitle();
     }
 }

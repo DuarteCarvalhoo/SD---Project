@@ -121,7 +121,12 @@ public class Client implements ClientHello{
         directorias.add("C:\\Users\\Duarte\\Desktop\\SD\\PROJETO\\META 1\\SD---Project\\musicasServer\\c.mp3");*/
 
         System.out.println("Choose one song:");
-        //aqui fazia-se print da lista de musicas na base de dados..
+        if(loggedUser.printDownloadableMusics().equals("No musics to show.")){
+                return "Can't download any musics.";
+        }
+        else{
+            System.out.println(loggedUser.printDownloadableMusics());
+        }
 
         String escolha = reader.nextLine();
 
@@ -156,22 +161,26 @@ public class Client implements ClientHello{
         return print;
     }
 
-    private static String sendMusic(Hello rmi) throws IOException {
+    private static String[] sendMusic(Hello rmi,Scanner reader) throws IOException {
+        String[] musicInfo = new String[7];
+        int auxi = 0;
         ServerSocket socket = new ServerSocket(5000);
         System.out.println("check1");
         String[] aux = socket.getLocalSocketAddress().toString().split("/");
         rmi.startSocket(aux[0]);
         Socket socketAcept = socket.accept();
-        System.out.println("Write down the directory of your music: (example:'C:\\Duarte\\example.wav').");
+        System.out.println("Write down the directory of your music: (example:'C:\\music\\example.wav').");
         Scanner direc = new Scanner(System.in);
         String auxx = direc.nextLine();
+        musicInfo[auxi] = auxx;
+        auxi++;
         File file = new File(auxx);
         String[] aux1 = auxx.split("\\\\");
         System.out.println("can it split?");
         System.out.println(aux1[aux1.length-1]);
         FilePermission permission = new FilePermission(auxx, "read");
         FileInputStream fInStream= new FileInputStream(file);
-        System.out.println("tou much bytes?");
+        System.out.println("too much bytes?");
         OutputStream outStream = socketAcept.getOutputStream();
         byte b[];
         System.out.println("no");
@@ -200,7 +209,66 @@ public class Client implements ClientHello{
         outStream.close();
         socketAcept.close();
         socket.close();
-        return aux1[aux1.length-1];
+        musicInfo[auxi] = aux1[aux1.length-1];
+        auxi++;
+        boolean flagOK = false;
+        String composer = "";
+        while(!flagOK){
+            System.out.print("Insert composer: ");
+            composer = reader.nextLine();
+            if(!composer.trim().equals("")){
+                flagOK=true;
+            }
+        }
+        musicInfo[auxi] = composer;
+        auxi++;
+        flagOK=false;
+        String artist = "";
+        while(!flagOK){
+            System.out.print("Insert artist: ");
+            artist = reader.nextLine();
+            if(!artist.trim().equals("")){
+                flagOK=true;
+            }
+        }
+        musicInfo[auxi] = artist;
+        auxi++;
+
+        flagOK=false;
+        String duration = "";
+        while(!flagOK){
+            System.out.print("Insert duration(seconds): ");
+            duration = reader.nextLine();
+            if(!duration.trim().equals("")){
+                flagOK=true;
+            }
+        }
+        musicInfo[auxi] = duration;
+        auxi++;
+
+        flagOK=false;
+        String album = "";
+        while(!flagOK){
+            System.out.print("Insert album: ");
+            album = reader.nextLine();
+            if(!album.trim().equals("")){
+                flagOK=true;
+            }
+        }
+        musicInfo[auxi] = album;
+        auxi++;
+
+        flagOK=false;
+        String genre = "";
+        while(!flagOK){
+            System.out.print("Insert genre: ");
+            genre = reader.nextLine();
+            if(!genre.trim().equals("")){
+                flagOK=true;
+            }
+        }
+        musicInfo[auxi] = genre;
+        return musicInfo;
     }
 
     public static void login(Hello rmi, Scanner reader) throws IOException, NotBoundException {
@@ -356,11 +424,26 @@ public class Client implements ClientHello{
                         System.out.println(downloadMusic(rmi, reader));
                         break;
                     case "/upload":
-                        String musicName = sendMusic(rmi);
-                        System.out.println(rmi.sendMusicRMI(musicName));
+                        String[] musicInfo = sendMusic(rmi,reader);
+                        String response = rmi.sendMusicRMI(musicInfo,loggedUser.getUsername());
+                        String[] responseSpli = response.split(";");
+                        switch (responseSpli[0]){
+                            case "type|userNotFound":
+                                System.out.println("ERROR: User Not Found.");
+                                break;
+                            case "type|artistNotFound":
+                                System.out.println("ERROR: Artist Not Found.");
+                                break;
+                            case"type|sendMusicComplete":
+                                if(responseSpli.length>1){
+                                    String[] s = responseSpli[1].split("\\|");
+                                    loggedUser.addDownloadableMusic(s[1]);
+                                }
+                                break;
+                        }
                         break;
                     default:
-                        System.out.println("Este comando não faz nada. Para sair escreva 'leave'");
+                        System.out.println("Este comando não faz nada. Para sair escreva '/logout'");
                 }
             }
             catch(RemoteException e){
@@ -530,7 +613,7 @@ public class Client implements ClientHello{
         boolean flagOK;
         flagOK = false;
         String name = "";
-        System.out.println("Which artist you wanna show? ");
+        System.out.println("Which artist you wanna search? ");
         while(!flagOK){
             name = reader.nextLine();
             if(!name.trim().equals("")){
@@ -629,9 +712,6 @@ public class Client implements ClientHello{
         switch(response.trim()){
             case "/artist":
                 createArtist(rmi,reader);
-                break;
-            case "/music":
-                //createMusic();
                 break;
             case "/album":
                 createAlbum(rmi,reader);
@@ -906,4 +986,5 @@ public class Client implements ClientHello{
                 //something;
         }
     }
-}
+
+    }

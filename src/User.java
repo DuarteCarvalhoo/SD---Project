@@ -1,14 +1,31 @@
 import java.io.Serializable;
+import java.util.ArrayList;
 
 public class User implements Serializable{
     private String username;
     private String password;
     private boolean online = false;
     private boolean editor = false;
+    private ArrayList<String> downloadableMusics = new ArrayList<>();
 
 
     public String getUsername() {
         return username;
+    }
+
+    public String printDownloadableMusics(){
+        String finalString = "";
+        if(getDownloadableMusics().isEmpty()){
+            finalString += "No musics to show.";
+        }
+        else{
+            for(String music : getDownloadableMusics()){
+                finalString += music;
+                finalString += ",";
+                finalString+="\n";
+            }
+        }
+        return finalString;
     }
 
     public String getPassword() {
@@ -25,6 +42,14 @@ public class User implements Serializable{
 
     public void setEditor(boolean editor) {
         this.editor = editor;
+    }
+
+    public void addDownloadableMusic(String musicName){
+        this.downloadableMusics.add(musicName);
+    }
+
+    public ArrayList<String> getDownloadableMusics() {
+        return downloadableMusics;
     }
 
     public boolean checkPassword(String password){
