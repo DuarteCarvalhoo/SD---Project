@@ -358,7 +358,9 @@ public class Client extends UnicastRemoteObject implements ClientHello{
                         }
                         break;
                     default:
-                        System.out.println("Este comando não faz nada. Para sair escreva '/logout'");
+                        if (!text.trim().equals("/logout")){
+                            System.out.println("Este comando não faz nada. Para sair escreva '/logout'");
+                        }
                 }
             }
             catch(RemoteException e){
