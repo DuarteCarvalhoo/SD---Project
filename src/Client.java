@@ -156,7 +156,6 @@ public class Client {
     }
 
     private static String sendMusic(Hello rmi) throws IOException {
-
         ServerSocket socket = new ServerSocket(5000);
         System.out.println("check1");
         String[] aux = socket.getLocalSocketAddress().toString().split("/");
@@ -431,7 +430,7 @@ public class Client {
                 score = Double.parseDouble(pont.trim());
                 break;
             } catch (NumberFormatException ignore) {
-                System.out.println("Invalid input");
+                System.out.println("Invalid input!");
             }
         }
 

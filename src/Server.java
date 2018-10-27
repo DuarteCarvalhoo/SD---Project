@@ -38,10 +38,7 @@
 
 import com.sun.xml.internal.ws.policy.privateutil.PolicyUtils;
 
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.net.MulticastSocket;
@@ -527,8 +524,26 @@ public class Server implements Hello {
             return "pong";
         }
 
+    public static String[] readIPFile() {
+        String line = null;
+        String[] lineSplit = new String[2];
+        try {
+            FileReader fileR = new FileReader("ip local.txt");
+            BufferedReader bufferedR = new BufferedReader(fileR);
+            while((line=bufferedR.readLine()) !=null){
+                lineSplit = line.split("\\|");
+            }
+        } catch (FileNotFoundException e){
+            System.out.println("Not found");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return lineSplit;
+    }
     public static void main (String[]args){
-        System.setProperty("localhost", "192.168.1.74");
+        String data[] = readIPFile();
+        //System.setProperty("localhost", "192.168.1.74");
+        System.setProperty(data[0], data[1]);
         int aux = 0;
         while (aux < 1) {
             try {
