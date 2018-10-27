@@ -13,6 +13,7 @@ public class MulticastServer extends Thread implements Serializable {
     private ArrayList<User> usersList = new ArrayList<>();
     private ArrayList<Artist> artistsList = new ArrayList<>();
     private ArrayList<Album> albunsList = new ArrayList<>();
+    private ArrayList<Music> musicsList = new ArrayList<>();
 
     public static void main(String[] args){
         MulticastServer server = new MulticastServer();
@@ -135,10 +136,18 @@ public class MulticastServer extends Thread implements Serializable {
                         sendMsg("Music saving on the server.");
                         break;
                     case "type|sendMusic":
-                        aux2 = aux[1];
-                        String[] musicName = aux2.split("\\|");
-                        receiveMusic(socketHelp, musicName[1]);
-                        sendMsg("it worked out");
+                        String[] pathParts = aux[1].split("\\|");
+                        String[] nameParts = aux[2].split("\\|");
+                        String[] composerParts = aux[3].split("\\|");
+                        String[] artistParts = aux[4].split("\\|");
+                        String[] durationParts = aux[4].split("\\|");
+                        String[] albumParts = aux[5].split("\\|");
+                        String[] genreParts = aux[6].split("\\|");
+                        Music music = new Music(pathParts[1],nameParts[1],composerParts[1],artistParts[1],durationParts[1],albumParts[1],genreParts[1]);
+                        musicsList.add(music);
+                        writeFiles();
+                        receiveMusic(socketHelp, nameParts[1]);
+                        sendMsg("it worked out|"+musicsList);
                         break;
                     case "type|openSocket":
                         auxSocket = openSocket();
@@ -181,19 +190,19 @@ public class MulticastServer extends Thread implements Serializable {
                         }
                         break;
                     case "type|createArtist":
-                        String[] nameParts = aux[1].split("\\|");
-                        String[] genreParts = aux[2].split("\\|");
+                        String[] nameParts1 = aux[1].split("\\|");
+                        String[] genreParts1 = aux[2].split("\\|");
                         String[] descriptionParts = aux[3].split("\\|");
-                        boolean artistExists = checkArtistExists(nameParts[1]);
+                        boolean artistExists = checkArtistExists(nameParts1[1]);
                         if (artistExists) {
                             sendMsg("type|artistExists");
                             System.out.println("ERRO: Artist already exists.");
                         }
                         else {
-                            Artist newArtist = new Artist(nameParts[1],descriptionParts[1],genreParts[1]);
+                            Artist newArtist = new Artist(nameParts1[1],descriptionParts[1],genreParts1[1]);
                             artistsList.add(newArtist);
                             writeFiles();
-                            System.out.println("SUCESSO: Adicionou ao arraylist com nome '" + nameParts[1] + "', genre '" + genreParts[1] + "' e descrição '"+descriptionParts[1]+"'");
+                            System.out.println("SUCESSO: Adicionou ao arraylist com nome '" + nameParts1[1] + "', genre '" + genreParts1[1] + "' e descrição '"+descriptionParts[1]+"'");
                             sendMsg("type|createArtistComplete");
                         }
                         break;
@@ -367,7 +376,7 @@ public class MulticastServer extends Thread implements Serializable {
                         Album newAlbum = new Album();
                         String[] scoreParts = aux[1].split("\\|");
                         String[] textParts = aux[2].split("\\|");
-                        String[] albumParts = aux[3].split("\\|");
+                        String[] albumParts1 = aux[3].split("\\|");
                         Critic c = new Critic(Double.parseDouble(scoreParts[1]),textParts[1]);
                         if(albunsList.isEmpty()){
                             sendMsg("type|criticFail");
@@ -375,11 +384,11 @@ public class MulticastServer extends Thread implements Serializable {
                         }
                         else {
                             for (Album a : albunsList) {
-                                if (a.getName().equals(albumParts[1])) {
+                                if (a.getName().equals(albumParts1[1])) {
                                     newAlbum = a;
                                 }
                             }
-                            if(checkAlbumExists(albumParts[1],newAlbum.getArtist().getName())){
+                            if(checkAlbumExists(albumParts1[1],newAlbum.getArtist().getName())){
                                 newAlbum.addCritic(c);
                                 sendMsg("type|criticComplete");
                                 System.out.println("Critic Complete.");
@@ -605,7 +614,8 @@ public class MulticastServer extends Thread implements Serializable {
             ObjectInputStream objectIn = new ObjectInputStream(new BufferedInputStream(new FileInputStream("data.bin")));
             this.usersList = (ArrayList) objectIn.readObject();
             this.artistsList = (ArrayList) objectIn.readObject();
-            this.albunsList = (ArrayList<Album>) objectIn.readObject();
+            this.albunsList = (ArrayList) objectIn.readObject();
+            this.musicsList = (ArrayList) objectIn.readObject();
             objectIn.close();
             System.out.println("Read file successfully.");
         }
@@ -628,6 +638,7 @@ public class MulticastServer extends Thread implements Serializable {
             fout.writeObject(this.usersList);
             fout.writeObject(this.artistsList);
             fout.writeObject(this.albunsList);
+            fout.writeObject(this.musicsList);
             fout.close();
             out.close();
         }
