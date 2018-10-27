@@ -178,7 +178,7 @@ public class Client {
         int current =0;
         long len = file.length();
         while(current!=len){
-            int size = 1024 * 1024;
+            int size = 1024;
 
             if(len - current >= size)
                 current += size;
