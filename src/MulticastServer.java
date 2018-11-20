@@ -270,7 +270,7 @@ public class MulticastServer extends Thread implements Serializable {
                             System.out.println("ERRO: Artist already exists.");
                         }
                         else {
-                            Artist newArtist = new Artist(nameParts1[1],descriptionParts[1],genreParts1[1]);
+                            Musician newArtist = new Musician(nameParts1[1],descriptionParts[1],genreParts1[1]);
                             artistsList.add(newArtist);
                             writeFiles();
                             System.out.println("SUCESSO: Adicionou ao arraylist com nome '" + nameParts1[1] + "', genre '" + genreParts1[1] + "' e descrição '"+descriptionParts[1]+"'");
@@ -278,7 +278,7 @@ public class MulticastServer extends Thread implements Serializable {
                         }
                         break;
                     case "type|createAlbum":
-                        Artist artist = new Artist();
+                        Artist artist = new Musician();
                         String[] namePa = aux[1].split("\\|");
                         String[] aName = aux[2].split("\\|");
                         String[] descripParts = aux[3].split("\\|");
@@ -412,7 +412,7 @@ public class MulticastServer extends Thread implements Serializable {
                         }*/
                         String[] nameArtist = aux[1].split("\\|");
                         String n = nameArtist[1];
-                        Artist art = new Artist();
+                        Artist art = new Musician();
                         if(artistsList.isEmpty()){
                             sendMsg("type|showArtistFail");
                             System.out.println("ERROR: No Artists on the database.");
@@ -434,7 +434,7 @@ public class MulticastServer extends Thread implements Serializable {
                     case "type|showArtistAlbums":
                         String[] nameA = aux[1].split("\\|");
                         String nA = nameA[1];
-                        Artist artista = new Artist();
+                        Artist artista = new Musician();
                         if(!checkArtistExists(nA)){
                             sendMsg("type|showArtistAlbumsFail");
                             System.out.println("ERROR: Artist Not Found.");

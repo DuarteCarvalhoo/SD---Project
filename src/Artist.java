@@ -1,7 +1,7 @@
 import java.io.Serializable;
 import java.util.ArrayList;
 
-public class Artist implements Serializable {
+public abstract class Artist implements Serializable {
     private String name,description, genre;
     private ArrayList<Album> albums = new ArrayList<>();
 
