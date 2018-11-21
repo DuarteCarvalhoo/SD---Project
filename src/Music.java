@@ -1,76 +1,32 @@
 import java.io.Serializable;
 
 public class Music implements Serializable {
-    private String path,title,composer,artist,album,genre;
-    private int duration;
+    private String title;
+    private int length;
+    private int id;
 
-    public String getPath() {
-        return path;
+    public int getId() {
+        return id;
     }
 
-    public void setPath(String path) {
-        this.path = path;
-    }
-
-    public String getComposer() {
-        return composer;
-    }
-
-    public String getArtist() {
-        return artist;
+    public void setId(int id) {
+        this.id = id;
     }
 
     public String getTitle() {
         return title;
     }
 
-    public void setComposer(String composer) {
-        this.composer = composer;
-    }
-
-    public void setArtist(String artist) {
-        this.artist = artist;
-    }
-
     public void setTitle(String title) {
         this.title = title;
     }
 
-    public String getAlbum() {
-        return album;
-    }
-
-    public void setAlbum(String album) {
-        this.album = album;
-    }
-
-    public String getGenre() {
-        return genre;
-    }
-
-    public void setGenre(String genre) {
-        this.genre = genre;
-    }
-
-    public int getDuration() {
-        return duration;
-    }
-
-    public void setDuration(int duration) {
-        this.duration = duration;
-    }
-
-    public Music(String path, String title, String composer, String artist, String duration, String album, String genre) {
-        this.path = path;
+    public Music(String path, String title, String composer, String artist, String length, String album, String genre) {
         this.title = title;
-        this.composer = composer;
-        this.artist = artist;
-        this.duration = Integer.parseInt(duration);
-        this.album = album;
-        this.genre = genre;
+        this.length = Integer.parseInt(length);
     }
 
     public String toString(){
-        return getArtist() +" - " + getTitle();
+        return getTitle();
     }
 }

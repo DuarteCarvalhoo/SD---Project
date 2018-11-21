@@ -176,7 +176,7 @@ public class MulticastServer extends Thread implements Serializable {
                             artisT = returnsArtist(artistParts[1]);
                             for(Album album2 : artisT.getAlbums()){
                                 if(album2.getName().trim().equals(albumParts[1])){
-                                    album2.addMusic(music);
+                                    //album2.addMusic(music);
                                     System.out.println("Music added to artist's album.");
                                 }
                             }
@@ -411,13 +411,13 @@ public class MulticastServer extends Thread implements Serializable {
                                 sendMsg("type|albumNotFound");
                             }
                             else {
-                                Album newAlbum = new Album(namePa[1], artist, descripParts[1], duracaoParts[1]);
-                                albunsList.add(newAlbum);
+                                //Album newAlbum = new Album(namePa[1], artist, descripParts[1], duracaoParts[1]);
+                                //albunsList.add(newAlbum);
 
                                 boolean flagAddToArtist = false;
                                 for (Artist a : artistsList) {
                                     if (a.getName().equals(aName[1])) {
-                                        a.getAlbums().add(newAlbum);
+                                        //a.getAlbums().add(newAlbum);
                                         sendMsg("type|createAlbumComplete");
                                         flagAddToArtist = true;
                                     }
@@ -431,18 +431,47 @@ public class MulticastServer extends Thread implements Serializable {
                         break;
                     case "type|createConcert":
                         String[] concertLocation = aux[1].split("\\|");
+                        String[] concertName = aux[2].split("\\|");
                         PreparedStatement stmtConcert = null;
                         try {
-                            Concert a = new Concert(concertLocation[1]);
+                            Concert a = new Concert(concertLocation[1],concertName[1]);
                             connection.setAutoCommit(false);
                             System.out.println("Opened database successfully");
 
-                            stmtConcert = connection.prepareStatement("INSERT INTO concerts (id,location)"
-                                    + "VALUES (DEFAULT,?);");
+                            stmtConcert = connection.prepareStatement("INSERT INTO concerts (id,location,name)"
+                                    + "VALUES (DEFAULT,?,?);");
                             stmtConcert.setString(1,a.getLocation());
+                            stmtConcert.setString(2,a.getName());
                             stmtConcert.executeUpdate();
 
                             stmtConcert.close();
+                            connection.commit();
+
+                        }catch(org.postgresql.util.PSQLException e) {
+                            sendMsg("type|createConcertFailed");
+                            System.out.println("ERRO: Concert already exists.");
+                        }
+                        System.out.println("Records created successfully");
+                        sendMsg("type|createConcertComplete");
+                        break;
+                    case "type|concertAssociation":
+                        String[] concertBandMusician = aux[2].split("\\|");
+                        String[] concertN = aux[1].split("\\|");
+
+                        int concertId = getConcertIdByName(concertN[1]);
+                        int bandId = getArtistIdByName(concertBandMusician[1]);
+                        PreparedStatement stmtConcertA = null;
+                        try {
+                            connection.setAutoCommit(false);
+                            System.out.println("Opened database successfully");
+
+                            stmtConcertA = connection.prepareStatement("INSERT INTO concerts_group (concerts_id, artist_id)"
+                                    + "VALUES (?,?);");
+                            stmtConcertA.setInt(1,concertId);
+                            stmtConcertA.setInt(2,bandId);
+                            stmtConcertA.executeUpdate();
+
+                            stmtConcertA.close();
                             connection.commit();
 
                         }catch(org.postgresql.util.PSQLException e) {
@@ -474,6 +503,30 @@ public class MulticastServer extends Thread implements Serializable {
                         }
                         System.out.println("Records created successfully");
                         sendMsg("type|createPublisherComplete");
+                        break;
+                    case "type|createPlaylist":
+                        String[] playlistName = aux[1].split("\\|");
+                        String[] playlistUser = aux[2].split("\\|");
+                        PreparedStatement stmtPlaylist = null, stmtUserConnection=null;
+                        try {
+                            Playlist a = new Playlist(playlistName[1]);
+                            connection.setAutoCommit(false);
+                            System.out.println("Opened database successfully");
+
+                            stmtPlaylist = connection.prepareStatement("INSERT INTO playlist (id,name,user_id)"
+                                    + "VALUES (DEFAULT,?,?);");
+                            stmtPlaylist.setString(1,a.getName());
+                            stmtPlaylist.setInt(2,Integer.parseInt(playlistUser[1]));
+                            stmtPlaylist.executeUpdate();
+
+                            stmtPlaylist.close();
+                            connection.commit();
+                        }catch(org.postgresql.util.PSQLException e) {
+                            sendMsg("type|createPlaylistFailed");
+                            System.out.println("ERRO: Something went wrong");
+                        }
+                        System.out.println("Records created successfully");
+                        sendMsg("type|createPlaylistComplete");
                         break;
                     case "type|editArtistName":
                         String[] nameBeforeParts = aux[1].split("\\|");
@@ -617,7 +670,7 @@ public class MulticastServer extends Thread implements Serializable {
                         }
                         break;
                     case "type|makeCritic":
-                        Album newAlbum = new Album();
+                        /*Album newAlbum = new Album();
                         String[] scoreParts = aux[1].split("\\|");
                         String[] textParts = aux[2].split("\\|");
                         String[] albumParts1 = aux[3].split("\\|");
@@ -641,7 +694,7 @@ public class MulticastServer extends Thread implements Serializable {
                                 sendMsg("type|criticFail");
                                 System.out.println("Critic not Complete. Album not found.");
                             }
-                        }
+                        }*/
                         break;
                     case "type|showAlbum":
                         Album album = new Album();
@@ -678,6 +731,64 @@ public class MulticastServer extends Thread implements Serializable {
         } finally {
             socket.close();
         }
+    }
+
+    private int getConcertIdByName(String concertN) {
+        try{
+            connection.setAutoCommit(false);
+            PreparedStatement stmt = connection.prepareStatement("SELECT * FROM concerts WHERE name = ?;");
+            stmt.setString(1,concertN);
+            ResultSet rs = stmt.executeQuery();
+
+            int concertId = 0 ;
+            while (rs.next()) {
+                concertId = rs.getInt("id");
+            }
+
+            return concertId;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return 0;
+    }
+
+    private String getConcertNameById(int concertId) {
+        try{
+            connection.setAutoCommit(false);
+            PreparedStatement stmt = connection.prepareStatement("SELECT * FROM concerts WHERE id = ?;");
+            stmt.setInt(1,concertId);
+            ResultSet rs = stmt.executeQuery();
+
+            String concertName = "" ;
+            while (rs.next()) {
+                concertName = rs.getString("name");
+            }
+
+            return concertName;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return "";
+    }
+
+    private int getArtistIdByName(String bandMusicianName) {
+        try{
+            connection.setAutoCommit(false);
+            PreparedStatement stmt = connection.prepareStatement("SELECT * FROM artist WHERE name = ?;");
+
+            stmt.setString(1,bandMusicianName);
+            ResultSet rs = stmt.executeQuery();
+
+            int concertId = 0 ;
+            while (rs.next()) {
+                concertId = rs.getInt("id");
+            }
+
+            return concertId;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return 0;
     }
 
     private boolean isEditor(String username) {
@@ -897,9 +1008,9 @@ public class MulticastServer extends Thread implements Serializable {
         else {
             for (Music music : musicsList) {
                 if (music.getTitle().equals(name)){
-                    if(music.getArtist().equals(artistName)){
+                    /*if(music.getArtist().equals(artistName)){
                         return true;
-                    }
+                    }*/
                 }
             }
         }
@@ -913,9 +1024,9 @@ public class MulticastServer extends Thread implements Serializable {
         else {
             for (Album album : albunsList) {
                 if (album.getName().equals(name)) {
-                    if(album.getArtist().getName().equals(artist)){
+                    /*if(album.getArtist().getName().equals(artist)){
                         return true;
-                    }
+                    }*/
                 }
             }
         }

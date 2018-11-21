@@ -436,24 +436,6 @@ public class Client extends UnicastRemoteObject implements ClientHello{
         switch (responseSplit[0]) {
             case "type|showArtistComplete":
                 System.out.println(artistParts[1]); //easy way, i don't if i can use it
-                /*if (responseSplit.length > 3) {
-                    String[] nome = responseSplit[1].split("\\|");
-                    String[] genre = responseSplit[2].split("\\|");
-                    String[] description = responseSplit[3].split("\\|");
-                    String[] albunsParts = responseSplit[4].split("\\|");
-                    String albunsNamesFinais = "";
-                    int i;
-                    for(i=2;i<albunsParts.length;i++){
-                        albunsNamesFinais += (albunsParts[i] + ",");
-                    }
-                    System.out.println("\nName: "+nome[1]+"\nGenre: "+genre[1]+"\nDescription: "+description[1]+"\nAlbums:"+albunsNamesFinais);
-                }
-                else{
-                    String[] nome = responseSplit[1].split("\\|");
-                    String[] genre = responseSplit[2].split("\\|");
-                    String[] description = responseSplit[3].split("\\|");
-                    System.out.println(nome[1]+"-"+genre[1]+"-"+description[1]);
-                }*/
                 break;
             case "type|showArtistFail":
                 System.out.println("Artist not Shown.");
@@ -683,7 +665,7 @@ public class Client extends UnicastRemoteObject implements ClientHello{
                 createPublisher(rmi,reader);
                 break;
             case "/playlist":
-                //createPlaylist(rmi,reader);
+                createPlaylist(rmi,reader);
                 break;
             default:
                 //Something;
@@ -881,24 +863,42 @@ public class Client extends UnicastRemoteObject implements ClientHello{
 
     public static void createConcert(Hello rmi,Scanner reader) throws RemoteException{
         boolean flagOK = false;
-        System.out.println("Insert your data('location')");
+        System.out.println("Insert your data('location-name-band/musician')");
         String text = "";
+        String[]data = new String[3];
         while(!flagOK) {
             text = reader.nextLine();
-            if(text.trim().equals("")){
-                System.out.println("Insert your data('location')");
+            data = text.trim().split("-");
+            if(data.length == 3){
+                if(data[0].trim().equals("") || data[1].trim().equals("") || data[2].trim().equals("")){
+                    System.out.println("Insert your data('location-name-band/musician')");
+                }
+                else {
+                    flagOK = true;
+                }
             }
             else{
-                flagOK = true;
+                System.out.println("Insert your data('location-name-band/musician')");
             }
         }
-        String response = rmi.createConcert(text);
-        switch (response.trim()){
+        String response1 = rmi.createConcert(data[0],data[1]);
+        switch (response1.trim()){
+            case "type|createConcertFailed":
+                System.out.println("Concert creation failed.");
+                break;
+            case "type|createConcertComplete":
+                System.out.println("SUCCESS: Concert created successfully.");
+                break;
+            default:
+                //something;
+        }
+        String response2 = rmi.concertAssociation(data[1],data[2]);
+        switch (response2.trim()){
             case "type|concertExists":
                 System.out.println("Concert already exists.");
                 break;
             case "type|createConcertComplete":
-                System.out.println("SUCCESS: Concert created successfully.");
+                System.out.println("SUCCESS: Successful association.");
                 break;
             default:
                 //something;
@@ -925,6 +925,32 @@ public class Client extends UnicastRemoteObject implements ClientHello{
                 break;
             case "type|createPublisherComplete":
                 System.out.println("SUCCESS: Publisher created successfully.");
+                break;
+            default:
+                //something;
+        }
+    }
+
+    public static void createPlaylist(Hello rmi,Scanner reader) throws RemoteException{
+        boolean flagOK = false;
+        System.out.println("Insert your data('name')");
+        String text = "";
+        while(!flagOK) {
+            text = reader.nextLine();
+            if(text.trim().equals("")){
+                System.out.println("Insert your data('name-description')");
+            }
+            else {
+                flagOK = true;
+            }
+        }
+        String response1 = rmi.createPlaylist(text,loggedUser.getId()); //User-Playlist association
+        switch (response1.trim()){
+            case "type|createPlaylistFailed":
+                System.out.println("Playlist not created.");
+                break;
+            case "type|createPlaylistComplete":
+                System.out.println("SUCCESS: Playlist created successfully.");
                 break;
             default:
                 //something;
