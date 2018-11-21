@@ -71,37 +71,25 @@ public class MulticastServer extends Thread implements Serializable {
                         String[] loginPasswordParts = aux[2].split("\\|");
                         String user = loginUsernameParts[1];
                         String pass = loginPasswordParts[1];
-                        if (userDatabaseEmpty()) {
-                            sendMsg("type|loginFail");
-                            System.out.println("ERROR: No users on the database.");
-                        } else {
-                            User u = checkUsernameLogin(user,pass);
-                            if (!u.equals(null)) {
-                                /*if (u.isOnline()) {
-                                    sendMsg("type|loginFail");
-                                    System.out.println("ERRO: User already logged in.");
-                                } else {
-                                */
-                                boolean loggedIn = true;
-                                if (!loggedIn) {
-                                    sendMsg("type|loginFail");
-                                    System.out.println("ERRO: Login não completo.");
-                                } else {
-                                    //setUserOnline();
-                                    sendMsg("type|loginComplete;username|" + u.getUsername() + ";password|" + u.getPassword() + ";editor|" + u.isEditor());
+                        try {
+                            if (userDatabaseEmpty()) {
+                                sendMsg("type|loginFail");
+                                System.out.println("ERROR: No users on the database.");
+                            } else {
+                                User u = checkUsernameLogin(user, pass);
+                                if(u.getId() != 0){
+                                    sendMsg("type|loginComplete;id|" + u.getId()+";editor|"+u.isEditor());//
                                     System.out.println("SUCESSO: Login Completo");
                                     flag = true;
                                 }
+                            }
+                                if (!flag) {
+                                    System.out.println("Username not found.");
+                                    sendMsg("type|loginFail");
                                 }
-                                else{
-                                sendMsg("type|loginFail");
-                                System.out.println("ERRO: Password/Username incorrect.");
-                            }
-                            //}
-                            if (!flag) {
-                                System.out.println("Username not found.");
-                                sendMsg("type|loginFail");
-                            }
+                        }
+                        catch (org.postgresql.util.PSQLException e){
+                            System.out.println(e);
                         }
                         //funçao passa como argumentos o user e pw
                         //funçao pra confirmar se o user existe, se a pw ta certa e por fim enviar a resposta
@@ -129,7 +117,6 @@ public class MulticastServer extends Thread implements Serializable {
 
                             stmt.close();
                             connection.commit();
-                            connection.close();
                             sendMsg("type|registComplete");
                         }
                         else{
@@ -144,7 +131,7 @@ public class MulticastServer extends Thread implements Serializable {
 
                                 stmt.close();
                                 connection.commit();
-                                connection.close();
+                                
                                 sendMsg("type|registComplete");
                             } catch (org.postgresql.util.PSQLException e){
                                 System.out.println("Something went wrong.");
@@ -314,7 +301,7 @@ public class MulticastServer extends Thread implements Serializable {
 
                                 stmt.close();
                                 connection.commit();
-                                connection.close();
+                                
                             } catch (Exception e) {
                                 System.err.println( e.getClass().getName()+": "+ e.getMessage() );
                                 System.exit(0);
@@ -492,7 +479,7 @@ public class MulticastServer extends Thread implements Serializable {
                             }
                             rs.close();
                             stmt.close();
-                            connection.close();
+                            
                         } catch ( Exception e ) {
                             System.err.println( e.getClass().getName()+": "+ e.getMessage() );
                             System.exit(0);
@@ -583,31 +570,6 @@ public class MulticastServer extends Thread implements Serializable {
                             }
                         }
                         break;
-                    case "type|logout":
-                        boolean flagLogout = false;
-                        System.out.println("Logging out.");
-                        String[] logoutUsername = aux[1].split("\\|");
-                        String logoutUser = logoutUsername[1];
-                        if (!logoutUser.equals("none")) {
-                            for (User u : usersList) {
-                                if (u.getUsername().equals(logoutUser)) {
-                                    u.setOffline();
-                                    //readFiles();
-                                    writeFiles();
-                                    sendMsg("type|logoutComplete");
-                                    flagLogout = true;
-                                }
-                            }
-                            if (!flagLogout) {
-                                System.out.println("User not found");
-                                sendMsg("type|logoutFail");
-                            }
-                        } else {
-                            System.out.println("No user is logged in.");
-                            sendMsg("type|logoutFail");
-                        }
-                        break;
-                    //dentro da funçao decidir o que pesquisa artista, estilo ou album
                     default:
                         System.out.println("Feedback above.");
                         break;
@@ -709,9 +671,14 @@ public class MulticastServer extends Thread implements Serializable {
     }
     ////////////// FUNÇOES AUXILIAR /////////////
     private boolean userDatabaseEmpty() throws SQLException {
-        Statement stmt = connection.createStatement();
-        ResultSet rs = stmt.executeQuery("SELECT * FROM utilizador");
-        return !rs.next();
+        try{
+            Statement stmt = connection.createStatement();
+            ResultSet rs = stmt.executeQuery("SELECT * FROM utilizador");
+            return !rs.next();
+        }
+        catch (org.postgresql.util.PSQLException e){
+            return false;
+        }
     }
 
     private User returnsUser(String username){
@@ -737,13 +704,15 @@ public class MulticastServer extends Thread implements Serializable {
         try {
             String userDB="",passDB="";
             boolean isEditorDB=false;
-            connection.setAutoCommit(false);
+            int id=0;
 
+            connection.setAutoCommit(false);
             stmt = connection.prepareStatement("SELECT * FROM utilizador WHERE username = ?;");
             stmt.setString(1, username);
             ResultSet rs = stmt.executeQuery();
 
             while (rs.next()) {
+                id = rs.getInt("id");
                 userDB = rs.getString("username");
                 passDB = rs.getString("password");
                 isEditorDB = rs.getBoolean("iseditor");
@@ -751,15 +720,14 @@ public class MulticastServer extends Thread implements Serializable {
 
             stmt.close();
             connection.commit();
-            connection.close();
-            User u = new User(username,password,isEditorDB);
+            User u = new User(id,username,isEditorDB);
             if(userDB.equals(username) && passDB.equals(password)){
                 return u;
             }
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        return null;
+        return (new User(0,"none",false));
     }
 
     public int checkUsernameRegister(String username){

@@ -138,6 +138,11 @@ public class Server implements Hello {
         System.out.println("Entrou no Login");
         String[] newLogin = login.split("-");
         MulticastSocket socket = null;
+        for(User u : userOnlines){
+            if(u.getUsername().equals(newLogin[0])){
+                return "type|userLogged";
+            }
+        }
         //envia pra o multicast
         try {
             socket = new MulticastSocket();
@@ -186,31 +191,13 @@ public class Server implements Hello {
     }
 
     public String checkLogout(User user) {
-        System.out.println("Entrou no logout");
-        MulticastSocket socket = null;
-        //envia pra o multicast
-        try {
-            socket = new MulticastSocket();
-            InetAddress group = InetAddress.getByName(MULTICAST_ADDRESS);
-            socket.joinGroup(group);
-            String aux = "type|logout;username|" + user.getUsername(); //protocol
-            System.out.println(aux); //ver como ficou
-            byte[] buffer = aux.getBytes();
-            DatagramPacket packet = new DatagramPacket(buffer, buffer.length, group, PORT);
-            socket.send(packet);
-            //recebe do multicast
-            String msg = receiveMulticast();
-            if (msg != null) return msg;
-            socket.leaveGroup(group);
-        } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            socket.close();
+        for(User u : userOnlines){
+            if(u.getId() == user.getId()){
+                removeOnlineUser(u);
+            }
+            return "type|logoutComplete";
         }
-
-
-
-        return "ups";
+        return "type|logoutFail";
     }
 
     public void addOnlineUser(User aux){
@@ -482,14 +469,14 @@ public class Server implements Hello {
             ClientHello aux2 = null;
             System.out.println("entrei no if");
             try {
-                for (int i=0;i<userOnlines.size();i++) {
+                /*for (int i=0;i<userOnlines.size();i++) {
                     if (userOnlines.get(i).getUsername().equals(name)) {
                         System.out.println("entrei noutro");
                         aux2 = userOnlines.get(i).getInterface();
                         System.out.println("criou interface client");
                         break;
                     }
-                }
+                }*/
                 aux2.msg(">> You are now an editor!");
             } catch (NullPointerException e) { //o user ta off
                 System.out.println("tou remoteexpetion");

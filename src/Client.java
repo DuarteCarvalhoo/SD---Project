@@ -56,7 +56,7 @@ import java.net.*;
 
 public class Client extends UnicastRemoteObject implements ClientHello{
 
-    private static User loggedUser = new User();
+    private static User loggedUser;
     private Client() throws RemoteException {}
     private static ClientHello client;
 
@@ -95,7 +95,7 @@ public class Client extends UnicastRemoteObject implements ClientHello{
                         registo(rmi, reader);
                         break;
                     case "/user":
-                        System.out.println(loggedUser.getUsername());
+                        System.out.println(loggedUser);
                         break;
                     default:
                         if(!text.trim().equals("quit")){
@@ -141,7 +141,6 @@ public class Client extends UnicastRemoteObject implements ClientHello{
                 break;
             case "type|registComplete":
                 System.out.println("Successful register.");
-                loggedUser.setClientInterface(client);
                 break;
             default:
                 System.out.println("Something went wrong.");
@@ -172,22 +171,17 @@ public class Client extends UnicastRemoteObject implements ClientHello{
         String[] txtSplit = txt.split(";");
         switch (txtSplit[0].trim()){
             case "type|loginComplete":
-                if (txtSplit.length == 3) {
-                    String[] username = txtSplit[1].split("\\|");
-                    String[] password = txtSplit[2].split("\\|");
-                    String[] editor = txtSplit[3].split("\\|");
-                    loggedUser = new User(username[1], password[1], Boolean.parseBoolean(editor[1]),true);
-                }
-                System.out.println("Welcome!");
+                String[] id = txtSplit[1].split("\\|");
+                String[] editor = txtSplit[2].split("\\|");
+                loggedUser = new User(Integer.parseInt(id[1]),userDataParts[0],Boolean.parseBoolean(editor[1]));
                 loggedUser.setClientInterface(client);
-                ArrayList<String> printNotif = loggedUser.getNotifications();
-                System.out.println(printNotif.size());
-                for(int i=0;i<printNotif.size();i++){
-                    System.out.println(printNotif.get(i));
-                }
+                System.out.println("Welcome!");
+
                 rmi.addOnlineUser(loggedUser);
                 menuPrincipal(rmi,reader);
-                loggedUser.cleanNotification();
+                break;
+            case "type|userLogged":
+                System.out.println("User already logged in.");
                 break;
             case "type|loginFail":
                 System.out.println("Login failed.");
@@ -198,19 +192,9 @@ public class Client extends UnicastRemoteObject implements ClientHello{
     }
 
     public static void logout(Hello rmi) throws RemoteException{
-        String txt = rmi.checkLogout(loggedUser);
-        switch(txt.trim()){
-            case "type|logoutComplete":
-                System.out.println("Logged out successfully.");
-                rmi.removeOnlineUser(loggedUser);
-                loggedUser = new User();
-                break;
-            case "type|logoutFail":
-                System.out.println("Logout failed.");
-                break;
-            default:
-                System.out.println("Something went wrong.");
-        }
+        rmi.checkLogout(loggedUser);
+        System.out.println("Logged out successfully.");
+        loggedUser = new User();
     }
 
             ////////////// MENU PRINCIPAL COM A FUNÇÕES INICIAIS /////////////
@@ -312,7 +296,7 @@ public class Client extends UnicastRemoteObject implements ClientHello{
                         makeCritic(rmi,reader);
                         break;
                     case "/download":
-                        System.out.println(downloadMusic(rmi, reader));
+                        //System.out.println(downloadMusic(rmi, reader));
                         break;
                     case "/upload":
                         String[] musicInfo = new String[7];
@@ -1007,7 +991,7 @@ public class Client extends UnicastRemoteObject implements ClientHello{
         return musicInfo;
     }
 
-    private static String downloadMusic(Hello rmi, Scanner reader) throws IOException {
+    /*private static String downloadMusic(Hello rmi, Scanner reader) throws IOException {
         System.out.println("Choose one song:");
         if(loggedUser.printDownloadableMusics().equals("No musics to show.")){
             return "Can't download any musics.";
@@ -1062,7 +1046,7 @@ public class Client extends UnicastRemoteObject implements ClientHello{
         System.out.println("ficheiro 100% completo");
 
         return print;
-    }
+    }*/
 
            ////////////// FAILOVER /////////////
     private static Hello changeRMI() throws RemoteException, NotBoundException {
