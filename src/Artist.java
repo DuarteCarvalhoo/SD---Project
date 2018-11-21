@@ -2,7 +2,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 
 public abstract class Artist implements Serializable {
-    private String name,description, genre;
+    private String name,description;
     private boolean isComposer = false ,isSongwriter = false ,isMusician = false , isBand = false;
     private ArrayList<Album> albums = new ArrayList<>();
 
@@ -38,14 +38,6 @@ public abstract class Artist implements Serializable {
         this.description = description;
     }
 
-    public String getGenre() {
-        return genre;
-    }
-
-    public void setGenre(String genre) {
-        this.genre = genre;
-    }
-
     public String printAlbums(ArrayList<Album> albums) {
         String finalString = "";
         if(albums.isEmpty()){
@@ -64,10 +56,9 @@ public abstract class Artist implements Serializable {
         return albums;
     }
 
-    public Artist(String name, String genre, String description) {
+    public Artist(String name,String description) {
         this.name = name;
         this.description = description;
-        this.genre = genre;
     }
 
     public Artist(){}
@@ -75,7 +66,6 @@ public abstract class Artist implements Serializable {
     @Override
     public String toString(){
         return "Name: "+getName()
-                +"\nGenre: "+getGenre()
                 +"\nDescription: "+getDescription()
                 +"\nAlbums: "+printAlbums(this.albums);
     }

@@ -6,8 +6,8 @@ public class Composer extends Artist {
         return isComposer;
     }
 
-    public Composer(String name, String genre, String description) {
-        super(name, genre, description);
+    public Composer(String name, String description) {
+        super(name, description);
         this.isComposer = true;
     }
 

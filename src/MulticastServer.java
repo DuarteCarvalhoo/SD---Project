@@ -273,42 +273,121 @@ public class MulticastServer extends Thread implements Serializable {
                             }
                         }
                      */
-                    case "type|createArtist":
+                    case "type|createSongwriter":
                         String[] nameParts1 = aux[1].split("\\|");
-                        String[] genreParts1 = aux[2].split("\\|");
-                        String[] descriptionParts = aux[3].split("\\|");
-                        boolean artistExists = checkArtistExists(nameParts1[1]);
-                        if (artistExists) {
-                            sendMsg("type|artistExists");
+                        String[] descriptionParts = aux[2].split("\\|");
+                        PreparedStatement stmtSongwriter = null;
+                        try {
+                            Songwriter a = new Songwriter(nameParts1[1],descriptionParts[1]);
+                            connection.setAutoCommit(false);
+                            System.out.println("Opened database successfully");
+
+                            stmtSongwriter = connection.prepareStatement("INSERT INTO artist (id,name,description,musician_ismusician,group_isgroup,songwriter_issongwriter,composer_iscomposer)"
+                                    + "VALUES (DEFAULT,?,?,?,?,?,?);");
+                            stmtSongwriter.setString(1,a.getName());
+                            stmtSongwriter.setString(2,a.getDescription());
+                            stmtSongwriter.setBoolean(3,a.isMusician());
+                            stmtSongwriter.setBoolean(4,a.isBand());
+                            stmtSongwriter.setBoolean(5,a.isSongwriter());
+                            stmtSongwriter.setBoolean(6,a.isComposer());
+                            stmtSongwriter.executeUpdate();
+
+                            stmtSongwriter.close();
+                            connection.commit();
+
+                        } catch (org.postgresql.util.PSQLException e) {
+                            sendMsg("type|stmtSongwriter");
                             System.out.println("ERRO: Artist already exists.");
                         }
-                        else {
-                            PreparedStatement stmt = null;
-                            try {
-                                Musician a = new Musician(nameParts1[1],genreParts1[1],descriptionParts[1]);
-                                connection.setAutoCommit(false);
-                                System.out.println("Opened database successfully");
+                        System.out.println("Records created successfully");
+                        sendMsg("type|createSongwriterComplete");
+                        break;
+                    case "type|createMusician":
+                        String[] namePartsMusician = aux[1].split("\\|");
+                        String[] descriptionPartsMusician = aux[2].split("\\|");
+                        PreparedStatement stmtMusician = null;
+                        try {
+                            Musician a = new Musician(namePartsMusician[1],descriptionPartsMusician[1]);
+                            connection.setAutoCommit(false);
+                            System.out.println("Opened database successfully");
 
-                                stmt = connection.prepareStatement("INSERT INTO artist (id,name,description,musician_ismusician,group_isgroup,songwriter_issongwriter,composer_iscomposer)"
-                                        + "VALUES (DEFAULT,?,?,?,?,?,?);");
-                                stmt.setString(1,a.getName());
-                                stmt.setString(2,a.getDescription());
-                                stmt.setBoolean(3,a.isMusician());
-                                stmt.setBoolean(4,a.isBand());
-                                stmt.setBoolean(5,a.isSongwriter());
-                                stmt.setBoolean(6,a.isComposer());
-                                stmt.executeUpdate();
+                            stmtMusician = connection.prepareStatement("INSERT INTO artist (id,name,description,musician_ismusician,group_isgroup,songwriter_issongwriter,composer_iscomposer)"
+                                    + "VALUES (DEFAULT,?,?,?,?,?,?);");
+                            stmtMusician.setString(1,a.getName());
+                            stmtMusician.setString(2,a.getDescription());
+                            stmtMusician.setBoolean(3,a.isMusician());
+                            stmtMusician.setBoolean(4,a.isBand());
+                            stmtMusician.setBoolean(5,a.isSongwriter());
+                            stmtMusician.setBoolean(6,a.isComposer());
+                            stmtMusician.executeUpdate();
 
-                                stmt.close();
-                                connection.commit();
-                                
-                            } catch (Exception e) {
-                                System.err.println( e.getClass().getName()+": "+ e.getMessage() );
-                                System.exit(0);
-                            }
-                            System.out.println("Records created successfully");
+                            stmtMusician.close();
+                            connection.commit();
+
+                        } catch (org.postgresql.util.PSQLException e) {
+                            sendMsg("type|musicianExists");
+                            System.out.println("ERRO: Artist already exists.");
                         }
-                        sendMsg("type|createArtistComplete");
+                        System.out.println("Records created successfully");
+                        sendMsg("type|createMusicianComplete");
+                        break;
+                    case "type|createComposer":
+                        String[] namePartsComposer = aux[1].split("\\|");
+                        String[] descriptionPartsComposer = aux[2].split("\\|");
+                        PreparedStatement stmtComposer = null;
+                        try {
+                            Composer a = new Composer(namePartsComposer[1],descriptionPartsComposer[1]);
+                            connection.setAutoCommit(false);
+                            System.out.println("Opened database successfully");
+
+                            stmtComposer = connection.prepareStatement("INSERT INTO artist (id,name,description,musician_ismusician,group_isgroup,songwriter_issongwriter,composer_iscomposer)"
+                                    + "VALUES (DEFAULT,?,?,?,?,?,?);");
+                            stmtComposer.setString(1,a.getName());
+                            stmtComposer.setString(2,a.getDescription());
+                            stmtComposer.setBoolean(3,a.isMusician());
+                            stmtComposer.setBoolean(4,a.isBand());
+                            stmtComposer.setBoolean(5,a.isSongwriter());
+                            stmtComposer.setBoolean(6,a.isComposer());
+                            stmtComposer.executeUpdate();
+
+                            stmtComposer.close();
+                            connection.commit();
+
+                        }catch(org.postgresql.util.PSQLException e) {
+                            sendMsg("type|composerExists");
+                            System.out.println("ERRO: Composer already exists.");
+                        }
+                        System.out.println("Records created successfully");
+                        sendMsg("type|createComposerComplete");
+                        break;
+                    case "type|createBand":
+                        String[] namePartsBand = aux[1].split("\\|");
+                        String[] descriptionPartsBand = aux[2].split("\\|");
+                        PreparedStatement stmtBand = null;
+                        try {
+                            Band a = new Band(namePartsBand[1],descriptionPartsBand[1]);
+                            connection.setAutoCommit(false);
+                            System.out.println("Opened database successfully");
+
+                            stmtBand = connection.prepareStatement("INSERT INTO artist (id,name,description,musician_ismusician,group_isgroup,songwriter_issongwriter,composer_iscomposer)"
+                                    + "VALUES (DEFAULT,?,?,?,?,?,?);");
+                            stmtBand.setString(1,a.getName());
+                            stmtBand.setString(2,a.getDescription());
+                            stmtBand.setBoolean(3,a.isMusician());
+                            stmtBand.setBoolean(4,a.isBand());
+                            stmtBand.setBoolean(5,a.isSongwriter());
+                            stmtBand.setBoolean(6,a.isComposer());
+                            stmtBand.executeUpdate();
+
+                            stmtBand.close();
+                            connection.commit();
+
+                        }catch(org.postgresql.util.PSQLException e) {
+                            sendMsg("type|bandExists");
+                            System.out.println("ERRO: Band already exists.");
+                        }
+                        System.out.println("Records created successfully");
+                        sendMsg("type|createBandComplete");
                         break;
                     case "type|createAlbum":
                         Artist artist = new Musician();
@@ -363,23 +442,6 @@ public class MulticastServer extends Thread implements Serializable {
                                     a.setName(nameAfterParts[1]);
                                     sendMsg("type|nameChanged");
                                     System.out.println("SUCCESS: Name Changed.");
-                                }
-                            }
-                        }
-                        break;
-                    case "type|editArtistGenre":
-                        String[] artistNameParts = aux[1].split("\\|");
-                        String[] genreAfterParts = aux[2].split("\\|");
-                        if(!checkArtistExists(artistNameParts[1])){
-                            sendMsg("type|genreNotChanged");
-                            System.out.println("ERROR: Artist Not Found -> Genre Not Found.");
-                        }
-                        else{
-                            for(Artist a : artistsList){
-                                if(a.getName().equals(artistNameParts[1])){
-                                    a.setGenre(genreAfterParts[1]);
-                                    sendMsg("type|genreChanged");
-                                    System.out.println("SUCCESS: Genre Changed.");
                                 }
                             }
                         }
@@ -463,19 +525,7 @@ public class MulticastServer extends Thread implements Serializable {
                                 boolean isBand = rs.getBoolean("group_isgroup");
                                 boolean isSongwriter = rs.getBoolean("songwriter_issongwriter");
                                 boolean isComposer = rs.getBoolean("composer_iscomposer");
-                                if(isMusician){
-                                    System.out.println("It's a Musician.");
-                                }
-                                if(isComposer){
-                                    System.out.println("It's a Composer.");
-                                }
-                                if(isBand){
-                                    System.out.println("It's a band.");
-                                }
-                                if(isSongwriter){
-                                    System.out.println("It's a Songwriter.");
-                                }
-                                art = new Musician(name1,"genre",description);
+                                art = new Musician(name1,description);
                             }
                             rs.close();
                             stmt.close();

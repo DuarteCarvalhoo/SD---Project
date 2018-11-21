@@ -94,9 +94,6 @@ public class Client extends UnicastRemoteObject implements ClientHello{
                     case "/register":
                         registo(rmi, reader);
                         break;
-                    case "/user":
-                        System.out.println(loggedUser);
-                        break;
                     default:
                         if(!text.trim().equals("quit")){
                             System.out.println("Este comando não faz nada. Para sair escreva 'quit'");
@@ -670,7 +667,7 @@ public class Client extends UnicastRemoteObject implements ClientHello{
 
             ////////////// MENU DE CRIAR COM AS SUAS FUNÇÕES/////////////
     public static void createMenu(Hello rmi, Scanner reader) throws RemoteException{
-        System.out.println("What do you want to create: Artist, Album?");
+        System.out.println("What do you want to create: Artist, Album, Concert, Publisher, Playlist?");
         String response = reader.nextLine();
         switch(response.trim()){
             case "/artist":
@@ -679,38 +676,167 @@ public class Client extends UnicastRemoteObject implements ClientHello{
             case "/album":
                 createAlbum(rmi,reader);
                 break;
+            case "/concert":
+                //createConcert(rmi,reader);
+                break;
+            case "/publisher":
+                //createPublisher(rmi,reader);
+                break;
+            case "/playlist":
+                //createPlaylist(rmi,reader);
+                break;
             default:
                 //Something;
         }
     }
 
     public static void createArtist(Hello rmi,Scanner reader) throws RemoteException{
+        System.out.println("What do you want to create: Songwriter, Musician, Composer, Band?");
+        String response = reader.nextLine();
+        switch(response.trim()){
+            case "/songwriter":
+                createSongwriter(rmi,reader);
+                break;
+            case "/musician":
+                createMusician(rmi,reader);
+                break;
+            case "/composer":
+                createComposer(rmi,reader);
+                break;
+            case "/band":
+                createBand(rmi,reader);
+                break;
+            default:
+                //Something;
+        }
+    }
+
+    public static void createSongwriter(Hello rmi,Scanner reader) throws RemoteException{
         boolean flagOK = false;
-        System.out.println("Insert your data('name-genre-description')");
+        System.out.println("Insert your data('name-description')");
         String text = "";
-        String[]data = new String[3];
+        String[]data = new String[2];
         while(!flagOK) {
             text = reader.nextLine();
             data = text.trim().split("-");
-            if(data.length == 3){
-                if(data[0].trim().equals("") || data[1].trim().equals("") || data[2].trim().equals("")){
-                    System.out.println("Insert your data('name-genre-description')");
+            if(data.length == 2){
+                if(data[0].trim().equals("") || data[1].trim().equals("")){
+                    System.out.println("Insert your data('name-description')");
                 }
                 else {
                     flagOK = true;
                 }
             }
             else{
-                System.out.println("Insert your data('name-genre-description')");
+                System.out.println("Insert your data('name-description')");
             }
         }
-        String response = rmi.createArtist(data[0], data[1], data[2]);
+        String response = rmi.createSongwriter(data[0], data[1]);
         switch (response.trim()){
-            case "type|artistExists":
-                System.out.println("Artist already exists.");
+            case "type|songWriterExists":
+                System.out.println("Songwriter already exists.");
                 break;
-            case "type|createArtistComplete":
-                System.out.println("SUCCESS: Artist created successfully.");
+            case "type|createSongwriterComplete":
+                System.out.println("SUCCESS: Songwriter created successfully.");
+                break;
+            default:
+                //something;
+        }
+    }
+
+    public static void createMusician(Hello rmi,Scanner reader) throws RemoteException{
+        boolean flagOK = false;
+        System.out.println("Insert your data('name-description')");
+        String text = "";
+        String[]data = new String[2];
+        while(!flagOK) {
+            text = reader.nextLine();
+            data = text.trim().split("-");
+            if(data.length == 2){
+                if(data[0].trim().equals("") || data[1].trim().equals("")){
+                    System.out.println("Insert your data('name-description')");
+                }
+                else {
+                    flagOK = true;
+                }
+            }
+            else{
+                System.out.println("Insert your data('name-description')");
+            }
+        }
+        String response = rmi.createMusician(data[0], data[1]);
+        switch (response.trim()){
+            case "type|musicianExists":
+                System.out.println("Musician already exists.");
+                break;
+            case "type|createMusicianComplete":
+                System.out.println("SUCCESS: Musician created successfully.");
+                break;
+            default:
+                //something;
+        }
+    }
+
+    public static void createComposer(Hello rmi,Scanner reader) throws RemoteException{
+        boolean flagOK = false;
+        System.out.println("Insert your data('name-description')");
+        String text = "";
+        String[]data = new String[2];
+        while(!flagOK) {
+            text = reader.nextLine();
+            data = text.trim().split("-");
+            if(data.length == 2){
+                if(data[0].trim().equals("") || data[1].trim().equals("")){
+                    System.out.println("Insert your data('name-description')");
+                }
+                else {
+                    flagOK = true;
+                }
+            }
+            else{
+                System.out.println("Insert your data('name-description')");
+            }
+        }
+        String response = rmi.createComposer(data[0], data[1]);
+        switch (response.trim()){
+            case "type|composerExists":
+                System.out.println("Composer already exists.");
+                break;
+            case "type|createComposerComplete":
+                System.out.println("SUCCESS: Composer created successfully.");
+                break;
+            default:
+                //something;
+        }
+    }
+
+    public static void createBand(Hello rmi,Scanner reader) throws RemoteException{
+        boolean flagOK = false;
+        System.out.println("Insert your data('name-description')");
+        String text = "";
+        String[]data = new String[2];
+        while(!flagOK) {
+            text = reader.nextLine();
+            data = text.trim().split("-");
+            if(data.length == 2){
+                if(data[0].trim().equals("") || data[1].trim().equals("")){
+                    System.out.println("Insert your data('name-description')");
+                }
+                else {
+                    flagOK = true;
+                }
+            }
+            else{
+                System.out.println("Insert your data('name-description')");
+            }
+        }
+        String response = rmi.createBand(data[0], data[1]);
+        switch (response.trim()){
+            case "type|bandExists":
+                System.out.println("Band already exists.");
+                break;
+            case "type|createBandComplete":
+                System.out.println("SUCCESS: Band created successfully.");
                 break;
             default:
                 //something;

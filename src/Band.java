@@ -6,8 +6,8 @@ public class Band extends Artist {
         return isBand;
     }
 
-    public Band(String name, String genre, String description) {
-        super(name, genre, description);
+    public Band(String name, String description) {
+        super(name, description);
         this.isBand = true;
     }
 
