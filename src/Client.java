@@ -56,7 +56,7 @@ import java.net.*;
 
 public class Client extends UnicastRemoteObject implements ClientHello{
 
-    private static User loggedUser = new User();
+    private static User loggedUser;
     private Client() throws RemoteException {}
     private static ClientHello client;
 
@@ -76,7 +76,7 @@ public class Client extends UnicastRemoteObject implements ClientHello{
         System.getProperties().put("java.security.policy", "policy.all");
         System.setSecurityManager(new RMISecurityManager());
         try {
-            Registry registry = LocateRegistry.getRegistry("localhost",7000);
+            Registry registry = LocateRegistry.getRegistry("192.84.13.142",7000);
             rmi =(Hello) registry.lookup("Hello");
         } catch (Exception e) {
             System.err.println("Client exception: " + e.toString());
@@ -93,9 +93,6 @@ public class Client extends UnicastRemoteObject implements ClientHello{
                         break;
                     case "/register":
                         registo(rmi, reader);
-                        break;
-                    case "/user":
-                        System.out.println(loggedUser.getUsername());
                         break;
                     default:
                         if(!text.trim().equals("quit")){
@@ -141,7 +138,6 @@ public class Client extends UnicastRemoteObject implements ClientHello{
                 break;
             case "type|registComplete":
                 System.out.println("Successful register.");
-                loggedUser.setClientInterface(client);
                 break;
             default:
                 System.out.println("Something went wrong.");
@@ -172,36 +168,17 @@ public class Client extends UnicastRemoteObject implements ClientHello{
         String[] txtSplit = txt.split(";");
         switch (txtSplit[0].trim()){
             case "type|loginComplete":
-                if (txtSplit.length == 5) {
-                    String[] username = txtSplit[1].split("\\|");
-                    String[] password = txtSplit[2].split("\\|");
-                    String[] editor = txtSplit[3].split("\\|");
-                    String[] online = txtSplit[4].split("\\|");
-                    loggedUser = new User(username[1], password[1], Boolean.parseBoolean(editor[1]), Boolean.parseBoolean(online[1]));
-
-                }
-                else if(txtSplit.length > 5){
-                    String[] username = txtSplit[1].split("\\|");
-                    String[] password = txtSplit[2].split("\\|");
-                    String[] editor = txtSplit[3].split("\\|");
-                    String[] online = txtSplit[4].split("\\|");
-                    String[] downloads = txtSplit[5].split("\\|");
-                    ArrayList<String> downloadableMusics = new ArrayList<>();
-                    for(int i=1;i<downloads.length;i++){
-                        downloadableMusics.add(downloads[i]);
-                    }
-                    loggedUser = new User(username[1], password[1], Boolean.parseBoolean(editor[1]), Boolean.parseBoolean(online[1]),downloadableMusics);
-                }
-                System.out.println("Welcome!");
+                String[] id = txtSplit[1].split("\\|");
+                String[] editor = txtSplit[2].split("\\|");
+                loggedUser = new User(Integer.parseInt(id[1]),userDataParts[0],Boolean.parseBoolean(editor[1]));
                 loggedUser.setClientInterface(client);
-                ArrayList<String> printNotif = loggedUser.getNotifications();
-                System.out.println(printNotif.size());
-                for(int i=0;i<printNotif.size();i++){
-                    System.out.println(printNotif.get(i));
-                }
+                System.out.println("Welcome!");
+
                 rmi.addOnlineUser(loggedUser);
                 menuPrincipal(rmi,reader);
-                loggedUser.cleanNotification();
+                break;
+            case "type|userLogged":
+                System.out.println("User already logged in.");
                 break;
             case "type|loginFail":
                 System.out.println("Login failed.");
@@ -212,19 +189,9 @@ public class Client extends UnicastRemoteObject implements ClientHello{
     }
 
     public static void logout(Hello rmi) throws RemoteException{
-        String txt = rmi.checkLogout(loggedUser);
-        switch(txt.trim()){
-            case "type|logoutComplete":
-                System.out.println("Logged out successfully.");
-                rmi.removeOnlineUser(loggedUser);
-                loggedUser = new User();
-                break;
-            case "type|logoutFail":
-                System.out.println("Logout failed.");
-                break;
-            default:
-                System.out.println("Something went wrong.");
-        }
+        rmi.checkLogout(loggedUser);
+        System.out.println("Logged out successfully.");
+        loggedUser = new User();
     }
 
             ////////////// MENU PRINCIPAL COM A FUNÇÕES INICIAIS /////////////
@@ -326,7 +293,7 @@ public class Client extends UnicastRemoteObject implements ClientHello{
                         makeCritic(rmi,reader);
                         break;
                     case "/download":
-                        System.out.println(downloadMusic(rmi, reader));
+                        //System.out.println(downloadMusic(rmi, reader));
                         break;
                     case "/upload":
                         String[] musicInfo = new String[7];
@@ -700,7 +667,7 @@ public class Client extends UnicastRemoteObject implements ClientHello{
 
             ////////////// MENU DE CRIAR COM AS SUAS FUNÇÕES/////////////
     public static void createMenu(Hello rmi, Scanner reader) throws RemoteException{
-        System.out.println("What do you want to create: Artist, Album?");
+        System.out.println("What do you want to create: Artist, Album, Concert, Publisher, Playlist?");
         String response = reader.nextLine();
         switch(response.trim()){
             case "/artist":
@@ -709,38 +676,167 @@ public class Client extends UnicastRemoteObject implements ClientHello{
             case "/album":
                 createAlbum(rmi,reader);
                 break;
+            case "/concert":
+                //createConcert(rmi,reader);
+                break;
+            case "/publisher":
+                //createPublisher(rmi,reader);
+                break;
+            case "/playlist":
+                //createPlaylist(rmi,reader);
+                break;
             default:
                 //Something;
         }
     }
 
     public static void createArtist(Hello rmi,Scanner reader) throws RemoteException{
+        System.out.println("What do you want to create: Songwriter, Musician, Composer, Band?");
+        String response = reader.nextLine();
+        switch(response.trim()){
+            case "/songwriter":
+                createSongwriter(rmi,reader);
+                break;
+            case "/musician":
+                createMusician(rmi,reader);
+                break;
+            case "/composer":
+                createComposer(rmi,reader);
+                break;
+            case "/band":
+                createBand(rmi,reader);
+                break;
+            default:
+                //Something;
+        }
+    }
+
+    public static void createSongwriter(Hello rmi,Scanner reader) throws RemoteException{
         boolean flagOK = false;
-        System.out.println("Insert your data('name-genre-description')");
+        System.out.println("Insert your data('name-description')");
         String text = "";
-        String[]data = new String[3];
+        String[]data = new String[2];
         while(!flagOK) {
             text = reader.nextLine();
             data = text.trim().split("-");
-            if(data.length == 3){
-                if(data[0].trim().equals("") || data[1].trim().equals("") || data[2].trim().equals("")){
-                    System.out.println("Insert your data('name-genre-description')");
+            if(data.length == 2){
+                if(data[0].trim().equals("") || data[1].trim().equals("")){
+                    System.out.println("Insert your data('name-description')");
                 }
                 else {
                     flagOK = true;
                 }
             }
             else{
-                System.out.println("Insert your data('name-genre-description')");
+                System.out.println("Insert your data('name-description')");
             }
         }
-        String response = rmi.createArtist(data[0], data[1], data[2]);
+        String response = rmi.createSongwriter(data[0], data[1]);
         switch (response.trim()){
-            case "type|artistExists":
-                System.out.println("Artist already exists.");
+            case "type|songWriterExists":
+                System.out.println("Songwriter already exists.");
                 break;
-            case "type|createArtistComplete":
-                System.out.println("SUCCESS: Artist created successfully.");
+            case "type|createSongwriterComplete":
+                System.out.println("SUCCESS: Songwriter created successfully.");
+                break;
+            default:
+                //something;
+        }
+    }
+
+    public static void createMusician(Hello rmi,Scanner reader) throws RemoteException{
+        boolean flagOK = false;
+        System.out.println("Insert your data('name-description')");
+        String text = "";
+        String[]data = new String[2];
+        while(!flagOK) {
+            text = reader.nextLine();
+            data = text.trim().split("-");
+            if(data.length == 2){
+                if(data[0].trim().equals("") || data[1].trim().equals("")){
+                    System.out.println("Insert your data('name-description')");
+                }
+                else {
+                    flagOK = true;
+                }
+            }
+            else{
+                System.out.println("Insert your data('name-description')");
+            }
+        }
+        String response = rmi.createMusician(data[0], data[1]);
+        switch (response.trim()){
+            case "type|musicianExists":
+                System.out.println("Musician already exists.");
+                break;
+            case "type|createMusicianComplete":
+                System.out.println("SUCCESS: Musician created successfully.");
+                break;
+            default:
+                //something;
+        }
+    }
+
+    public static void createComposer(Hello rmi,Scanner reader) throws RemoteException{
+        boolean flagOK = false;
+        System.out.println("Insert your data('name-description')");
+        String text = "";
+        String[]data = new String[2];
+        while(!flagOK) {
+            text = reader.nextLine();
+            data = text.trim().split("-");
+            if(data.length == 2){
+                if(data[0].trim().equals("") || data[1].trim().equals("")){
+                    System.out.println("Insert your data('name-description')");
+                }
+                else {
+                    flagOK = true;
+                }
+            }
+            else{
+                System.out.println("Insert your data('name-description')");
+            }
+        }
+        String response = rmi.createComposer(data[0], data[1]);
+        switch (response.trim()){
+            case "type|composerExists":
+                System.out.println("Composer already exists.");
+                break;
+            case "type|createComposerComplete":
+                System.out.println("SUCCESS: Composer created successfully.");
+                break;
+            default:
+                //something;
+        }
+    }
+
+    public static void createBand(Hello rmi,Scanner reader) throws RemoteException{
+        boolean flagOK = false;
+        System.out.println("Insert your data('name-description')");
+        String text = "";
+        String[]data = new String[2];
+        while(!flagOK) {
+            text = reader.nextLine();
+            data = text.trim().split("-");
+            if(data.length == 2){
+                if(data[0].trim().equals("") || data[1].trim().equals("")){
+                    System.out.println("Insert your data('name-description')");
+                }
+                else {
+                    flagOK = true;
+                }
+            }
+            else{
+                System.out.println("Insert your data('name-description')");
+            }
+        }
+        String response = rmi.createBand(data[0], data[1]);
+        switch (response.trim()){
+            case "type|bandExists":
+                System.out.println("Band already exists.");
+                break;
+            case "type|createBandComplete":
+                System.out.println("SUCCESS: Band created successfully.");
                 break;
             default:
                 //something;
@@ -1021,7 +1117,7 @@ public class Client extends UnicastRemoteObject implements ClientHello{
         return musicInfo;
     }
 
-    private static String downloadMusic(Hello rmi, Scanner reader) throws IOException {
+    /*private static String downloadMusic(Hello rmi, Scanner reader) throws IOException {
         System.out.println("Choose one song:");
         if(loggedUser.printDownloadableMusics().equals("No musics to show.")){
             return "Can't download any musics.";
@@ -1076,7 +1172,7 @@ public class Client extends UnicastRemoteObject implements ClientHello{
         System.out.println("ficheiro 100% completo");
 
         return print;
-    }
+    }*/
 
            ////////////// FAILOVER /////////////
     private static Hello changeRMI() throws RemoteException, NotBoundException {

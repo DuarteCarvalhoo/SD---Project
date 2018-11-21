@@ -1,5 +1,6 @@
 import java.io.*;
 import java.net.*;
+import java.sql.*;
 import java.util.*;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
@@ -13,6 +14,7 @@ public class MulticastServer extends Thread implements Serializable {
     private ArrayList<Artist> artistsList = new ArrayList<>();
     private ArrayList<Album> albunsList = new ArrayList<>();
     private ArrayList<Music> musicsList = new ArrayList<>();
+    private Connection connection = null;
 
     public static void main(String[] args){
         MulticastServer server = new MulticastServer();
@@ -23,6 +25,16 @@ public class MulticastServer extends Thread implements Serializable {
 
     ////////////// RECEBER E TRATAR O PROTOCOL /////////////
     public void run() {
+        try {
+            Class.forName("org.postgresql.Driver");
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        }
+        try {
+            connection = DriverManager.getConnection("jdbc:postgresql://localhost:5432/BD/SD","postgres", "fabiogc1998");
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
         MulticastSocket socket = null;
         //System.out.println(this.getName() + "run...");
 
@@ -59,34 +71,25 @@ public class MulticastServer extends Thread implements Serializable {
                         String[] loginPasswordParts = aux[2].split("\\|");
                         String user = loginUsernameParts[1];
                         String pass = loginPasswordParts[1];
-                        System.out.println("USERNAME: " + user + " PASSWORD: " + pass);
-                        if (usersList.isEmpty()) {
-                            sendMsg("type|loginFail");
-                            System.out.println("ERRO: No users on the database.");
-                        } else {
-                            for (User u : usersList) {
-                                if (user.equals(u.getUsername())) {
-                                    if (u.isOnline()) {
-                                        sendMsg("type|loginFail");
-                                        System.out.println("ERRO: User already logged in.");
-                                    } else {
-                                        boolean loggedInSuccessfully = checkUsernameLogin(user, pass);
-                                        if (!loggedInSuccessfully) {
-                                            sendMsg("type|loginFail");
-                                            System.out.println("ERRO: Login não completo.");
-                                        } else {
-                                            u.setOnline();
-                                            sendMsg("type|loginComplete;username|" + u.getUsername() + ";password|" + u.getPassword() + ";editor|" + u.isEditor() + ";online|" + u.isOnline()+";Downloads|"+u.printDownloadableMusicsLogin());
-                                            System.out.println("SUCESSO: Login Completo");
-                                            flag = true;
-                                        }
-                                    }
+                        try {
+                            if (userDatabaseEmpty()) {
+                                sendMsg("type|loginFail");
+                                System.out.println("ERROR: No users on the database.");
+                            } else {
+                                User u = checkUsernameLogin(user, pass);
+                                if(u.getId() != 0){
+                                    sendMsg("type|loginComplete;id|" + u.getId()+";editor|"+u.isEditor());//
+                                    System.out.println("SUCESSO: Login Completo");
+                                    flag = true;
                                 }
                             }
-                            if (!flag) {
-                                System.out.println("Username not found.");
-                                sendMsg("type|loginFail");
-                            }
+                                if (!flag) {
+                                    System.out.println("Username not found.");
+                                    sendMsg("type|loginFail");
+                                }
+                        }
+                        catch (org.postgresql.util.PSQLException e){
+                            System.out.println(e);
                         }
                         //funçao passa como argumentos o user e pw
                         //funçao pra confirmar se o user existe, se a pw ta certa e por fim enviar a resposta
@@ -100,31 +103,41 @@ public class MulticastServer extends Thread implements Serializable {
                             String[] registerPasswordParts = aux[2].split("\\|");
                             username = registerUsernameParts[1];
                             password = registerPasswordParts[1];
-                            System.out.println("USERNAME: " + username + " PASSWORD: " + password);
                         }catch (Exception e){
                             return;
                         }
-                        int usernameUsed = checkUsernameRegister(username);
-                        if (usernameUsed == 1) {
-                            sendMsg("type|usernameUsed");
-                            System.out.println("ERRO: Username já usado.");
-                        } else if (usernameUsed == -1) {
-                            User newUser = new User(username, password);
-                            newUser.makeEditor();
-                            System.out.println("Editor permisions given.");
-                            usersList.add(newUser);
-                            writeFiles();
-                            System.out.println("SUCCESS: User added to database with username: '" + username + "' and password '" + password + "'");
-                            sendMsg("type|registComplete");
-                        } else {
-                            User newUser = new User(username, password);
-                            usersList.add(newUser);
-                            writeFiles();
-                            System.out.println("SUCESSO: Adicionou ao arraylist com user '" + username + "' e password '" + password + "'");
+                        if(userDatabaseEmpty()){
+                            connection.setAutoCommit(false);
+                            User u = new User(username,password);
+                            PreparedStatement stmt = connection.prepareStatement("INSERT INTO utilizador(id,username,password,iseditor)" +
+                                    "VALUES (DEFAULT,?,?,true)");
+                            stmt.setString(1,u.getUsername());
+                            stmt.setString(2,u.getPassword());
+                            stmt.executeUpdate();
+
+                            stmt.close();
+                            connection.commit();
                             sendMsg("type|registComplete");
                         }
-                        //funçao passa como argumentos o user e pw
-                        //na funçao verificar se nao ha users iguais, se nao guardar no arraylist (se usarmos 2 pws ver se sao iguais) e enviar a resposta
+                        else{
+                            try{
+                                connection.setAutoCommit(false);
+                                User u = new User(username,password);
+                                PreparedStatement stmt = connection.prepareStatement("INSERT INTO utilizador(id,username,password,iseditor)" +
+                                        "VALUES (DEFAULT,?,?,false)");
+                                stmt.setString(1,u.getUsername());
+                                stmt.setString(2,u.getPassword());
+                                stmt.executeUpdate();
+
+                                stmt.close();
+                                connection.commit();
+                                
+                                sendMsg("type|registComplete");
+                            } catch (org.postgresql.util.PSQLException e){
+                                System.out.println("Something went wrong.");
+                                sendMsg("type|usernameUsed");
+                            }
+                        }
                         break;
                     case "type|turnOnSocket":
                         aux2 = aux[1];
@@ -260,25 +273,124 @@ public class MulticastServer extends Thread implements Serializable {
                             }
                         }
                      */
-                    case "type|createArtist":
+                    case "type|createSongwriter":
                         String[] nameParts1 = aux[1].split("\\|");
-                        String[] genreParts1 = aux[2].split("\\|");
-                        String[] descriptionParts = aux[3].split("\\|");
-                        boolean artistExists = checkArtistExists(nameParts1[1]);
-                        if (artistExists) {
-                            sendMsg("type|artistExists");
+                        String[] descriptionParts = aux[2].split("\\|");
+                        PreparedStatement stmtSongwriter = null;
+                        try {
+                            Songwriter a = new Songwriter(nameParts1[1],descriptionParts[1]);
+                            connection.setAutoCommit(false);
+                            System.out.println("Opened database successfully");
+
+                            stmtSongwriter = connection.prepareStatement("INSERT INTO artist (id,name,description,musician_ismusician,group_isgroup,songwriter_issongwriter,composer_iscomposer)"
+                                    + "VALUES (DEFAULT,?,?,?,?,?,?);");
+                            stmtSongwriter.setString(1,a.getName());
+                            stmtSongwriter.setString(2,a.getDescription());
+                            stmtSongwriter.setBoolean(3,a.isMusician());
+                            stmtSongwriter.setBoolean(4,a.isBand());
+                            stmtSongwriter.setBoolean(5,a.isSongwriter());
+                            stmtSongwriter.setBoolean(6,a.isComposer());
+                            stmtSongwriter.executeUpdate();
+
+                            stmtSongwriter.close();
+                            connection.commit();
+
+                        } catch (org.postgresql.util.PSQLException e) {
+                            sendMsg("type|stmtSongwriter");
                             System.out.println("ERRO: Artist already exists.");
                         }
-                        else {
-                            Artist newArtist = new Artist(nameParts1[1],descriptionParts[1],genreParts1[1]);
-                            artistsList.add(newArtist);
-                            writeFiles();
-                            System.out.println("SUCESSO: Adicionou ao arraylist com nome '" + nameParts1[1] + "', genre '" + genreParts1[1] + "' e descrição '"+descriptionParts[1]+"'");
-                            sendMsg("type|createArtistComplete");
+                        System.out.println("Records created successfully");
+                        sendMsg("type|createSongwriterComplete");
+                        break;
+                    case "type|createMusician":
+                        String[] namePartsMusician = aux[1].split("\\|");
+                        String[] descriptionPartsMusician = aux[2].split("\\|");
+                        PreparedStatement stmtMusician = null;
+                        try {
+                            Musician a = new Musician(namePartsMusician[1],descriptionPartsMusician[1]);
+                            connection.setAutoCommit(false);
+                            System.out.println("Opened database successfully");
+
+                            stmtMusician = connection.prepareStatement("INSERT INTO artist (id,name,description,musician_ismusician,group_isgroup,songwriter_issongwriter,composer_iscomposer)"
+                                    + "VALUES (DEFAULT,?,?,?,?,?,?);");
+                            stmtMusician.setString(1,a.getName());
+                            stmtMusician.setString(2,a.getDescription());
+                            stmtMusician.setBoolean(3,a.isMusician());
+                            stmtMusician.setBoolean(4,a.isBand());
+                            stmtMusician.setBoolean(5,a.isSongwriter());
+                            stmtMusician.setBoolean(6,a.isComposer());
+                            stmtMusician.executeUpdate();
+
+                            stmtMusician.close();
+                            connection.commit();
+
+                        } catch (org.postgresql.util.PSQLException e) {
+                            sendMsg("type|musicianExists");
+                            System.out.println("ERRO: Artist already exists.");
                         }
+                        System.out.println("Records created successfully");
+                        sendMsg("type|createMusicianComplete");
+                        break;
+                    case "type|createComposer":
+                        String[] namePartsComposer = aux[1].split("\\|");
+                        String[] descriptionPartsComposer = aux[2].split("\\|");
+                        PreparedStatement stmtComposer = null;
+                        try {
+                            Composer a = new Composer(namePartsComposer[1],descriptionPartsComposer[1]);
+                            connection.setAutoCommit(false);
+                            System.out.println("Opened database successfully");
+
+                            stmtComposer = connection.prepareStatement("INSERT INTO artist (id,name,description,musician_ismusician,group_isgroup,songwriter_issongwriter,composer_iscomposer)"
+                                    + "VALUES (DEFAULT,?,?,?,?,?,?);");
+                            stmtComposer.setString(1,a.getName());
+                            stmtComposer.setString(2,a.getDescription());
+                            stmtComposer.setBoolean(3,a.isMusician());
+                            stmtComposer.setBoolean(4,a.isBand());
+                            stmtComposer.setBoolean(5,a.isSongwriter());
+                            stmtComposer.setBoolean(6,a.isComposer());
+                            stmtComposer.executeUpdate();
+
+                            stmtComposer.close();
+                            connection.commit();
+
+                        }catch(org.postgresql.util.PSQLException e) {
+                            sendMsg("type|composerExists");
+                            System.out.println("ERRO: Composer already exists.");
+                        }
+                        System.out.println("Records created successfully");
+                        sendMsg("type|createComposerComplete");
+                        break;
+                    case "type|createBand":
+                        String[] namePartsBand = aux[1].split("\\|");
+                        String[] descriptionPartsBand = aux[2].split("\\|");
+                        PreparedStatement stmtBand = null;
+                        try {
+                            Band a = new Band(namePartsBand[1],descriptionPartsBand[1]);
+                            connection.setAutoCommit(false);
+                            System.out.println("Opened database successfully");
+
+                            stmtBand = connection.prepareStatement("INSERT INTO artist (id,name,description,musician_ismusician,group_isgroup,songwriter_issongwriter,composer_iscomposer)"
+                                    + "VALUES (DEFAULT,?,?,?,?,?,?);");
+                            stmtBand.setString(1,a.getName());
+                            stmtBand.setString(2,a.getDescription());
+                            stmtBand.setBoolean(3,a.isMusician());
+                            stmtBand.setBoolean(4,a.isBand());
+                            stmtBand.setBoolean(5,a.isSongwriter());
+                            stmtBand.setBoolean(6,a.isComposer());
+                            stmtBand.executeUpdate();
+
+                            stmtBand.close();
+                            connection.commit();
+
+                        }catch(org.postgresql.util.PSQLException e) {
+                            sendMsg("type|bandExists");
+                            System.out.println("ERRO: Band already exists.");
+                        }
+                        System.out.println("Records created successfully");
+                        sendMsg("type|createBandComplete");
                         break;
                     case "type|createAlbum":
-                        Artist artist = new Artist();
+                        Artist artist = new Musician();
                         String[] namePa = aux[1].split("\\|");
                         String[] aName = aux[2].split("\\|");
                         String[] descripParts = aux[3].split("\\|");
@@ -330,23 +442,6 @@ public class MulticastServer extends Thread implements Serializable {
                                     a.setName(nameAfterParts[1]);
                                     sendMsg("type|nameChanged");
                                     System.out.println("SUCCESS: Name Changed.");
-                                }
-                            }
-                        }
-                        break;
-                    case "type|editArtistGenre":
-                        String[] artistNameParts = aux[1].split("\\|");
-                        String[] genreAfterParts = aux[2].split("\\|");
-                        if(!checkArtistExists(artistNameParts[1])){
-                            sendMsg("type|genreNotChanged");
-                            System.out.println("ERROR: Artist Not Found -> Genre Not Found.");
-                        }
-                        else{
-                            for(Artist a : artistsList){
-                                if(a.getName().equals(artistNameParts[1])){
-                                    a.setGenre(genreAfterParts[1]);
-                                    sendMsg("type|genreChanged");
-                                    System.out.println("SUCCESS: Genre Changed.");
                                 }
                             }
                         }
@@ -412,13 +507,41 @@ public class MulticastServer extends Thread implements Serializable {
                         }*/
                         String[] nameArtist = aux[1].split("\\|");
                         String n = nameArtist[1];
-                        Artist art = new Artist();
-                        if(artistsList.isEmpty()){
+                        Artist art = new Musician();
+
+                        PreparedStatement stmt = null;
+                        try {
+                            connection.setAutoCommit(false);
+                            System.out.println("Opened database successfully");
+
+                            stmt = connection.prepareStatement("SELECT * FROM artist WHERE name = ?;");
+                            stmt.setString(1,n);
+                            ResultSet rs = stmt.executeQuery();
+                            while (rs.next()) {
+                                String id = rs.getString("id");
+                                String  name1 = rs.getString("name");
+                                String description = rs.getString("description");
+                                boolean isMusician = rs.getBoolean("musician_ismusician");
+                                boolean isBand = rs.getBoolean("group_isgroup");
+                                boolean isSongwriter = rs.getBoolean("songwriter_issongwriter");
+                                boolean isComposer = rs.getBoolean("composer_iscomposer");
+                                art = new Musician(name1,description);
+                            }
+                            rs.close();
+                            stmt.close();
+                            
+                        } catch ( Exception e ) {
+                            System.err.println( e.getClass().getName()+": "+ e.getMessage() );
+                            System.exit(0);
+                        }
+                        System.out.println("Operation done successfully");
+                        sendMsg("type|showArtistComplete;Artist|"+art);
+                        /*if(artistsList.isEmpty()){
                             sendMsg("type|showArtistFail");
                             System.out.println("ERROR: No Artists on the database.");
                         }
                         else {
-                            if (!checkArtistExists(n)) {
+                            /*if (!checkArtistExists(n)) {
                                 sendMsg("type|showArtistFail");
                                 System.out.println("ERROR: Artist Not Found.");
                             } else {
@@ -427,14 +550,12 @@ public class MulticastServer extends Thread implements Serializable {
                                         art = a;
                                     }
                                 }
-                                sendMsg("type|showArtistComplete;Artist|"+art);
-                            }
-                        }
+                            }*/
                         break;
                     case "type|showArtistAlbums":
                         String[] nameA = aux[1].split("\\|");
                         String nA = nameA[1];
-                        Artist artista = new Artist();
+                        Artist artista = new Musician();
                         if(!checkArtistExists(nA)){
                             sendMsg("type|showArtistAlbumsFail");
                             System.out.println("ERROR: Artist Not Found.");
@@ -499,31 +620,6 @@ public class MulticastServer extends Thread implements Serializable {
                             }
                         }
                         break;
-                    case "type|logout":
-                        boolean flagLogout = false;
-                        System.out.println("Logging out.");
-                        String[] logoutUsername = aux[1].split("\\|");
-                        String logoutUser = logoutUsername[1];
-                        if (!logoutUser.equals("none")) {
-                            for (User u : usersList) {
-                                if (u.getUsername().equals(logoutUser)) {
-                                    u.setOffline();
-                                    //readFiles();
-                                    writeFiles();
-                                    sendMsg("type|logoutComplete");
-                                    flagLogout = true;
-                                }
-                            }
-                            if (!flagLogout) {
-                                System.out.println("User not found");
-                                sendMsg("type|logoutFail");
-                            }
-                        } else {
-                            System.out.println("No user is logged in.");
-                            sendMsg("type|logoutFail");
-                        }
-                        break;
-                    //dentro da funçao decidir o que pesquisa artista, estilo ou album
                     default:
                         System.out.println("Feedback above.");
                         break;
@@ -531,9 +627,47 @@ public class MulticastServer extends Thread implements Serializable {
             }
         } catch (IOException e) {
             e.printStackTrace();
+        } catch (SQLException e) {
+            e.printStackTrace();
         } finally {
             socket.close();
         }
+    }
+
+    private boolean isEditor(String username) {
+
+        try {
+            connection.setAutoCommit(false);
+            PreparedStatement stmt = connection.prepareStatement("SELECT * FROM utilizador WHERE username = ?;");
+            stmt.setString(1, username);
+            ResultSet rs = stmt.executeQuery();
+
+            boolean isEditorDB = false;
+            while (rs.next()) {
+                isEditorDB = rs.getBoolean("iseditor");
+            }
+
+            stmt.close();
+            connection.commit();
+            if (isEditorDB) {
+                return true;
+            }
+        } catch (
+                SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+
+    private void makeEditor(String username) throws SQLException {
+        connection.setAutoCommit(false);
+        PreparedStatement stmt = connection.prepareStatement("UPDATE utilizador SET iseditor = true WHERE username = ?");
+        stmt.setString(1,username);
+        stmt.executeUpdate();
+
+        stmt.close();
+        connection.commit();
     }
 
     ////////////// DOWNLOAD E UPLOAD /////////////
@@ -621,8 +755,18 @@ public class MulticastServer extends Thread implements Serializable {
         socket.send(packet);
         socket.close();
     }
-
     ////////////// FUNÇOES AUXILIAR /////////////
+    private boolean userDatabaseEmpty() throws SQLException {
+        try{
+            Statement stmt = connection.createStatement();
+            ResultSet rs = stmt.executeQuery("SELECT * FROM utilizador");
+            return !rs.next();
+        }
+        catch (org.postgresql.util.PSQLException e){
+            return false;
+        }
+    }
+
     private User returnsUser(String username){
         for(User u : usersList){
             if(u.getUsername().trim().equals(username)){
@@ -641,15 +785,35 @@ public class MulticastServer extends Thread implements Serializable {
         return null;
     }
 
-    public boolean checkUsernameLogin(String username, String password){
-        for (User user : usersList) {
-            if(user.getUsername().equals(username)){
-                if(user.checkPassword(password)){
-                    return true;
-                }
+    public User checkUsernameLogin(String username, String password){
+        PreparedStatement stmt = null;
+        try {
+            String userDB="",passDB="";
+            boolean isEditorDB=false;
+            int id=0;
+
+            connection.setAutoCommit(false);
+            stmt = connection.prepareStatement("SELECT * FROM utilizador WHERE username = ?;");
+            stmt.setString(1, username);
+            ResultSet rs = stmt.executeQuery();
+
+            while (rs.next()) {
+                id = rs.getInt("id");
+                userDB = rs.getString("username");
+                passDB = rs.getString("password");
+                isEditorDB = rs.getBoolean("iseditor");
             }
+
+            stmt.close();
+            connection.commit();
+            User u = new User(id,username,isEditorDB);
+            if(userDB.equals(username) && passDB.equals(password)){
+                return u;
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
-        return false;
+        return (new User(0,"none",false));
     }
 
     public int checkUsernameRegister(String username){

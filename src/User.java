@@ -4,7 +4,7 @@ import java.util.ArrayList;
 public class User implements Serializable{
     private String username;
     private String password;
-    private boolean online = false;
+    private int id;
     private boolean editor = false;
     private ClientHello clientInterface;
     private ArrayList<String> downloadableMusics = new ArrayList<>();
@@ -87,6 +87,14 @@ public class User implements Serializable{
         return notifications;
     }
 
+    public int getId() {
+        return id;
+    }
+
+    public ClientHello getClientInterface() {
+        return clientInterface;
+    }
+
     public void cleanNotification (){
         notifications = new ArrayList<String>();
     }
@@ -110,34 +118,15 @@ public class User implements Serializable{
         return "Username: " + getUsername() + " Password: " + getPassword();
     }
 
-    public boolean isOnline(){
-        return online;
-    }
-
-    public void setOffline() {
-        this.online = false;
-    }
-
-    public void setOnline(){
-        this.online = true;
-    }
-
     public User(String username, String password) {
         this.username = username;
         this.password = password;
     }
 
-    public User(String username, String password, boolean editor, boolean online) {
+    public User(int id, String username, boolean editor){
+        this.id = id;
         this.username = username;
-        this.password = password;
         this.editor = editor;
-        this.online = online;
-    }
-
-    public User(String username, String password, boolean online) {
-        this.username = username;
-        this.password = password;
-        this.online = online;
     }
 
     public User(){
@@ -145,11 +134,4 @@ public class User implements Serializable{
         this.password = "none";
     }
 
-    public User(String username, String password, boolean editor, boolean online, ArrayList<String> downloadableMusics) {
-        this.username = username;
-        this.password = password;
-        this.editor = editor;
-        this.online = online;
-        this.downloadableMusics = downloadableMusics;
-    }
 }
