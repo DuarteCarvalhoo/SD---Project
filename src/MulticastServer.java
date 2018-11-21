@@ -584,6 +584,42 @@ public class MulticastServer extends Thread implements Serializable {
         }
     }
 
+    private boolean isEditor(String username) {
+
+        try {
+            connection.setAutoCommit(false);
+            PreparedStatement stmt = connection.prepareStatement("SELECT * FROM utilizador WHERE username = ?;");
+            stmt.setString(1, username);
+            ResultSet rs = stmt.executeQuery();
+
+            boolean isEditorDB = false;
+            while (rs.next()) {
+                isEditorDB = rs.getBoolean("iseditor");
+            }
+
+            stmt.close();
+            connection.commit();
+            if (isEditorDB) {
+                return true;
+            }
+        } catch (
+                SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+
+    private void makeEditor(String username) throws SQLException {
+        connection.setAutoCommit(false);
+        PreparedStatement stmt = connection.prepareStatement("UPDATE utilizador SET iseditor = true WHERE username = ?");
+        stmt.setString(1,username);
+        stmt.executeUpdate();
+
+        stmt.close();
+        connection.commit();
+    }
+
     ////////////// DOWNLOAD E UPLOAD /////////////
     public ServerSocket openSocket() throws IOException {
         ServerSocket socket = new ServerSocket(5041);
