@@ -677,10 +677,10 @@ public class Client extends UnicastRemoteObject implements ClientHello{
                 createAlbum(rmi,reader);
                 break;
             case "/concert":
-                //createConcert(rmi,reader);
+                createConcert(rmi,reader);
                 break;
             case "/publisher":
-                //createPublisher(rmi,reader);
+                createPublisher(rmi,reader);
                 break;
             case "/playlist":
                 //createPlaylist(rmi,reader);
@@ -873,6 +873,58 @@ public class Client extends UnicastRemoteObject implements ClientHello{
                 break;
             case "type|createAlbumComplete":
                 System.out.println("SUCCESS: Album created successfully.");
+                break;
+            default:
+                //something;
+        }
+    }
+
+    public static void createConcert(Hello rmi,Scanner reader) throws RemoteException{
+        boolean flagOK = false;
+        System.out.println("Insert your data('location')");
+        String text = "";
+        while(!flagOK) {
+            text = reader.nextLine();
+            if(text.trim().equals("")){
+                System.out.println("Insert your data('location')");
+            }
+            else{
+                flagOK = true;
+            }
+        }
+        String response = rmi.createConcert(text);
+        switch (response.trim()){
+            case "type|concertExists":
+                System.out.println("Concert already exists.");
+                break;
+            case "type|createConcertComplete":
+                System.out.println("SUCCESS: Concert created successfully.");
+                break;
+            default:
+                //something;
+        }
+    }
+
+    private static void createPublisher(Hello rmi, Scanner reader) throws RemoteException {
+        boolean flagOK = false;
+        System.out.println("Insert your data('Name')");
+        String text = "";
+        while(!flagOK) {
+            text = reader.nextLine();
+            if(text.trim().equals("")){
+                System.out.println("Insert your data('Name')");
+            }
+            else{
+                flagOK = true;
+            }
+        }
+        String response = rmi.createPublisher(text);
+        switch (response.trim()){
+            case "type|publisherExists":
+                System.out.println("Publisher already exists.");
+                break;
+            case "type|createPublisherComplete":
+                System.out.println("SUCCESS: Publisher created successfully.");
                 break;
             default:
                 //something;

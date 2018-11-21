@@ -429,6 +429,52 @@ public class MulticastServer extends Thread implements Serializable {
                             }
                         }
                         break;
+                    case "type|createConcert":
+                        String[] concertLocation = aux[1].split("\\|");
+                        PreparedStatement stmtConcert = null;
+                        try {
+                            Concert a = new Concert(concertLocation[1]);
+                            connection.setAutoCommit(false);
+                            System.out.println("Opened database successfully");
+
+                            stmtConcert = connection.prepareStatement("INSERT INTO concerts (id,location)"
+                                    + "VALUES (DEFAULT,?);");
+                            stmtConcert.setString(1,a.getLocation());
+                            stmtConcert.executeUpdate();
+
+                            stmtConcert.close();
+                            connection.commit();
+
+                        }catch(org.postgresql.util.PSQLException e) {
+                            sendMsg("type|concertExists");
+                            System.out.println("ERRO: Concert already exists.");
+                        }
+                        System.out.println("Records created successfully");
+                        sendMsg("type|createConcertComplete");
+                        break;
+                    case "type|createPublisher":
+                        String[] publisherName = aux[1].split("\\|");
+                        PreparedStatement stmtPublisher = null;
+                        try {
+                            Publisher a = new Publisher(publisherName[1]);
+                            connection.setAutoCommit(false);
+                            System.out.println("Opened database successfully");
+
+                            stmtPublisher = connection.prepareStatement("INSERT INTO publisher (id,name)"
+                                    + "VALUES (DEFAULT,?);");
+                            stmtPublisher.setString(1,a.getName());
+                            stmtPublisher.executeUpdate();
+
+                            stmtPublisher.close();
+                            connection.commit();
+
+                        }catch(org.postgresql.util.PSQLException e) {
+                            sendMsg("type|publisherExists");
+                            System.out.println("ERRO: Publisher already exists.");
+                        }
+                        System.out.println("Records created successfully");
+                        sendMsg("type|createPublisherComplete");
+                        break;
                     case "type|editArtistName":
                         String[] nameBeforeParts = aux[1].split("\\|");
                         String[] nameAfterParts = aux[2].split("\\|");
