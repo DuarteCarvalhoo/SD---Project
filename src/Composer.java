@@ -1,6 +1,7 @@
 public class Composer extends Artist {
     private boolean isComposer = false;
 
+    @Override
     public boolean isComposer() {
         return isComposer;
     }

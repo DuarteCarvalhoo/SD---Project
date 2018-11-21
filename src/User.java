@@ -145,11 +145,4 @@ public class User implements Serializable{
         this.password = "none";
     }
 
-    public User(String username, String password, boolean editor, boolean online, ArrayList<String> downloadableMusics) {
-        this.username = username;
-        this.password = password;
-        this.editor = editor;
-        this.online = online;
-        this.downloadableMusics = downloadableMusics;
-    }
 }

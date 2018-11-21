@@ -1,6 +1,7 @@
 public class Band extends Artist {
     private boolean isBand = false;
 
+    @Override
     public boolean isBand() {
         return isBand;
     }

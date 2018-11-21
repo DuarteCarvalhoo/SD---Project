@@ -1,6 +1,7 @@
 public class Musician extends Artist{
-    private boolean isMusician;
+    private boolean isMusician = false;
 
+    @Override
     public boolean isMusician() {
         return isMusician;
     }

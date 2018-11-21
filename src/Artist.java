@@ -3,7 +3,24 @@ import java.util.ArrayList;
 
 public abstract class Artist implements Serializable {
     private String name,description, genre;
+    private boolean isComposer = false ,isSongwriter = false ,isMusician = false , isBand = false;
     private ArrayList<Album> albums = new ArrayList<>();
+
+    public boolean isComposer() {
+        return isComposer;
+    }
+
+    public boolean isSongwriter() {
+        return isSongwriter;
+    }
+
+    public boolean isMusician() {
+        return isMusician;
+    }
+
+    public boolean isBand() {
+        return isBand;
+    }
 
     public String getName() {
         return name;

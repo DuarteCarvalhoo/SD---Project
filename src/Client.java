@@ -76,7 +76,7 @@ public class Client extends UnicastRemoteObject implements ClientHello{
         System.getProperties().put("java.security.policy", "policy.all");
         System.setSecurityManager(new RMISecurityManager());
         try {
-            Registry registry = LocateRegistry.getRegistry("localhost",7000);
+            Registry registry = LocateRegistry.getRegistry("192.84.13.142",7000);
             rmi =(Hello) registry.lookup("Hello");
         } catch (Exception e) {
             System.err.println("Client exception: " + e.toString());
@@ -172,25 +172,11 @@ public class Client extends UnicastRemoteObject implements ClientHello{
         String[] txtSplit = txt.split(";");
         switch (txtSplit[0].trim()){
             case "type|loginComplete":
-                if (txtSplit.length == 5) {
+                if (txtSplit.length == 3) {
                     String[] username = txtSplit[1].split("\\|");
                     String[] password = txtSplit[2].split("\\|");
                     String[] editor = txtSplit[3].split("\\|");
-                    String[] online = txtSplit[4].split("\\|");
-                    loggedUser = new User(username[1], password[1], Boolean.parseBoolean(editor[1]), Boolean.parseBoolean(online[1]));
-
-                }
-                else if(txtSplit.length > 5){
-                    String[] username = txtSplit[1].split("\\|");
-                    String[] password = txtSplit[2].split("\\|");
-                    String[] editor = txtSplit[3].split("\\|");
-                    String[] online = txtSplit[4].split("\\|");
-                    String[] downloads = txtSplit[5].split("\\|");
-                    ArrayList<String> downloadableMusics = new ArrayList<>();
-                    for(int i=1;i<downloads.length;i++){
-                        downloadableMusics.add(downloads[i]);
-                    }
-                    loggedUser = new User(username[1], password[1], Boolean.parseBoolean(editor[1]), Boolean.parseBoolean(online[1]),downloadableMusics);
+                    loggedUser = new User(username[1], password[1], Boolean.parseBoolean(editor[1]),true);
                 }
                 System.out.println("Welcome!");
                 loggedUser.setClientInterface(client);
