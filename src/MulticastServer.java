@@ -690,20 +690,22 @@ public class MulticastServer extends Thread implements Serializable {
                             String nome = "";
                             String genre = "";
                             String description = "";
+                            String publisherN = "";
+                            String artistName = "";
+                            ArrayList<Critic> criticsList = new ArrayList<>();
+                            ArrayList<Music> musicsList = new ArrayList<>();
                             int length = 0;
                             int publisherId = 0;
                             int id = 0;
                             int artistId = 0;
+                            double scoreFinal = 0;
 
                             try {
                                 connection.setAutoCommit(false);
                                 System.out.println("Opened database successfully");
                                 stmtShowAlbum = connection.prepareStatement("SELECT * FROM album WHERE name = ?;");
-                                System.out.println("1");
                                 stmtShowAlbum.setString(1, albuName[1]);
-                                System.out.println("2");
                                 ResultSet rs = stmtShowAlbum.executeQuery();
-                                System.out.println("3");
                                 while (rs.next()) {
                                     id = rs.getInt("id");
                                     nome = rs.getString("name");
@@ -715,25 +717,26 @@ public class MulticastServer extends Thread implements Serializable {
 
                                 stmtShowAlbum.close();
 
-                                String publisherN = getPublisherNameById(publisherId);
+                                publisherN = getPublisherNameById(publisherId);
                                 stmtShowAlbum = connection.prepareStatement("SELECT * FROM artist_album WHERE album_id = ?;");
                                 stmtShowAlbum.setInt(1, id);
                                 rs = stmtShowAlbum.executeQuery();
                                 while (rs.next()) {
                                     artistId = rs.getInt("artist_id");
                                 }
-                                String artistName = getArtistNameById(artistId);
-                                ArrayList<Critic> criticsList;
+                                artistName = getArtistNameById(artistId);
                                 criticsList = getCriticsByAlbumId(id);
-                                double scoreFinal = calculateScore(criticsList);
-                                album = new Album(nome,artistName,description,length,genre,scoreFinal,criticsList,publisherN);
+                                scoreFinal = calculateScore(criticsList);
 
 
                             }catch(org.postgresql.util.PSQLException e){
                                 System.out.println("except");
                                 sendMsg("type|showAlbumFailed");
                             }
-                            sendMsg("type|showAlbumComplete" + ";Album|" + album);
+                            sendMsg("type|showAlbumComplete" + ";AlbumName|" + nome +";ArtistName|"+artistName
+                        + ";Description|"+description+";Length|"+length+";Genre|"+genre+";ScoreFinal|"+scoreFinal
+                            +";CriticsList|"+printCritics(criticsList)+";MusicsList|"+printMusics(musicsList)+";Publisher|"+publisherN);
+                            //sendMsg("type|showAlbumComplete" + ";Album|" + album);
                         }
                         break;
                     default:
@@ -750,6 +753,47 @@ public class MulticastServer extends Thread implements Serializable {
         }
     }
 
+    private String printMusics(ArrayList<Music> m) {
+        String finalString = "";
+        if(m.isEmpty()){
+            finalString += "No musics to show.";
+        }
+        else{
+            for(int i = 0;i<m.size();i++){
+                if(i == (m.size()-1)){
+                    finalString += m.get(i).toString();
+                }
+                else{
+                    finalString += m.get(i).toString();
+                    finalString += "!";
+                }
+            }
+        }
+
+
+        return finalString;
+    }
+
+    private String printCritics(ArrayList<Critic> c){
+        String finalString = "";
+        if(c.isEmpty()){
+            finalString += "No critics to show.";
+        }
+        else{
+            for(int i = 0;i<c.size();i++){
+                if(i == (c.size()-1)){
+                    finalString += c.get(i).toString();
+                }
+                else{
+                    finalString += c.get(i).toString();
+                    finalString += "!";
+                }
+            }
+        }
+
+
+        return finalString;
+    }
     private double calculateScore(ArrayList<Critic> criticsList) {
         double score=0;
         for(Critic c : criticsList){
