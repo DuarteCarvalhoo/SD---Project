@@ -457,18 +457,69 @@ public class Client extends UnicastRemoteObject implements ClientHello{
                 System.out.println("Which album you wanna show? ");
             }
         }
+        String nome = "";
+        String genre = "";
+        String description = "";
+        String publisherN = "";
+        String artistName = "";
+        ArrayList<Critic> criticsList = new ArrayList<>();
+        ArrayList<Music> musicsList = new ArrayList<>();
+        int length = 0;
+        int publisherId = 0;
+        int id = 0;
+        int artistId = 0;
+        double scoreFinal = 0;
         String resp = rmi.showAlbum(n);
         String[] respSplit = resp.trim().split(";");
+        String[] nomeParts = respSplit[1].split("\\|");
+        String[] ArtistName = respSplit[2].split("\\|");
+        String[] Description = respSplit[3].split("\\|");
+        String[] Length = respSplit[4].split("\\|");
+        String[] Genre = respSplit[5].split("\\|");
+        String[] ScoreFinal = respSplit[6].split("\\|");
+        String[] Critics = respSplit[7].split("\\|");
+        String[] CriticByCritic = Critics[1].split("!");
+        if(CriticByCritic.length != 0){
+            criticsList = createCriticsList(CriticByCritic);
+        }
+        String[] Musics = respSplit[8].split("\\|");
+        String[] MusicByMusic = Musics[1].split("!");
+        if(MusicByMusic.length != 0){
+            musicsList = createMusicsList(MusicByMusic);
+        }
+        String[] Publisher = respSplit[9].split("\\|");
         if(respSplit.length>1){
-            String[] s = respSplit[1].split("\\|");
-            System.out.println(s[1]);
+            Album album = new Album();
+            album = new Album(nomeParts[1],ArtistName[1],Description[1],Integer.parseInt(Length[1]),Genre[1],Double.parseDouble(ScoreFinal[1]),criticsList,musicsList,Publisher[1]);
+            System.out.println(album);
         }
         else{
             System.out.println("ERROR: Show Album Failed.");
         }
     }
 
-            ////////////// MENU DE EDITOR COM AS SUAS FUNÇÕES INICIAIS/////////////
+    private static ArrayList<Music> createMusicsList(String[] musicByMusic) {
+        ArrayList<Music> m = new ArrayList();
+
+        for(int i=0;i<musicByMusic.length;i++){
+            //m.add();
+        }
+        return m;
+    }
+
+    private static ArrayList<Critic> createCriticsList(String[] criticByCritic) {
+        ArrayList<Critic> c = new ArrayList<>();
+        String[] Critics1;
+
+        for(int i=0;i<criticByCritic.length;i++){
+            Critics1 = criticByCritic[i].split(",");
+            c.add(new Critic(Double.parseDouble(Critics1[2]),Critics1[1],Critics1[0]));
+        }
+
+        return c;
+    }
+
+    ////////////// MENU DE EDITOR COM AS SUAS FUNÇÕES INICIAIS/////////////
     public static void editorMenu(Hello rmi,Scanner reader) throws RemoteException{
         if(!loggedUser.isEditor()){
             System.out.println("You don't have permission to do this.");

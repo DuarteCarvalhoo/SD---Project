@@ -13,6 +13,7 @@ public class Album implements Serializable{
     private String publisher;
     private double score;
     private ArrayList<Critic> criticsList = new ArrayList<>();
+    private ArrayList<Music> musicsList = new ArrayList<>();
 
     public int getId() {
         return id;
@@ -51,10 +52,13 @@ public class Album implements Serializable{
         if(musics.isEmpty()){
             finalString += "No musics to show.";
         }
-        else{
-            for(Music music : musics){
+        else {
+            int i = 1;
+            for (Music music : musics) {
+                finalString += i+". ";
                 finalString += music.toString();
-                finalString+="\n";
+                finalString += "\n";
+                i++;
             }
         }
         return finalString;
@@ -86,10 +90,11 @@ public class Album implements Serializable{
                 "Genre: " + genre + "\n" +
                 "Score: "+ score + "\n" +
                 "Publisher: "+ publisher + "\n" +
-                "Critics: \n" + printCritics(criticsList);
+                "Critics: \n" + printCritics(criticsList) + "\n" +
+                "Musics: \n" + printMusics(musicsList);
     }
 
-    public Album(String name, String artist, String description, int length, String genre, Double score, ArrayList<Critic> criticsList, String publisher) {
+    public Album(String name, String artist, String description, int length, String genre, Double score, ArrayList<Critic> criticsList, ArrayList<Music>musicsList, String publisher) {
         this.name = name;
         this.artist = artist;
         this.description = description;
@@ -97,6 +102,7 @@ public class Album implements Serializable{
         this.genre = genre;
         this.score = score;
         this.criticsList = criticsList;
+        this.musicsList = musicsList;
         this.publisher = publisher;
     }
 
