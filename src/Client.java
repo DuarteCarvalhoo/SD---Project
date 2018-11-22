@@ -235,11 +235,21 @@ public class Client extends UnicastRemoteObject implements ClientHello{
                         menuDePesquisa(rmi, reader);
                         break;
                     case "/share":
+                        ArrayList<Music> musicsList = new ArrayList<>();
                         String music ="";
                         String userName="";
                         boolean flagOK = false;
                         System.out.println("Which music you wanna share?");
-                        loggedUser.printDownloadableMusics();
+                        String response = rmi.getMusicList(loggedUser.getId());
+                        String[] rSplit = response.split(";");
+                        String[] musicParts = rSplit[1].split("\\|");
+                        musicsList = createMusicsList(musicParts[1].split(","));
+                        int i = 1;
+                        for (Music m : musicsList) {
+                            System.out.println(i+". "+m.toString());
+                            i++;
+                        }
+
                         while(!flagOK){
                             music = reader.nextLine();
                             if(!music.trim().equals("")){
@@ -307,8 +317,8 @@ public class Client extends UnicastRemoteObject implements ClientHello{
                                 menuPrincipal(rmi,reader);
                             }
                         }
-                        String response = rmi.sendMusicRMI(musicInfo,loggedUser.getId());
-                        String[] responseSpli = response.split(";");
+                        String resp = rmi.sendMusicRMI(musicInfo,loggedUser.getId());
+                        String[] responseSpli = resp.split(";");
                         switch (responseSpli[0]){
                             case "type|userNotFound":
                                 System.out.println("ERROR: User Not Found.");

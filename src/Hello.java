@@ -100,4 +100,6 @@ public interface Hello extends Remote {
     String showArtistAlbums(String name) throws RemoteException;
 
     String shareMusic(String music, String userName) throws RemoteException;
+
+    String getMusicList(int id) throws RemoteException;
 }

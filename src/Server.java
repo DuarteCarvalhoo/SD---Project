@@ -229,6 +229,29 @@ public class Server implements Hello {
         return msg;
     }
 
+    public String getMusicList(int id) {
+        MulticastSocket socket = null;
+        //envia para o multicast
+        try {
+            socket = new MulticastSocket();
+            InetAddress group = InetAddress.getByName(MULTICAST_ADDRESS);
+            socket.joinGroup(group);
+            String aux = "type|getMusicsList;UserId|"+id; //protocol
+            byte[] buffer = aux.getBytes();
+            DatagramPacket packet = new DatagramPacket(buffer, buffer.length, group, PORT);
+            socket.send(packet);
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            socket.close();
+        }
+
+        //recebe do multicast
+        String msg = receiveMulticast();
+        if (msg != null) return msg;
+        return null;
+    }
+
     ///////////// PESQUISA!! /////////////
     public String showArtist(String name){
         MulticastSocket socket = null;
