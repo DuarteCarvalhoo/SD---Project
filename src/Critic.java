@@ -3,6 +3,15 @@ import java.io.Serializable;
 public class Critic implements Serializable {
     private double score;
     private String text;
+    private int id;
+
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
+    }
 
     public double getScore() {
         return score;

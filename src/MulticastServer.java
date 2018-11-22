@@ -176,7 +176,7 @@ public class MulticastServer extends Thread implements Serializable {
                             artisT = returnsArtist(artistParts[1]);
                             for(Album album2 : artisT.getAlbums()){
                                 if(album2.getName().trim().equals(albumParts[1])){
-                                    album2.addMusic(music);
+                                    //album2.addMusic(music);
                                     System.out.println("Music added to artist's album.");
                                 }
                             }
@@ -392,42 +392,141 @@ public class MulticastServer extends Thread implements Serializable {
                     case "type|createAlbum":
                         Artist artist = new Musician();
                         String[] namePa = aux[1].split("\\|");
-                        String[] aName = aux[2].split("\\|");
+                        String[] gParts = aux[2].split("\\|");
                         String[] descripParts = aux[3].split("\\|");
-                        String[] duracaoParts = aux[4].split("\\|");
-                        if(checkAlbumExists(namePa[1],aName[1])){
-                            sendMsg("type|albumExists");
-                            System.out.println("ERRO: Album already exists.");
-                        }
-                        else{
-                            boolean flagAlbum = false;
-                            for(Artist a : artistsList){
-                                if(a.getName().equals(aName[1])){
-                                    artist = a;
-                                    flagAlbum=true;
-                                }
-                            }
-                            if(!flagAlbum){
-                                sendMsg("type|albumNotFound");
-                            }
-                            else {
-                                Album newAlbum = new Album(namePa[1], artist, descripParts[1], duracaoParts[1]);
-                                albunsList.add(newAlbum);
+                        String[] aName = aux[4].split("\\|");
+                        String[] pName = aux[5].split("\\|");
+                        PreparedStatement stmtAlbum = null;
+                        boolean flagAlbum = false;
 
-                                boolean flagAddToArtist = false;
-                                for (Artist a : artistsList) {
-                                    if (a.getName().equals(aName[1])) {
-                                        a.getAlbums().add(newAlbum);
-                                        sendMsg("type|createAlbumComplete");
-                                        flagAddToArtist = true;
-                                    }
-                                }
-                                if(!flagAddToArtist){
-                                    sendMsg("type|createAlbumFailed");
-                                    System.out.println("Falhou.");
-                                }
-                            }
+                        try{
+                            connection.setAutoCommit(false);
+                            System.out.println("Open database successfully!");
+                            int publisherId = getPublisherById(pName[1]);
+
+                            stmtAlbum = connection.prepareStatement("INSERT INTO album(id,name,genre,description,length,publisher_id)"
+                                                        + "VALUES (DEFAULT,?,?,?,0,?);");
+                            stmtAlbum.setString(1,namePa[1]);
+                            stmtAlbum.setString(2,gParts[1]);
+                            stmtAlbum.setString(3,descripParts[1]);
+                            stmtAlbum.setInt(4,publisherId);
+                            stmtAlbum.executeUpdate();
+
+                            int artistId = getArtistIdByName(aName[1]);
+                            int albumId = getAlbumIdByName(namePa[1]);
+                            stmtAlbum = connection.prepareStatement("INSERT INTO artist_album(artist_id, album_id)"
+                            + "VALUES (?,?);");
+                            stmtAlbum.setInt(1,artistId);
+                            stmtAlbum.setInt(2,albumId);
+                            stmtAlbum.executeUpdate();
+
+                            stmtAlbum.close();
+                            connection.commit();
+                        }catch(org.postgresql.util.PSQLException e){
+                            sendMsg("type|createAlbumFailed");
+                            System.out.println("ERRO: Album creation failed.");
                         }
+                        System.out.println("Records created successfully");
+                        sendMsg("type|createAlbumComplete");
+                        break;
+                    case "type|createConcert":
+                        String[] concertLocation = aux[1].split("\\|");
+                        String[] concertName = aux[2].split("\\|");
+                        PreparedStatement stmtConcert = null;
+                        try {
+                            Concert a = new Concert(concertLocation[1],concertName[1]);
+                            connection.setAutoCommit(false);
+                            System.out.println("Opened database successfully");
+
+                            stmtConcert = connection.prepareStatement("INSERT INTO concerts (id,location,name)"
+                                    + "VALUES (DEFAULT,?,?);");
+                            stmtConcert.setString(1,a.getLocation());
+                            stmtConcert.setString(2,a.getName());
+                            stmtConcert.executeUpdate();
+
+                            stmtConcert.close();
+                            connection.commit();
+
+                        }catch(org.postgresql.util.PSQLException e) {
+                            sendMsg("type|createConcertFailed");
+                            System.out.println("ERRO: Concert already exists.");
+                        }
+                        System.out.println("Records created successfully");
+                        sendMsg("type|createConcertComplete");
+                        break;
+                    case "type|concertAssociation":
+                        String[] concertBandMusician = aux[2].split("\\|");
+                        String[] concertN = aux[1].split("\\|");
+
+                        int concertId = getConcertIdByName(concertN[1]);
+                        int bandId = getArtistIdByName(concertBandMusician[1]);
+                        PreparedStatement stmtConcertA = null;
+                        try {
+                            connection.setAutoCommit(false);
+                            System.out.println("Opened database successfully");
+
+                            stmtConcertA = connection.prepareStatement("INSERT INTO concerts_group (concerts_id, artist_id)"
+                                    + "VALUES (?,?);");
+                            stmtConcertA.setInt(1,concertId);
+                            stmtConcertA.setInt(2,bandId);
+                            stmtConcertA.executeUpdate();
+
+                            stmtConcertA.close();
+                            connection.commit();
+
+                        }catch(org.postgresql.util.PSQLException e) {
+                            sendMsg("type|concertExists");
+                            System.out.println("ERRO: Concert already exists.");
+                        }
+                        System.out.println("Records created successfully");
+                        sendMsg("type|createConcertComplete");
+                        break;
+                    case "type|createPublisher":
+                        String[] publisherName = aux[1].split("\\|");
+                        PreparedStatement stmtPublisher = null;
+                        try {
+                            Publisher a = new Publisher(publisherName[1]);
+                            connection.setAutoCommit(false);
+                            System.out.println("Opened database successfully");
+
+                            stmtPublisher = connection.prepareStatement("INSERT INTO publisher (id,name)"
+                                    + "VALUES (DEFAULT,?);");
+                            stmtPublisher.setString(1,a.getName());
+                            stmtPublisher.executeUpdate();
+
+                            stmtPublisher.close();
+                            connection.commit();
+
+                        }catch(org.postgresql.util.PSQLException e) {
+                            sendMsg("type|publisherExists");
+                            System.out.println("ERRO: Publisher already exists.");
+                        }
+                        System.out.println("Records created successfully");
+                        sendMsg("type|createPublisherComplete");
+                        break;
+                    case "type|createPlaylist":
+                        String[] playlistName = aux[1].split("\\|");
+                        String[] playlistUser = aux[2].split("\\|");
+                        PreparedStatement stmtPlaylist = null, stmtUserConnection=null;
+                        try {
+                            Playlist a = new Playlist(playlistName[1]);
+                            connection.setAutoCommit(false);
+                            System.out.println("Opened database successfully");
+
+                            stmtPlaylist = connection.prepareStatement("INSERT INTO playlist (id,name,user_id)"
+                                    + "VALUES (DEFAULT,?,?);");
+                            stmtPlaylist.setString(1,a.getName());
+                            stmtPlaylist.setInt(2,Integer.parseInt(playlistUser[1]));
+                            stmtPlaylist.executeUpdate();
+
+                            stmtPlaylist.close();
+                            connection.commit();
+                        }catch(org.postgresql.util.PSQLException e) {
+                            sendMsg("type|createPlaylistFailed");
+                            System.out.println("ERRO: Something went wrong.");
+                        }
+                        System.out.println("Records created successfully");
+                        sendMsg("type|createPlaylistComplete");
                         break;
                     case "type|editArtistName":
                         String[] nameBeforeParts = aux[1].split("\\|");
@@ -482,29 +581,6 @@ public class MulticastServer extends Thread implements Serializable {
                         }
                         break;
                     case "type|showArtist":
-                        /*String[] nameArtist = aux[1].split("\\|");
-                        String n = nameArtist[1];
-                        if(!checkArtistExists(n)){
-                            sendMsg("type|showArtistFail");
-                            System.out.println("ERROR: Artist Not Found.");
-                        }
-                        else{
-                            String albuns = "-No albuns";
-                            for(Artist a : artistsList){
-                                if(a.getName().equals(n)){
-                                    int i;
-                                    if(a.getAlbums().size()>0){
-                                        String[] nomesAlbuns = new String[a.getAlbums().size()];
-                                        for(i=0;i<a.getAlbums().size();i++){
-                                            nomesAlbuns[i] = a.getAlbums().get(i).getName();
-                                        }
-                                        albuns = printAlbunsProtocol(nomesAlbuns);
-                                    }
-                                    sendMsg("type|showArtistComplete;"+"Name|"+a.getName()+";Genre|"+a.getGenre()+";Description|"+a.getDescription()+";Album|"+albuns);
-                                    System.out.println("SUCCESS: Artist Shown.");
-                                }
-                            }
-                        }*/
                         String[] nameArtist = aux[1].split("\\|");
                         String n = nameArtist[1];
                         Artist art = new Musician();
@@ -571,29 +647,34 @@ public class MulticastServer extends Thread implements Serializable {
                         }
                         break;
                     case "type|makeCritic":
-                        Album newAlbum = new Album();
                         String[] scoreParts = aux[1].split("\\|");
                         String[] textParts = aux[2].split("\\|");
-                        String[] albumParts1 = aux[3].split("\\|");
-                        Critic c = new Critic(Double.parseDouble(scoreParts[1]),textParts[1]);
-                        if(albunsList.isEmpty()){
-                            sendMsg("type|criticFail");
-                            System.out.println("ERROR: No Albums in the database.");
+                        String[] albName = aux[3].split("\\|");
+                        String[] userId = aux[4].split("\\|");
+
+                        if(albumDatabaseEmpty()){
+                            sendMsg("type|makeCriticFail");
+                            System.out.println("ERROR: No Albuns in the database.");
                         }
-                        else {
-                            for (Album a : albunsList) {
-                                if (a.getName().equals(albumParts1[1])) {
-                                    newAlbum = a;
-                                }
-                            }
-                            if(checkAlbumExists(albumParts1[1],newAlbum.getArtist().getName())){
-                                newAlbum.addCritic(c);
+                        else{
+                            PreparedStatement stmtCritic = null;
+
+                            try{
+                                int albumId = getAlbumIdByName(albName[1]);
+                                connection.setAutoCommit(false);
+                                stmtCritic = connection.prepareStatement("INSERT INTO critic(id, score, text, album_id, user_id) "
+                                                + "VALUES(DEFAULT,?,?,?,?);");
+                                stmtCritic.setDouble(1,Double.parseDouble(scoreParts[1]));
+                                stmtCritic.setString(2,textParts[1]);
+                                stmtCritic.setInt(3,albumId);
+                                stmtCritic.setInt(4,Integer.parseInt(userId[1]));
+                                stmtCritic.executeUpdate();
+                                stmtCritic.close();
+                                connection.commit();
                                 sendMsg("type|criticComplete");
-                                System.out.println("Critic Complete.");
-                            }
-                            else{
+                            }catch(org.postgresql.util.PSQLException e){
                                 sendMsg("type|criticFail");
-                                System.out.println("Critic not Complete. Album not found.");
+                                System.out.println("Something went wrong.");
                             }
                         }
                         break;
@@ -632,6 +713,100 @@ public class MulticastServer extends Thread implements Serializable {
         } finally {
             socket.close();
         }
+    }
+
+    private int getAlbumIdByName(String s) {
+        try{
+            connection.setAutoCommit(false);
+            PreparedStatement stmt = connection.prepareStatement("SELECT * FROM album WHERE name = ?;");
+            stmt.setString(1,s);
+            ResultSet rs = stmt.executeQuery();
+
+            int albumId = 0;
+            while(rs.next()){
+                albumId = rs.getInt("id");
+            }
+            return albumId;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return 0;
+    }
+
+    private int getPublisherById(String s) {
+        try{
+            connection.setAutoCommit(false);
+            PreparedStatement stmt = connection.prepareStatement("SELECT * FROM publisher WHERE name = ?;");
+            stmt.setString(1,s);
+            ResultSet rs = stmt.executeQuery();
+
+            int publisherId = 0;
+            while(rs.next()){
+                publisherId = rs.getInt("id");
+            }
+            return publisherId;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return 0;
+    }
+
+    private int getConcertIdByName(String concertN) {
+        try{
+            connection.setAutoCommit(false);
+            PreparedStatement stmt = connection.prepareStatement("SELECT * FROM concerts WHERE name = ?;");
+            stmt.setString(1,concertN);
+            ResultSet rs = stmt.executeQuery();
+
+            int concertId = 0 ;
+            while (rs.next()) {
+                concertId = rs.getInt("id");
+            }
+
+            return concertId;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return 0;
+    }
+
+    private String getConcertNameById(int concertId) {
+        try{
+            connection.setAutoCommit(false);
+            PreparedStatement stmt = connection.prepareStatement("SELECT * FROM concerts WHERE id = ?;");
+            stmt.setInt(1,concertId);
+            ResultSet rs = stmt.executeQuery();
+
+            String concertName = "" ;
+            while (rs.next()) {
+                concertName = rs.getString("name");
+            }
+
+            return concertName;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return "";
+    }
+
+    private int getArtistIdByName(String bandMusicianName) {
+        try{
+            connection.setAutoCommit(false);
+            PreparedStatement stmt = connection.prepareStatement("SELECT * FROM artist WHERE name = ?;");
+
+            stmt.setString(1,bandMusicianName);
+            ResultSet rs = stmt.executeQuery();
+
+            int concertId = 0 ;
+            while (rs.next()) {
+                concertId = rs.getInt("id");
+            }
+
+            return concertId;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return 0;
     }
 
     private boolean isEditor(String username) {
@@ -767,6 +942,17 @@ public class MulticastServer extends Thread implements Serializable {
         }
     }
 
+    private boolean albumDatabaseEmpty() throws SQLException {
+        try{
+            Statement stmt = connection.createStatement();
+            ResultSet rs = stmt.executeQuery("SELECT * FROM album");
+            return !rs.next();
+        }
+        catch (org.postgresql.util.PSQLException e){
+            return false;
+        }
+    }
+
     private User returnsUser(String username){
         for(User u : usersList){
             if(u.getUsername().trim().equals(username)){
@@ -851,9 +1037,9 @@ public class MulticastServer extends Thread implements Serializable {
         else {
             for (Music music : musicsList) {
                 if (music.getTitle().equals(name)){
-                    if(music.getArtist().equals(artistName)){
+                    /*if(music.getArtist().equals(artistName)){
                         return true;
-                    }
+                    }*/
                 }
             }
         }
@@ -861,18 +1047,7 @@ public class MulticastServer extends Thread implements Serializable {
     }
 
     public boolean checkAlbumExists(String name, String artist){
-        if(albunsList.isEmpty()){
-            return false;
-        }
-        else {
-            for (Album album : albunsList) {
-                if (album.getName().equals(name)) {
-                    if(album.getArtist().getName().equals(artist)){
-                        return true;
-                    }
-                }
-            }
-        }
+        //Album a = getAlbumByName();
         return false;
     }
 

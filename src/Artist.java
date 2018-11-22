@@ -5,6 +5,15 @@ public abstract class Artist implements Serializable {
     private String name,description;
     private boolean isComposer = false ,isSongwriter = false ,isMusician = false , isBand = false;
     private ArrayList<Album> albums = new ArrayList<>();
+    private int id;
+
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
+    }
 
     public boolean isComposer() {
         return isComposer;
