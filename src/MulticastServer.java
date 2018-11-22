@@ -230,30 +230,19 @@ public class MulticastServer extends Thread implements Serializable {
                         boolean flagEditor = false;
                         String []parts = aux[1].split("\\|");
                         System.out.println("User: "+parts[1]);
-                        if(usersList.isEmpty()){
+                        if(userDatabaseEmpty()){
                             sendMsg("type|makingEditorFail");
                             System.out.println("ERROR: No users on the database.");
                         }
-                        else{
-                            for(User u : usersList){
-                                if(u.getUsername().equals(parts[1])){
-                                    if(u.isEditor()){
-                                        sendMsg("type|makingEditorFail");
-                                        System.out.println("ERROR: "+parts[1]+" is already an editor.");
-                                        flagEditor = true;
-                                    }
-                                    else{
-                                        u.makeEditor();
-                                        sendMsg("type|makingEditorComplete");
-                                        System.out.println("SUCCESS: User "+parts[1]+" made editor.");
-                                        flagEditor = true;
-                                    }
-                                }
-                            }
-                            if(!flagEditor){
-                                System.out.println("Username not found.");
-                                sendMsg("type|makingEditorFail");
-                            }
+                        else {
+                            makeEditor(parts[1]);
+                            sendMsg("type|makingEditorComplete");
+                            System.out.println("SUCCESS: User "+parts[1]+" made editor.");
+
+                        }
+                        if(!flagEditor){
+                            System.out.println("Username not found.");
+                            sendMsg("type|makingEditorFail");
                         }
                         break;
                     case"type|addNotification":
