@@ -679,26 +679,61 @@ public class MulticastServer extends Thread implements Serializable {
                         }
                         break;
                     case "type|showAlbum":
+                        String[] albuName = aux[1].split("\\|");
                         Album album = new Album();
-                        String[] albumNameParts = aux[1].split("\\|");
-                        String albumName = albumNameParts[1];
-                        if(albunsList.isEmpty()){
-                            sendMsg("type|showAlbumFail");
-                            System.out.println("ERROR: No Albums in the database.");
+                        if(albumDatabaseEmpty()){
+                            sendMsg("type|showAlbumFailed");
+                            System.out.println("ERROR: No albuns on database.");
                         }
                         else {
-                            for (Album a : albunsList) {
-                                if (a.getName().equals(albumName)) {
-                                    album = a;
+                            PreparedStatement stmtShowAlbum = null;
+                            String nome = "";
+                            String genre = "";
+                            String description = "";
+                            int length = 0;
+                            int publisherId = 0;
+                            int id = 0;
+                            int artistId = 0;
+
+                            try {
+                                connection.setAutoCommit(false);
+                                System.out.println("Opened database successfully");
+                                stmtShowAlbum = connection.prepareStatement("SELECT * FROM album WHERE name = ?;");
+                                System.out.println("1");
+                                stmtShowAlbum.setString(1, albuName[1]);
+                                System.out.println("2");
+                                ResultSet rs = stmtShowAlbum.executeQuery();
+                                System.out.println("3");
+                                while (rs.next()) {
+                                    id = rs.getInt("id");
+                                    nome = rs.getString("name");
+                                    genre = rs.getString("genre");
+                                    description = rs.getString("description");
+                                    length = rs.getInt("length");
+                                    publisherId = rs.getInt("publisher_id");
                                 }
+
+                                stmtShowAlbum.close();
+
+                                String publisherN = getPublisherNameById(publisherId);
+                                stmtShowAlbum = connection.prepareStatement("SELECT * FROM artist_album WHERE album_id = ?;");
+                                stmtShowAlbum.setInt(1, id);
+                                rs = stmtShowAlbum.executeQuery();
+                                while (rs.next()) {
+                                    artistId = rs.getInt("artist_id");
+                                }
+                                String artistName = getArtistNameById(artistId);
+                                ArrayList<Critic> criticsList;
+                                criticsList = getCriticsByAlbumId(id);
+                                double scoreFinal = calculateScore(criticsList);
+                                album = new Album(nome,artistName,description,length,genre,scoreFinal,criticsList,publisherN);
+
+
+                            }catch(org.postgresql.util.PSQLException e){
+                                System.out.println("except");
+                                sendMsg("type|showAlbumFailed");
                             }
-                            if(checkAlbumExists(albumName, album.getName())){
-                                sendMsg("type|albumAlreadyExists");
-                                System.out.println("ERROR: Album Not Found.");
-                            }
-                            else{
-                                sendMsg("type|showAlbumComplete"+";Album|"+album);
-                            }
+                            sendMsg("type|showAlbumComplete" + ";Album|" + album);
                         }
                         break;
                     default:
@@ -713,6 +748,55 @@ public class MulticastServer extends Thread implements Serializable {
         } finally {
             socket.close();
         }
+    }
+
+    private double calculateScore(ArrayList<Critic> criticsList) {
+        double score=0;
+        for(Critic c : criticsList){
+            score += c.getScore();
+        }
+        return score/criticsList.size();
+    }
+
+    private ArrayList<Critic> getCriticsByAlbumId(int id) {
+        ArrayList<Critic> c = new ArrayList<>();
+        try{
+            connection.setAutoCommit(false);
+            PreparedStatement stmt = connection.prepareStatement("SELECT * FROM critic WHERE album_id = ?;");
+            stmt.setInt(1,id);
+            ResultSet rs = stmt.executeQuery();
+
+
+            while(rs.next()){
+                Double score = rs.getDouble("score");
+                String text = rs.getString("text");
+                int userId = rs.getInt("user_id");
+                Critic cr = new Critic(score,text,getUserNameById(userId));
+                c.add(cr);
+            }
+            return c;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return c;
+    }
+
+    private String getUserNameById(int userId) {
+        try{
+            connection.setAutoCommit(false);
+            PreparedStatement stmt = connection.prepareStatement("SELECT * FROM utilizador WHERE id = ?;");
+            stmt.setInt(1,userId);
+            ResultSet rs = stmt.executeQuery();
+
+            String userName = "";
+            while(rs.next()){
+                userName = rs.getString("username");
+            }
+            return userName;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return "";
     }
 
     private int getAlbumIdByName(String s) {
@@ -749,6 +833,24 @@ public class MulticastServer extends Thread implements Serializable {
             e.printStackTrace();
         }
         return 0;
+    }
+
+    private String getPublisherNameById(int id) {
+        try{
+            connection.setAutoCommit(false);
+            PreparedStatement stmt = connection.prepareStatement("SELECT * FROM publisher WHERE id = ?;");
+            stmt.setInt(1,id);
+            ResultSet rs = stmt.executeQuery();
+
+            String publisherName = "";
+            while(rs.next()){
+                publisherName = rs.getString("name");
+            }
+            return publisherName;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return "";
     }
 
     private int getConcertIdByName(String concertN) {
@@ -807,6 +909,26 @@ public class MulticastServer extends Thread implements Serializable {
             e.printStackTrace();
         }
         return 0;
+    }
+
+    private String getArtistNameById(int id) {
+        try{
+            connection.setAutoCommit(false);
+            PreparedStatement stmt = connection.prepareStatement("SELECT * FROM artist WHERE id = ?;");
+
+            stmt.setInt(1,id);
+            ResultSet rs = stmt.executeQuery();
+
+            String artistName = "";
+            while (rs.next()) {
+                artistName = rs.getString("name");
+            }
+            stmt.close();
+            return artistName;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return "";
     }
 
     private boolean isEditor(String username) {

@@ -7,9 +7,12 @@ public class Album implements Serializable{
     private int id;
     private String name;
     private String description;
-    private String length;
+    private int length;
     private String genre;
-
+    private String artist;
+    private String publisher;
+    private double score;
+    private ArrayList<Critic> criticsList = new ArrayList<>();
 
     public int getId() {
         return id;
@@ -25,6 +28,10 @@ public class Album implements Serializable{
 
     public String getName(){
         return name;
+    }
+
+    public String getArtist() {
+        return artist;
     }
 
     public String getDescription() {
@@ -59,22 +66,38 @@ public class Album implements Serializable{
             finalString += "No critics to show.";
         }
         else {
+            int i = 1;
             for (Critic critic : critics) {
+                finalString += i+". ";
                 finalString += critic.toString();
                 finalString += "\n";
+                i++;
             }
         }
         return finalString;
     }
 
+    @Override
+    public String toString() {
+        return "Name: " + name + "\n" +
+                "Artist: " + artist + "\n" +
+                "Description:" + description + "\n" +
+                "Length: " + length + "\n" +
+                "Genre: " + genre + "\n" +
+                "Score: "+ score + "\n" +
+                "Publisher: "+ publisher + "\n" +
+                "Critics: \n" + printCritics(criticsList);
+    }
 
-
-
-    public Album(String name, String description, String length, String genre) {
+    public Album(String name, String artist, String description, int length, String genre, Double score, ArrayList<Critic> criticsList, String publisher) {
         this.name = name;
+        this.artist = artist;
         this.description = description;
         this.length = length;
         this.genre = genre;
+        this.score = score;
+        this.criticsList = criticsList;
+        this.publisher = publisher;
     }
 
     public Album(){
