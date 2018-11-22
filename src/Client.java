@@ -307,7 +307,7 @@ public class Client extends UnicastRemoteObject implements ClientHello{
                                 menuPrincipal(rmi,reader);
                             }
                         }
-                        String response = rmi.sendMusicRMI(musicInfo,loggedUser.getUsername());
+                        String response = rmi.sendMusicRMI(musicInfo,loggedUser.getId());
                         String[] responseSpli = response.split(";");
                         switch (responseSpli[0]){
                             case "type|userNotFound":
@@ -483,7 +483,7 @@ public class Client extends UnicastRemoteObject implements ClientHello{
             criticsList = createCriticsList(CriticByCritic);
         }
         String[] Musics = respSplit[8].split("\\|");
-        String[] MusicByMusic = Musics[1].split("!");
+        String[] MusicByMusic = Musics[1].split(",");
         if(MusicByMusic.length != 0){
             musicsList = createMusicsList(MusicByMusic);
         }
@@ -499,10 +499,10 @@ public class Client extends UnicastRemoteObject implements ClientHello{
     }
 
     private static ArrayList<Music> createMusicsList(String[] musicByMusic) {
-        ArrayList<Music> m = new ArrayList();
+        ArrayList<Music> m = new ArrayList<>();
 
         for(int i=0;i<musicByMusic.length;i++){
-            //m.add();
+            m.add(new Music(musicByMusic[i]));
         }
         return m;
     }
@@ -513,7 +513,10 @@ public class Client extends UnicastRemoteObject implements ClientHello{
 
         for(int i=0;i<criticByCritic.length;i++){
             Critics1 = criticByCritic[i].split(",");
-            c.add(new Critic(Double.parseDouble(Critics1[2]),Critics1[1],Critics1[0]));
+            if(Critics1.length == 3){
+                c.add(new Critic(Double.parseDouble(Critics1[2]),Critics1[1],Critics1[0]));
+
+            }
         }
 
         return c;
@@ -1233,16 +1236,6 @@ public class Client extends UnicastRemoteObject implements ClientHello{
         musicInfo[auxi] = album;
         auxi++;
 
-        flagOK=false;
-        String genre = "";
-        while(!flagOK){
-            System.out.print("Insert genre: ");
-            genre = reader.nextLine();
-            if(!genre.trim().equals("")){
-                flagOK=true;
-            }
-        }
-        musicInfo[auxi] = genre;
         return musicInfo;
     }
 

@@ -148,45 +148,48 @@ public class MulticastServer extends Thread implements Serializable {
                         sendMsg("Music saving on the server.");
                         break;
                     case "type|sendMusic":
-                        User loggedUser;
                         Artist artisT;
                         String[] loggedUserParts = aux[8].split("\\|");
                         String[] pathParts = aux[1].split("\\|");
-                        String[] nameParts = aux[2].split("\\|");
+                        String[] titleParts = aux[2].split("\\|");
                         String[] composerParts = aux[3].split("\\|");
                         String[] artistParts = aux[4].split("\\|");
                         String[] durationParts = aux[5].split("\\|");
                         String[] albumParts = aux[6].split("\\|");
-                        String[] genreParts = aux[7].split("\\|");
-                        Music music = new Music(pathParts[1],nameParts[1],composerParts[1],artistParts[1],durationParts[1],albumParts[1],genreParts[1]);
-                        if(checkUsernameRegister(loggedUserParts[1])!=1){
-                            sendMsg("type|userNotFound");
-                        }
-                        else if(!checkArtistExists(artistParts[1])){
-                            sendMsg("type|artistNotFound");
-                        }
-                        else if(!checkAlbumExists(albumParts[1],artistParts[1])){
-                            sendMsg("type|albumNotFound");
-                        }
-                        else if(checkMusicExists(nameParts[1],artistParts[1])){
-                            sendMsg("type|musicExists");
-                        }
-                        else{
-                            musicsList.add(music);
-                            artisT = returnsArtist(artistParts[1]);
-                            for(Album album2 : artisT.getAlbums()){
-                                if(album2.getName().trim().equals(albumParts[1])){
-                                    //album2.addMusic(music);
-                                    System.out.println("Music added to artist's album.");
-                                }
-                            }
-                            loggedUser = returnsUser(loggedUserParts[1]);
-                            loggedUser.addDownloadableMusic(music.getTitle());
-                            System.out.println("Music added to downloadable musics");
-                            writeFiles();
-                            receiveMusic(socketHelp, nameParts[1]);
-                            sendMsg("type|sendMusicComplete;MusicAdded|"+music.getTitle());
-                        }
+
+                        connection.setAutoCommit(false);
+                        PreparedStatement stmtUpload = connection.prepareStatement("INSERT INTO music(id, title, length)"
+                        + "VALUES(DEFAULT,?,?);");
+                        stmtUpload.setString(1,titleParts[1]);
+                        stmtUpload.setInt(2,Integer.parseInt(durationParts[1]));
+                        stmtUpload.executeUpdate();
+
+                        stmtUpload = connection.prepareStatement("INSERT INTO music_album(music_id, music_title, album_id)"
+                        + "VALUES(?,?,?);");
+                        stmtUpload.setInt(1,getMusicIdByName(titleParts[1]));
+                        stmtUpload.setString(2,titleParts[1]);
+                        stmtUpload.setInt(3,getAlbumIdByName(albumParts[1]));
+                        stmtUpload.executeUpdate();
+
+                        stmtUpload = connection.prepareStatement("INSERT INTO filearchive(id,path, music_id, music_title,user_id)"
+                        + "VALUES(DEFAULT,?,?,?,?);");
+                        stmtUpload.setString(1,pathParts[1]);
+                        stmtUpload.setInt(2,getMusicIdByName(titleParts[1]));
+                        stmtUpload.setString(3,titleParts[1]);
+                        stmtUpload.setInt(4,Integer.parseInt(loggedUserParts[1]));
+                        stmtUpload.executeUpdate();
+
+                        stmtUpload = connection.prepareStatement("INSERT INTO filearchive_user(filearchive_id, user_id)"
+                        + "VALUES(?,?);");
+
+                        stmtUpload.setInt(1,getFileArchiveByPath(pathParts[1]));
+                        stmtUpload.setInt(2,Integer.parseInt(loggedUserParts[1]));
+                        stmtUpload.executeUpdate();
+
+                        stmtUpload.close();
+                        connection.commit();
+                        receiveMusic(socketHelp,titleParts[1]);
+                        sendMsg("type|sendMusicComplete");
                         break;
                     case "type|shareMusic":
                         User userW;
@@ -726,6 +729,7 @@ public class MulticastServer extends Thread implements Serializable {
                                 }
                                 artistName = getArtistNameById(artistId);
                                 criticsList = getCriticsByAlbumId(id);
+                                musicsList = getMusicsByAlbumId(id);
                                 scoreFinal = calculateScore(criticsList);
 
 
@@ -753,6 +757,24 @@ public class MulticastServer extends Thread implements Serializable {
         }
     }
 
+    private int getFileArchiveByPath(String pathPart) {
+        try{
+            connection.setAutoCommit(false);
+            PreparedStatement stmt = connection.prepareStatement("SELECT * FROM filearchive WHERE path = ?;");
+            stmt.setString(1,pathPart);
+            ResultSet rs = stmt.executeQuery();
+
+            int fileId = 0;
+            while(rs.next()){
+                fileId = rs.getInt("id");
+            }
+            return fileId;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return 0;
+    }
+
     private String printMusics(ArrayList<Music> m) {
         String finalString = "";
         if(m.isEmpty()){
@@ -765,7 +787,7 @@ public class MulticastServer extends Thread implements Serializable {
                 }
                 else{
                     finalString += m.get(i).toString();
-                    finalString += "!";
+                    finalString += ",";
                 }
             }
         }
@@ -825,6 +847,41 @@ public class MulticastServer extends Thread implements Serializable {
         return c;
     }
 
+    private ArrayList<Music> getMusicsByAlbumId(int id) {
+        ArrayList<Music> m = new ArrayList<>();
+        ArrayList<Integer> ids = new ArrayList<>();
+        try{
+            connection.setAutoCommit(false);
+            PreparedStatement stmt = connection.prepareStatement("SELECT * FROM music_album WHERE album_id = ?;");
+            stmt.setInt(1,id);
+            ResultSet rs = stmt.executeQuery();
+
+
+            while(rs.next()){
+                int musicId = rs.getInt("music_id");
+                ids.add(musicId);
+            }
+
+            for(int i : ids){
+                stmt = connection.prepareStatement("SELECT * FROM music WHERE id = ?;");
+                stmt.setInt(1,i);
+                rs = stmt.executeQuery();
+
+                while(rs.next()){
+                    String title = rs.getString("title");
+                    int length = rs.getInt("length");
+
+                    //String tit = title.replaceAll(".mp3","");
+                    m.add(new Music(title,length));
+                }
+            }
+            return m;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return m;
+    }
+
     private String getUserNameById(int userId) {
         try{
             connection.setAutoCommit(false);
@@ -855,6 +912,24 @@ public class MulticastServer extends Thread implements Serializable {
                 albumId = rs.getInt("id");
             }
             return albumId;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return 0;
+    }
+
+    private int getMusicIdByName(String s) {
+        try{
+            connection.setAutoCommit(false);
+            PreparedStatement stmt = connection.prepareStatement("SELECT * FROM music WHERE title = ?;");
+            stmt.setString(1,s);
+            ResultSet rs = stmt.executeQuery();
+
+            int musicId = 0;
+            while(rs.next()){
+                musicId = rs.getInt("id");
+            }
+            return musicId;
         } catch (SQLException e) {
             e.printStackTrace();
         }
