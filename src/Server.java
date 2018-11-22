@@ -229,6 +229,29 @@ public class Server implements Hello {
         return msg;
     }
 
+    public String getMusicList(int id) {
+        MulticastSocket socket = null;
+        //envia para o multicast
+        try {
+            socket = new MulticastSocket();
+            InetAddress group = InetAddress.getByName(MULTICAST_ADDRESS);
+            socket.joinGroup(group);
+            String aux = "type|getMusicsList;UserId|"+id; //protocol
+            byte[] buffer = aux.getBytes();
+            DatagramPacket packet = new DatagramPacket(buffer, buffer.length, group, PORT);
+            socket.send(packet);
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            socket.close();
+        }
+
+        //recebe do multicast
+        String msg = receiveMulticast();
+        if (msg != null) return msg;
+        return null;
+    }
+
     ///////////// PESQUISA!! /////////////
     public String showArtist(String name){
         MulticastSocket socket = null;
@@ -711,14 +734,14 @@ public class Server implements Hello {
         return receiveMulticast();
     }
 
-    public String sendMusicRMI(String[] musicInfo,String loggedUser){
+    public String sendMusicRMI(String[] musicInfo,int loggedUserId){
         MulticastSocket socket = null;
         //envia pra o multicast
         try {
             socket = new MulticastSocket();
             InetAddress group = InetAddress.getByName(MULTICAST_ADDRESS);
             socket.joinGroup(group);
-            String aux = "type|sendMusic;musicPath|"+musicInfo[0]+";musicName|"+musicInfo[1]+";musicComposer|"+musicInfo[2]+";musicArtist|"+musicInfo[3]+";musicDuration|"+musicInfo[4]+";musicAlbum|"+musicInfo[5]+";musicGenre|"+musicInfo[6]+";loggedUser|"+loggedUser;//protocol
+            String aux = "type|sendMusic;musicPath|"+musicInfo[0]+";musicName|"+musicInfo[1]+";musicComposer|"+musicInfo[2]+";musicArtist|"+musicInfo[3]+";musicDuration|"+musicInfo[4]+";musicAlbum|"+musicInfo[5]+";musicGenre|"+musicInfo[6]+";loggedUserId|"+loggedUserId;//protocol
             byte[] buffer = aux.getBytes();
             DatagramPacket packet = new DatagramPacket(buffer, buffer.length, group, PORT);
             socket.send(packet);

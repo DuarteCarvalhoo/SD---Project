@@ -59,7 +59,7 @@ public interface Hello extends Remote {
 
     String checkLogout(User user) throws RemoteException;
 
-    String sendMusicRMI(String[] musicInfo, String loggedUser) throws RemoteException;
+    String sendMusicRMI(String[] musicInfo, int loggedUser) throws RemoteException;
 
     String ping() throws RemoteException;
 
@@ -100,4 +100,6 @@ public interface Hello extends Remote {
     String showArtistAlbums(String name) throws RemoteException;
 
     String shareMusic(String music, String userName) throws RemoteException;
+
+    String getMusicList(int id) throws RemoteException;
 }

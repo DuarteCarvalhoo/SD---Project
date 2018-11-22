@@ -5,6 +5,10 @@ public class Music implements Serializable {
     private int length;
     private int id;
 
+    public Music(String s) {
+        this.title = s;
+    }
+
     public int getId() {
         return id;
     }
@@ -21,9 +25,9 @@ public class Music implements Serializable {
         this.title = title;
     }
 
-    public Music(String path, String title, String composer, String artist, String length, String album, String genre) {
+    public Music(String title,int length) {
         this.title = title;
-        this.length = Integer.parseInt(length);
+        this.length = length;
     }
 
     public String toString(){
