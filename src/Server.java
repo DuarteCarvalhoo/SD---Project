@@ -466,14 +466,14 @@ public class Server implements Hello {
     }
 
 
-    public String createAlbum(String name, String artistName, String description, String duracao){
+    public String createAlbum(String name, String genre, String description, String artistName, String publisherName){
         MulticastSocket socket = null;
         //envia para o multicast
         try {
             socket = new MulticastSocket();
             InetAddress group = InetAddress.getByName(MULTICAST_ADDRESS);
             socket.joinGroup(group);
-            String aux = "type|createAlbum;Name|"+name+";ArtistName|"+artistName+";Description|"+description+";Duracao|"+duracao; //protocol
+            String aux = "type|createAlbum;Name|"+name+";Genre|"+genre+";Description|"+description+";ArtistName|"+artistName+";PublisherName|"+publisherName; //protocol
             byte[] buffer = aux.getBytes();
             DatagramPacket packet = new DatagramPacket(buffer, buffer.length, group, PORT);
             socket.send(packet);
@@ -668,14 +668,14 @@ public class Server implements Hello {
     }
 
     ////////////// FAZER CRITICA /////////////
-    public String makeCritic(double score, String text, String album){
+    public String makeCritic(double score, String text, String album, User user){
         MulticastSocket socket = null;
         //envia para o multicast
         try {
             socket = new MulticastSocket();
             InetAddress group = InetAddress.getByName(MULTICAST_ADDRESS);
             socket.joinGroup(group);
-            String aux = "type|makeCritic;Score|"+score+";Text|"+text+";Album|"+album; //protocol
+            String aux = "type|makeCritic;Score|"+score+";Text|"+text+";Album|"+album+";UserId|"+user.getId(); //protocol
             byte[] buffer = aux.getBytes();
             DatagramPacket packet = new DatagramPacket(buffer, buffer.length, group, PORT);
             socket.send(packet);

@@ -91,11 +91,11 @@ public interface Hello extends Remote {
 
     String editArtistDescription(String name, String newDescription) throws RemoteException;
 
-    String createAlbum(String name, String artistName, String description, String duracao) throws RemoteException;
+    String createAlbum(String name, String genre, String description, String artistName, String publisherName) throws RemoteException;
 
     String showAlbum(String name) throws RemoteException;
 
-    String makeCritic(double score, String text, String album) throws RemoteException;
+    String makeCritic(double score, String text, String album, User user) throws RemoteException;
 
     String showArtistAlbums(String name) throws RemoteException;
 

@@ -826,26 +826,26 @@ public class Client extends UnicastRemoteObject implements ClientHello{
     }
 
     public static void createAlbum(Hello rmi,Scanner reader) throws RemoteException{
-        System.out.println("Insert your data('name-artist-description-duration')");
+        System.out.println("Insert your data('name-genre-description-artist-publisher')");
         boolean flagOK = false;
         String text = "";
-        String[]data = new String[4];
+        String[]data = new String[5];
         while(!flagOK) {
             text = reader.nextLine();
             data = text.split("-");
-            if(data.length == 4){
-                if(data[0].trim().equals("") || data[1].trim().equals("") || data[2].trim().equals("") || data[3].trim().equals("")){
-                    System.out.println("Insert your data('name-genre-description-duration')");
+            if(data.length == 5){
+                if(data[0].trim().equals("") || data[1].trim().equals("") || data[2].trim().equals("") || data[3].trim().equals("") || data[4].trim().equals("")){
+                    System.out.println("Insert your data('name-genre-description-artist-publisher')");
                 }
                 else {
                     flagOK = true;
                 }
             }
             else{
-                System.out.println("Insert your data('name-artist-description-duracao')");
+                System.out.println("Insert your data('name-artist-description-artist-publisher')");
             }
         }
-        String response = rmi.createAlbum(data[0], data[1], data[2], data[3]);
+        String response = rmi.createAlbum(data[0], data[1], data[2], data[3], data[4]);
         switch (response.trim()){
             case "type|albumExists":
                 System.out.println("Album already exists.");
@@ -1068,7 +1068,7 @@ public class Client extends UnicastRemoteObject implements ClientHello{
             }
         }
 
-        String response = rmi.makeCritic(score,criticText,album);
+        String response = rmi.makeCritic(score,criticText,album,loggedUser);
         switch (response.trim()){
             case "type|criticComplete":
                 System.out.println("SUCCESS: Critic made.");
