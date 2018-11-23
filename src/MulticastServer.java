@@ -186,6 +186,13 @@ public class MulticastServer extends Thread implements Serializable {
                         stmtUpload.setInt(2,Integer.parseInt(loggedUserParts[1]));
                         stmtUpload.executeUpdate();
 
+                        int lengthA = getAlbumLengthById(getAlbumIdByName(albumParts[1]));
+                        int newLength = lengthA + Integer.parseInt(durationParts[1]);
+                        stmtUpload = connection.prepareStatement("UPDATE album SET length = ? WHERE id = ?;");
+                        stmtUpload.setInt(1,newLength);
+                        stmtUpload.setInt(2,getAlbumIdByName(albumParts[1]));
+                        stmtUpload.executeUpdate();
+
                         stmtUpload.close();
                         connection.commit();
                         receiveMusic(socketHelp,titleParts[1]);
@@ -213,7 +220,7 @@ public class MulticastServer extends Thread implements Serializable {
                         String[] userParts = aux[1].split("\\|");
                         ArrayList<Music> UploadedMusics;
 
-                        UploadedMusics = getUploadedMusicsByUserId(userParts[1]);
+                        UploadedMusics = getAvailableMusicsByUserId(userParts[1]);
                         sendMsg("type|getUploadedMusicsCompleted;"+"Musics|"+printMusics(UploadedMusics));
                         break;
                     case "type|openSocket":
@@ -239,10 +246,6 @@ public class MulticastServer extends Thread implements Serializable {
                             sendMsg("type|makingEditorComplete");
                             System.out.println("SUCCESS: User "+parts[1]+" made editor.");
 
-                        }
-                        if(!flagEditor){
-                            System.out.println("Username not found.");
-                            sendMsg("type|makingEditorFail");
                         }
                         break;
                     case"type|addNotification":
@@ -753,6 +756,24 @@ public class MulticastServer extends Thread implements Serializable {
         }
     }
 
+    private int getAlbumLengthById(int albumId) {
+        try{
+            connection.setAutoCommit(false);
+            PreparedStatement stmt = connection.prepareStatement("SELECT * FROM album WHERE id = ?;");
+            stmt.setInt(1,albumId);
+            ResultSet rs = stmt.executeQuery();
+
+            int albumLength = 0;
+            while(rs.next()){
+                albumLength = rs.getInt("length");
+            }
+            return albumLength;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return 0;
+    }
+
     private String getPathByMusicId(int musicId) {
         try{
             connection.setAutoCommit(false);
@@ -789,7 +810,7 @@ public class MulticastServer extends Thread implements Serializable {
         return 0;
     }
 
-    private ArrayList<Music> getUploadedMusicsByUserId(String userPart) {
+    private ArrayList<Music> getAvailableMusicsByUserId(String userPart) {
         ArrayList<Music> m = new ArrayList<>();
 
         try{
