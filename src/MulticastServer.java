@@ -165,25 +165,23 @@ public class MulticastServer extends Thread implements Serializable {
                         stmtUpload.executeUpdate();
 
                         stmtUpload = connection.prepareStatement("INSERT INTO album_music(album_id, music_id)"
-                        + "VALUES(?,?,?);");
-                        stmtUpload.setInt(1,getMusicIdByName(titleParts[1]));
-                        stmtUpload.setString(2,titleParts[1]);
-                        stmtUpload.setInt(3,getAlbumIdByName(albumParts[1]));
+                        + "VALUES(?,?);");
+                        stmtUpload.setInt(1,getAlbumIdByName(albumParts[1]));
+                        stmtUpload.setInt(2,getMusicIdByName(titleParts[1]));
                         stmtUpload.executeUpdate();
 
                         stmtUpload = connection.prepareStatement("INSERT INTO filearchive(id,path, music_id,utilizador_id)"
-                        + "VALUES(DEFAULT,?,?,?,?);");
+                        + "VALUES(DEFAULT,?,?,?);");
                         stmtUpload.setString(1,pathParts[1]);
                         stmtUpload.setInt(2,getMusicIdByName(titleParts[1]));
-                        stmtUpload.setString(3,titleParts[1]);
-                        stmtUpload.setInt(4,Integer.parseInt(loggedUserParts[1]));
+                        stmtUpload.setInt(3,Integer.parseInt(loggedUserParts[1]));
                         stmtUpload.executeUpdate();
 
                         stmtUpload = connection.prepareStatement("INSERT INTO utilizador_filearchive(utilizador_id, filearchive_id)"
                         + "VALUES(?,?);");
 
-                        stmtUpload.setInt(1,getFileArchiveByPath(pathParts[1]));
-                        stmtUpload.setInt(2,Integer.parseInt(loggedUserParts[1]));
+                        stmtUpload.setInt(2,getFileArchiveByPath(pathParts[1]));
+                        stmtUpload.setInt(1,Integer.parseInt(loggedUserParts[1]));
                         stmtUpload.executeUpdate();
 
                         int lengthA = getAlbumLengthById(getAlbumIdByName(albumParts[1]));
@@ -205,11 +203,11 @@ public class MulticastServer extends Thread implements Serializable {
                         int musicId = getMusicIdByName(musicParts[1]);
 
                         connection.setAutoCommit(false);
-                        PreparedStatement stmtShare = connection.prepareStatement("INSERT INTO filearchive_user(filearchive_id, user_id)"
+                        PreparedStatement stmtShare = connection.prepareStatement("INSERT INTO utilizador_filearchive(utilizador_id, filearchive_id)"
                         + "VALUES(?,?);");
 
-                        stmtShare.setInt(1,getFileArchiveByMusicId(musicId));
-                        stmtShare.setInt(2,getUserIdByName(shareUserParts[1]));
+                        stmtShare.setInt(2,getFileArchiveByMusicId(musicId));
+                        stmtShare.setInt(1,getUserIdByName(shareUserParts[1]));
                         stmtShare.executeUpdate();
 
                         stmtShare.close();
@@ -407,11 +405,12 @@ public class MulticastServer extends Thread implements Serializable {
                             int publisherId = getPublisherById(pName[1]);
 
                             System.out.println("0");
-                            stmtAlbum = connection.prepareStatement("INSERT INTO album(id,name,genre,description,length)"
-                                                        + "VALUES (DEFAULT,?,?,?,0);");
+                            stmtAlbum = connection.prepareStatement("INSERT INTO album(id,name,genre,description,length,publisher_id)"
+                                                        + "VALUES (DEFAULT,?,?,?,0,?);");
                             stmtAlbum.setString(1,namePa[1]);
                             stmtAlbum.setString(2,gParts[1]);
                             stmtAlbum.setString(3,descripParts[1]);
+                            stmtAlbum.setInt(4,publisherId);
                             stmtAlbum.executeUpdate();
                             System.out.println("1");
 
@@ -423,13 +422,6 @@ public class MulticastServer extends Thread implements Serializable {
                             stmtAlbum.setInt(2,albumId);
                             stmtAlbum.executeUpdate();
                             System.out.println("2");
-
-                            stmtAlbum = connection.prepareStatement("INSERT INTO publisher_album(publisher_id, album_id)"
-                                    + "VALUES (?,?);");
-                            stmtAlbum.setInt(1,publisherId);
-                            stmtAlbum.setInt(2,albumId);
-                            stmtAlbum.executeUpdate();
-                            System.out.println("3");
 
                             stmtAlbum.close();
                             connection.commit();
@@ -451,10 +443,11 @@ public class MulticastServer extends Thread implements Serializable {
                             connection.setAutoCommit(false);
                             System.out.println("Opened database successfully");
 
-                            stmtConcert = connection.prepareStatement("INSERT INTO concerts (id,location,name)"
-                                    + "VALUES (DEFAULT,?,?);");
+                            stmtConcert = connection.prepareStatement("INSERT INTO concert (id,name,description,location)"
+                                    + "VALUES (DEFAULT,?,?,?);");
                             stmtConcert.setString(1,a.getLocation());
                             stmtConcert.setString(2,a.getName());
+                            //add description
                             stmtConcert.executeUpdate();
 
                             stmtConcert.close();
@@ -735,7 +728,7 @@ public class MulticastServer extends Thread implements Serializable {
                                 stmtShowAlbum.setInt(1, id);
                                 rs = stmtShowAlbum.executeQuery();
                                 while (rs.next()) {
-                                    artistId = rs.getInt("artist_id");
+                                    artistId = rs.getInt("artista_id");
                                 }
                                 artistName = getArtistNameById(artistId);
                                 criticsList = getCriticsByAlbumId(id);
@@ -975,7 +968,7 @@ public class MulticastServer extends Thread implements Serializable {
         ArrayList<Integer> ids = new ArrayList<>();
         try{
             connection.setAutoCommit(false);
-            PreparedStatement stmt = connection.prepareStatement("SELECT * FROM music_album WHERE album_id = ?;");
+            PreparedStatement stmt = connection.prepareStatement("SELECT * FROM album_music WHERE album_id = ?;");
             stmt.setInt(1,id);
             ResultSet rs = stmt.executeQuery();
 
@@ -1156,7 +1149,7 @@ public class MulticastServer extends Thread implements Serializable {
     private String getArtistNameById(int id) {
         try{
             connection.setAutoCommit(false);
-            PreparedStatement stmt = connection.prepareStatement("SELECT * FROM artist WHERE id = ?;");
+            PreparedStatement stmt = connection.prepareStatement("SELECT * FROM artista WHERE id = ?;");
 
             stmt.setInt(1,id);
             ResultSet rs = stmt.executeQuery();
