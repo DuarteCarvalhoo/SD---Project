@@ -73,7 +73,7 @@ public interface Hello extends Remote {
 
     String createBand(String name, String description) throws RemoteException;
 
-    String createConcert(String location, String name) throws RemoteException;
+    String createConcert(String location, String name, String description) throws RemoteException;
 
     String concertAssociation(String location, String bandName) throws RemoteException;
 
