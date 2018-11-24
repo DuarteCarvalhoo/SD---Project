@@ -669,7 +669,7 @@ public class MulticastServer extends Thread implements Serializable {
                             try{
                                 int albumId = getAlbumIdByName(albName[1]);
                                 connection.setAutoCommit(false);
-                                stmtCritic = connection.prepareStatement("INSERT INTO critic(id, score, text, album_id, user_id) "
+                                stmtCritic = connection.prepareStatement("INSERT INTO critic(id, score, text, album_id, utilizador_id) "
                                                 + "VALUES(DEFAULT,?,?,?,?);");
                                 stmtCritic.setDouble(1,Double.parseDouble(scoreParts[1]));
                                 stmtCritic.setString(2,textParts[1]);
@@ -752,9 +752,7 @@ public class MulticastServer extends Thread implements Serializable {
                         break;
                 }
             }
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (SQLException e) {
+        } catch (IOException | SQLException e) {
             e.printStackTrace();
         } finally {
             socket.close();
@@ -965,7 +963,7 @@ public class MulticastServer extends Thread implements Serializable {
             while(rs.next()){
                 Double score = rs.getDouble("score");
                 String text = rs.getString("text");
-                int userId = rs.getInt("user_id");
+                int userId = rs.getInt("utilizador_id");
                 Critic cr = new Critic(score,text,getUserNameById(userId));
                 c.add(cr);
             }
