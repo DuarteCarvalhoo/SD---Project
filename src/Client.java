@@ -927,25 +927,25 @@ public class Client extends UnicastRemoteObject implements ClientHello{
 
     public static void createConcert(Hello rmi,Scanner reader) throws RemoteException{
         boolean flagOK = false;
-        System.out.println("Insert your data('location-name-band/musician')");
+        System.out.println("Insert your data('location-name-band/musician-description')");
         String text = "";
-        String[]data = new String[3];
+        String[]data = new String[4];
         while(!flagOK) {
             text = reader.nextLine();
             data = text.trim().split("-");
-            if(data.length == 3){
-                if(data[0].trim().equals("") || data[1].trim().equals("") || data[2].trim().equals("")){
-                    System.out.println("Insert your data('location-name-band/musician')");
+            if(data.length == 4){
+                if(data[0].trim().equals("") || data[1].trim().equals("") || data[2].trim().equals("") || data[3].trim().equals("")){
+                    System.out.println("Insert your data('location-name-band/musician-description')");
                 }
                 else {
                     flagOK = true;
                 }
             }
             else{
-                System.out.println("Insert your data('location-name-band/musician')");
+                System.out.println("Insert your data('location-name-band/musician-description')");
             }
         }
-        String response1 = rmi.createConcert(data[0],data[1]);
+        String response1 = rmi.createConcert(data[0],data[1],data[3]);
         switch (response1.trim()){
             case "type|createConcertFailed":
                 System.out.println("Concert creation failed.");

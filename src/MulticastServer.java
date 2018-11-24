@@ -437,6 +437,7 @@ public class MulticastServer extends Thread implements Serializable {
                     case "type|createConcert":
                         String[] concertLocation = aux[1].split("\\|");
                         String[] concertName = aux[2].split("\\|");
+                        String[] concertDescription = aux[3].split("\\|");
                         PreparedStatement stmtConcert = null;
                         try {
                             Concert a = new Concert(concertLocation[1],concertName[1]);
@@ -445,9 +446,9 @@ public class MulticastServer extends Thread implements Serializable {
 
                             stmtConcert = connection.prepareStatement("INSERT INTO concert (id,name,description,location)"
                                     + "VALUES (DEFAULT,?,?,?);");
-                            stmtConcert.setString(1,a.getLocation());
-                            stmtConcert.setString(2,a.getName());
-                            //add description
+                            stmtConcert.setString(3,a.getLocation());
+                            stmtConcert.setString(2,concertDescription[1]);
+                            stmtConcert.setString(1,a.getName());
                             stmtConcert.executeUpdate();
 
                             stmtConcert.close();
@@ -471,7 +472,7 @@ public class MulticastServer extends Thread implements Serializable {
                             connection.setAutoCommit(false);
                             System.out.println("Opened database successfully");
 
-                            stmtConcertA = connection.prepareStatement("INSERT INTO concerts_group (concerts_id, artist_id)"
+                            stmtConcertA = connection.prepareStatement("INSERT INTO concert_artista (concert_id, artista_id)"
                                     + "VALUES (?,?);");
                             stmtConcertA.setInt(1,concertId);
                             stmtConcertA.setInt(2,bandId);

@@ -513,14 +513,14 @@ public class Server implements Hello {
         return null;
     }
 
-    public String createConcert(String location, String name){
+    public String createConcert(String location, String name, String description){
         MulticastSocket socket = null;
         //envia para o multicast
         try {
             socket = new MulticastSocket();
             InetAddress group = InetAddress.getByName(MULTICAST_ADDRESS);
             socket.joinGroup(group);
-            String aux = "type|createConcert;Location|"+location+";Name|"+name; //protocol
+            String aux = "type|createConcert;Location|"+location+";Name|"+name+";Description|"+description; //protocol
             byte[] buffer = aux.getBytes();
             DatagramPacket packet = new DatagramPacket(buffer, buffer.length, group, PORT);
             socket.send(packet);
