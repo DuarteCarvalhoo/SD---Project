@@ -819,7 +819,7 @@ public class MulticastServer extends Thread implements Serializable {
 
         try{
             connection.setAutoCommit(false);
-            PreparedStatement stmt = connection.prepareStatement("SELECT * FROM filearchive_user WHERE user_id = ?;");
+            PreparedStatement stmt = connection.prepareStatement("SELECT * FROM utilizador_filearchive WHERE utilizador_id = ?;");
             stmt.setInt(1,Integer.parseInt(userPart));
             ResultSet rs = stmt.executeQuery();
 
@@ -845,9 +845,21 @@ public class MulticastServer extends Thread implements Serializable {
             ResultSet rs = stmt.executeQuery();
 
             String musicName = "";
+            int musicId = 0;
             while(rs.next()){
-                musicName = rs.getString("music_title");
+                musicId = rs.getInt("music_id");
             }
+
+            connection.setAutoCommit(false);
+            stmt = connection.prepareStatement("SELECT * FROM music WHERE id = ?;");
+            stmt.setInt(1,musicId);
+            rs = stmt.executeQuery();
+
+
+            while(rs.next()){
+                musicName = rs.getString("title");
+            }
+
             return musicName;
         } catch (SQLException e) {
             e.printStackTrace();
