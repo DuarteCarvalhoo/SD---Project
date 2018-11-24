@@ -76,7 +76,7 @@ public class Client extends UnicastRemoteObject implements ClientHello{
         System.getProperties().put("java.security.policy", "policy.all");
         System.setSecurityManager(new RMISecurityManager());
         try {
-            Registry registry = LocateRegistry.getRegistry("192.84.13.142",7000);
+            Registry registry = LocateRegistry.getRegistry("192.168.43.238",7000);
             rmi =(Hello) registry.lookup("Hello");
         } catch (Exception e) {
             System.err.println("Client exception: " + e.toString());
@@ -303,7 +303,7 @@ public class Client extends UnicastRemoteObject implements ClientHello{
                         makeCritic(rmi,reader);
                         break;
                     case "/download":
-                        //System.out.println(downloadMusic(rmi, reader));
+                        System.out.println(downloadMusic(rmi, reader));
                         break;
                     case "/upload":
                         String[] musicInfo = new String[7];
@@ -388,7 +388,7 @@ public class Client extends UnicastRemoteObject implements ClientHello{
     }
 
     public static int searchAlbumByArtistName(Hello rmi, Scanner reader) throws RemoteException {
-        System.out.print("Insert user's name: ");
+        System.out.print("Insert artist's name: ");
         boolean flagK = false;
         String nameA = "";
         while (!flagK) {
@@ -396,7 +396,7 @@ public class Client extends UnicastRemoteObject implements ClientHello{
             if (!nameA.trim().equals("")) {
                 flagK = true;
             } else {
-                System.out.print("Insert user's name: ");
+                System.out.print("Insert artist's name: ");
             }
         }
         String re = rmi.showArtistAlbums(nameA);
@@ -1249,26 +1249,28 @@ public class Client extends UnicastRemoteObject implements ClientHello{
         return musicInfo;
     }
 
-    /*private static String downloadMusic(Hello rmi, Scanner reader) throws IOException {
+    private static String downloadMusic(Hello rmi, Scanner reader) throws IOException {
+        ArrayList<Music> musicsList;
         System.out.println("Choose one song:");
-        if(loggedUser.printDownloadableMusics().equals("No musics to show.")){
-            return "Can't download any musics.";
-        }
-        else{
-            System.out.println(loggedUser.printDownloadableMusics());
+        String response = rmi.getMusicList(loggedUser.getId());
+        String[] rSplit = response.split(";");
+        String[] musicParts = rSplit[1].split("\\|");
+        musicsList = createMusicsList(musicParts[1].split(","));
+        int i = 1;
+        for (Music m : musicsList) {
+            System.out.println(i+". "+m.toString());
+            i++;
         }
 
         boolean flagEditor = false;
         String escolha = "";
         while(!flagEditor){
             escolha = reader.nextLine();
-            for(String music : loggedUser.getDownloadableMusics()){
-                music = music.replaceAll(".mp3","");
-                if(music.equals(escolha)){
+            for(Music music : musicsList){
+                if(music.getTitle().equals(escolha)){
                     flagEditor = true;
                 }
             }
-
             if(!flagEditor){
                 System.out.println("Choose one valid song: ");
             }
@@ -1276,7 +1278,7 @@ public class Client extends UnicastRemoteObject implements ClientHello{
 
 
         boolean boo = new File("./musicasServer/" + loggedUser.getUsername()).mkdirs();
-        String musicaEscolhida = "./musicasServer/" + escolha + ".mp3";
+        String musicaEscolhida = "./musicasServer/" + escolha;
 
         //fazer o socket ligar primeiro no multi mas sem pedir pra aceitar
         System.out.println(rmi.startServerSocket());
@@ -1284,7 +1286,7 @@ public class Client extends UnicastRemoteObject implements ClientHello{
         String print = rmi.downloadMusicRMI(musicaEscolhida);
         byte[] b = new byte [1024];
         InputStream is = socket.getInputStream();
-        FileOutputStream fOutStream = new FileOutputStream("./musicasServer/"+loggedUser.getUsername()+"/"+escolha+".mp3");
+        FileOutputStream fOutStream = new FileOutputStream("./musicasServer/"+loggedUser.getUsername()+"/"+escolha);
         BufferedOutputStream bOutStream = new BufferedOutputStream(fOutStream);
 
         int aux= 0;
@@ -1304,7 +1306,7 @@ public class Client extends UnicastRemoteObject implements ClientHello{
         System.out.println("ficheiro 100% completo");
 
         return print;
-    }*/
+    }
 
            ////////////// FAILOVER /////////////
     private static Hello changeRMI() throws RemoteException, NotBoundException {
