@@ -76,7 +76,7 @@ public class Client extends UnicastRemoteObject implements ClientHello{
         System.getProperties().put("java.security.policy", "policy.all");
         System.setSecurityManager(new RMISecurityManager());
         try {
-            Registry registry = LocateRegistry.getRegistry("192.84.13.142",7000);
+            Registry registry = LocateRegistry.getRegistry("192.168.43.238",7000);
             rmi =(Hello) registry.lookup("Hello");
         } catch (Exception e) {
             System.err.println("Client exception: " + e.toString());
