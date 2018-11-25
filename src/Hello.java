@@ -67,7 +67,7 @@ public interface Hello extends Remote {
 
     String createSongwriter(String name, String description) throws RemoteException;
 
-    String createMusician(String name, String description) throws RemoteException;
+    String createMusician(String name, String description, boolean isSongwriter, boolean isComposer, boolean isBand) throws RemoteException;
 
     String createComposer(String name, String description) throws RemoteException;
 

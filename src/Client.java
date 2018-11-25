@@ -76,7 +76,7 @@ public class Client extends UnicastRemoteObject implements ClientHello{
         System.getProperties().put("java.security.policy", "policy.all");
         System.setSecurityManager(new RMISecurityManager());
         try {
-            Registry registry = LocateRegistry.getRegistry("192.168.43.238",7000);
+            Registry registry = LocateRegistry.getRegistry("localhost",7000);
             rmi =(Hello) registry.lookup("Hello");
         } catch (Exception e) {
             System.err.println("Client exception: " + e.toString());
@@ -401,23 +401,22 @@ public class Client extends UnicastRemoteObject implements ClientHello{
         }
         String re = rmi.showArtistAlbums(nameA);
         String[] responseSplit = re.trim().split(";");
-        if (responseSplit.length > 1) {
-            String[] albunsParts = responseSplit[1].split("\\|");
+        String[] albunsParts = responseSplit[1].split("\\|");
+        String[] albunsNames = albunsParts[1].split(",");
+        if (!albunsNames[0].equals("No albuns to show.")) {
             String albunsNamesFinais = "";
-            int i;
-            for(i=1;i<albunsParts.length;i++){
-                if(i!=albunsParts.length-1){
-                    albunsNamesFinais += (albunsParts[i] + ",");
-                }
-                else{
-                    albunsNamesFinais += (albunsParts[i]);
-                }
+            int n = 1;
+            for (int i=0;i<albunsNames.length;i++) {
+                albunsNamesFinais += n+". ";
+                albunsNamesFinais += albunsNames[i];
+                albunsNamesFinais += "\n";
+                n++;
             }
-            System.out.println("\nAlbums:"+albunsNamesFinais);
+            System.out.println("\nAlbums:\n"+albunsNamesFinais);
             return 1;
         }
         else{
-            System.out.println("No albums");
+            System.out.println("This artist has no albums.");
             return 0;
         }
     }
@@ -719,6 +718,12 @@ public class Client extends UnicastRemoteObject implements ClientHello{
             case "/artist":
                 createArtist(rmi,reader);
                 break;
+            case "/songwriter":
+                createSongwriter(rmi,reader);
+                break;
+            case "/composer":
+                createComposer(rmi,reader);
+                break;
             case "/album":
                 createAlbum(rmi,reader);
                 break;
@@ -737,24 +742,20 @@ public class Client extends UnicastRemoteObject implements ClientHello{
     }
 
     public static void createArtist(Hello rmi,Scanner reader) throws RemoteException{
-        System.out.println("What do you want to create: Songwriter, Musician, Composer, Band?");
+        boolean isComposer = false, isSongwriter = false, isBand = false;
+        System.out.println("Is the new artist a Songwriter, a Composer or a Group? (Yes-Yes-Yes means all)");
         String response = reader.nextLine();
-        switch(response.trim()){
-            case "/songwriter":
-                createSongwriter(rmi,reader);
-                break;
-            case "/musician":
-                createMusician(rmi,reader);
-                break;
-            case "/composer":
-                createComposer(rmi,reader);
-                break;
-            case "/band":
-                createBand(rmi,reader);
-                break;
-            default:
-                //Something;
+        String[] responseSplit = response.split("-");
+        if(responseSplit[0].equals("yes")){
+            isSongwriter = true;
         }
+        if(responseSplit[1].equals("yes")){
+            isComposer = true;
+        }
+        if(responseSplit[2].equals("yes")){
+            createBand(rmi,reader);
+        }
+        createMusician(rmi,reader,isSongwriter,isComposer, isBand);
     }
 
     public static void createSongwriter(Hello rmi,Scanner reader) throws RemoteException{
@@ -762,7 +763,7 @@ public class Client extends UnicastRemoteObject implements ClientHello{
         System.out.println("Insert your data('name-description')");
         String text = "";
         String[]data = new String[2];
-        while(!flagOK) {
+        while(!flagOK){
             text = reader.nextLine();
             data = text.trim().split("-");
             if(data.length == 2){
@@ -790,7 +791,7 @@ public class Client extends UnicastRemoteObject implements ClientHello{
         }
     }
 
-    public static void createMusician(Hello rmi,Scanner reader) throws RemoteException{
+    public static void createMusician(Hello rmi,Scanner reader, boolean isSongwriter, boolean isComposer, boolean isBand) throws RemoteException{
         boolean flagOK = false;
         System.out.println("Insert your data('name-description')");
         String text = "";
@@ -810,7 +811,7 @@ public class Client extends UnicastRemoteObject implements ClientHello{
                 System.out.println("Insert your data('name-description')");
             }
         }
-        String response = rmi.createMusician(data[0], data[1]);
+        String response = rmi.createMusician(data[0], data[1], isSongwriter, isComposer, isBand);
         switch (response.trim()){
             case "type|musicianExists":
                 System.out.println("Musician already exists.");
