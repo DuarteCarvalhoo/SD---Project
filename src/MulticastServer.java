@@ -1,3 +1,5 @@
+import com.sun.org.apache.xpath.internal.operations.Bool;
+
 import java.io.*;
 import java.net.*;
 import java.sql.*;
@@ -305,6 +307,9 @@ public class MulticastServer extends Thread implements Serializable {
                     case "type|createMusician":
                         String[] namePartsMusician = aux[1].split("\\|");
                         String[] descriptionPartsMusician = aux[2].split("\\|");
+                        String[] songwriterParts = aux[3].split("\\|");
+                        String[] isComposerParts = aux[4].split("\\|");
+                        String[] isBandParts = aux[5].split("\\|");
                         PreparedStatement stmtMusician = null;
                         try {
                             Musician a = new Musician(namePartsMusician[1],descriptionPartsMusician[1]);
@@ -315,10 +320,10 @@ public class MulticastServer extends Thread implements Serializable {
                                     + "VALUES (DEFAULT,?,?,?,?,?,?);");
                             stmtMusician.setString(1,a.getName());
                             stmtMusician.setString(2,a.getDescription());
-                            stmtMusician.setBoolean(3,a.isMusician());
-                            stmtMusician.setBoolean(4,a.isBand());
-                            stmtMusician.setBoolean(5,a.isSongwriter());
-                            stmtMusician.setBoolean(6,a.isComposer());
+                            stmtMusician.setBoolean(3,!(Boolean.parseBoolean(isBandParts[1])));
+                            stmtMusician.setBoolean(4,Boolean.parseBoolean(isBandParts[1]));
+                            stmtMusician.setBoolean(5,Boolean.parseBoolean(songwriterParts[1]));
+                            stmtMusician.setBoolean(6,Boolean.parseBoolean(isComposerParts[1]));
                             stmtMusician.executeUpdate();
 
                             stmtMusician.close();

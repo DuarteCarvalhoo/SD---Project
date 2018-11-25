@@ -419,14 +419,14 @@ public class Server implements Hello {
         return null;
     }
 
-    public String createMusician(String name, String description){
+    public String createMusician(String name, String description, boolean isSongwriter, boolean isComposer, boolean isBand){
         MulticastSocket socket = null;
         //envia para o multicast
         try {
             socket = new MulticastSocket();
             InetAddress group = InetAddress.getByName(MULTICAST_ADDRESS);
             socket.joinGroup(group);
-            String aux = "type|createMusician;Name|"+name+";Description|"+description; //protocol
+            String aux = "type|createMusician;Name|"+name+";Description|"+description+";Songwriter|"+isSongwriter+";Composer|"+isComposer+";Band|"+isBand; //protocol
             byte[] buffer = aux.getBytes();
             DatagramPacket packet = new DatagramPacket(buffer, buffer.length, group, PORT);
             socket.send(packet);
