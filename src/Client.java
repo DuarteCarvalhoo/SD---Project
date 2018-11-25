@@ -1224,6 +1224,18 @@ public class Client extends UnicastRemoteObject implements ClientHello{
         auxi++;
 
         flagOK=false;
+        String songwriter = "";
+        while(!flagOK){
+            System.out.print("Insert songwriter: ");
+            songwriter = reader.nextLine();
+            if(!songwriter.trim().equals("")){
+                flagOK=true;
+            }
+        }
+        musicInfo[auxi] = songwriter;
+        auxi++;
+
+        flagOK=false;
         String duration = "";
         while(!flagOK){
             System.out.print("Insert duration(seconds): ");

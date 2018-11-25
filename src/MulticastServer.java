@@ -150,14 +150,14 @@ public class MulticastServer extends Thread implements Serializable {
                         sendMsg("Music saving on the server.");
                         break;
                     case "type|sendMusic":
-                        Artist artisT;
                         String[] loggedUserParts = aux[8].split("\\|");
                         String[] pathParts = aux[1].split("\\|");
                         String[] titleParts = aux[2].split("\\|");
                         String[] composerParts = aux[3].split("\\|");
                         String[] artistParts = aux[4].split("\\|");
-                        String[] durationParts = aux[5].split("\\|");
-                        String[] albumParts = aux[6].split("\\|");
+                        String[] sParts = aux[5].split("\\|");
+                        String[] durationParts = aux[6].split("\\|");
+                        String[] albumParts = aux[7].split("\\|");
 
                         connection.setAutoCommit(false);
                         PreparedStatement stmtUpload = connection.prepareStatement("INSERT INTO music(id, title, length)"
@@ -184,6 +184,24 @@ public class MulticastServer extends Thread implements Serializable {
 
                         stmtUpload.setInt(2,getFileArchiveByPath(pathParts[1]));
                         stmtUpload.setInt(1,Integer.parseInt(loggedUserParts[1]));
+                        stmtUpload.executeUpdate();
+
+                        stmtUpload = connection.prepareStatement("INSERT INTO composer_music(artista_id, music_id)"
+                        + "VALUES(?,?);");
+                        stmtUpload.setInt(1,getArtistIdByName(composerParts[1]));
+                        stmtUpload.setInt(2,getMusicIdByName(titleParts[1]));
+                        stmtUpload.executeUpdate();
+
+                        stmtUpload = connection.prepareStatement("INSERT INTO music_songwriter(music_id, artista_id)"
+                                + "VALUES(?,?);");
+                        stmtUpload.setInt(2,getArtistIdByName(sParts[1]));
+                        stmtUpload.setInt(1,getMusicIdByName(titleParts[1]));
+                        stmtUpload.executeUpdate();
+
+                        stmtUpload = connection.prepareStatement("INSERT INTO artista_music(artista_id, music_id)"
+                                + "VALUES(?,?);");
+                        stmtUpload.setInt(1,getArtistIdByName(sParts[1]));
+                        stmtUpload.setInt(2,getMusicIdByName(titleParts[1]));
                         stmtUpload.executeUpdate();
 
                         int lengthA = getAlbumLengthById(getAlbumIdByName(albumParts[1]));
@@ -670,9 +688,6 @@ public class MulticastServer extends Thread implements Serializable {
                             sendMsg("type|showArtistAlbumsFailed");
                             System.out.println(e.getMessage());
                         }
-
-
-
                         break;
                     case "type|makeCritic":
                         String[] scoreParts = aux[1].split("\\|");
