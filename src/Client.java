@@ -529,30 +529,38 @@ public class Client extends UnicastRemoteObject implements ClientHello{
         double scoreFinal = 0;
         String resp = rmi.showAlbum(n);
         String[] respSplit = resp.trim().split(";");
-        String[] nomeParts = respSplit[1].split("\\|");
-        String[] ArtistName = respSplit[2].split("\\|");
-        String[] Description = respSplit[3].split("\\|");
-        String[] Length = respSplit[4].split("\\|");
-        String[] Genre = respSplit[5].split("\\|");
-        String[] ScoreFinal = respSplit[6].split("\\|");
-        String[] Critics = respSplit[7].split("\\|");
-        String[] CriticByCritic = Critics[1].split("!");
-        if(CriticByCritic.length != 0){
-            criticsList = createCriticsList(CriticByCritic);
-        }
-        String[] Musics = respSplit[8].split("\\|");
-        String[] MusicByMusic = Musics[1].split(",");
-        if(MusicByMusic.length != 0){
-            musicsList = createMusicsList(MusicByMusic);
-        }
-        String[] Publisher = respSplit[9].split("\\|");
-        if(respSplit.length>1){
-            Album album = new Album();
-            album = new Album(nomeParts[1],ArtistName[1],Description[1],Integer.parseInt(Length[1]),Genre[1],Double.parseDouble(ScoreFinal[1]),criticsList,musicsList,Publisher[1]);
-            System.out.println(album);
-        }
-        else{
-            System.out.println("ERROR: Show Album Failed.");
+
+        switch(respSplit[0]){
+            case "type|notPartialSearchAlbumComplete":
+                String[] nomeParts = respSplit[1].split("\\|");
+                String[] ArtistName = respSplit[2].split("\\|");
+                String[] Description = respSplit[3].split("\\|");
+                String[] Length = respSplit[4].split("\\|");
+                String[] Genre = respSplit[5].split("\\|");
+                String[] ScoreFinal = respSplit[6].split("\\|");
+                String[] Critics = respSplit[7].split("\\|");
+                String[] CriticByCritic = Critics[1].split("!");
+                if(CriticByCritic.length != 0){
+                    criticsList = createCriticsList(CriticByCritic);
+                }
+                String[] Musics = respSplit[8].split("\\|");
+                String[] MusicByMusic = Musics[1].split(",");
+                if(MusicByMusic.length != 0){
+                    musicsList = createMusicsList(MusicByMusic);
+                }
+                String[] Publisher = respSplit[9].split("\\|");
+                Album album = new Album();
+                album = new Album(nomeParts[1],ArtistName[1],Description[1],Integer.parseInt(Length[1]),Genre[1],Double.parseDouble(ScoreFinal[1]),criticsList,musicsList,Publisher[1]);
+                System.out.println(album);
+                break;
+            case "type|partialSearchAlbumComplete":
+                String[] resultsParts = respSplit[1].split("\\|");
+                String[] results = resultsParts[1].split(",");
+                System.out.println("Which one did you mean?\n"+printAlbuns(results));
+                searchAlbumName(rmi,reader);
+                break;
+            default:
+                System.out.println("No matches found.");
         }
     }
 
