@@ -441,19 +441,27 @@ public class Client extends UnicastRemoteObject implements ClientHello{
             System.out.println("Showing artist failed.");
             return;
         }
-        String[] nameParts = responseSplit[1].split("\\|");
-        String[] descParts = responseSplit[2].split("\\|");
-        String[] funcParts = responseSplit[3].split("\\|");
-        String[] funcs = funcParts[1].split(",");
-        String[] albParts = responseSplit[4].split("\\|");
-        String[] albs = albParts[1].split(",");
+
+
         switch (responseSplit[0]) {
-            case "type|showArtistComplete":
+            case "type|notPartialSearchComplete":
+                String[] nameParts = responseSplit[1].split("\\|");
+                String[] descParts = responseSplit[2].split("\\|");
+                String[] funcParts = responseSplit[3].split("\\|");
+                String[] funcs = funcParts[1].split(",");
+                String[] albParts = responseSplit[4].split("\\|");
+                String[] albs = albParts[1].split(",");
                 System.out.println(
                     "Name: "+ nameParts[1] + " (" + printFuncs(funcs)+")"
                 +   "\nDescription: " + descParts[1]
                 +   "\nAlbums: \n" + printAlbuns(albs)
                         );
+                break;
+            case "type|partialSearchComplete":
+                String[] resultsParts = responseSplit[1].split("\\|");
+                String[] results = resultsParts[1].split(",");
+                System.out.println("Which one did you mean?\n"+printAlbuns(results));
+                searchArtist(rmi,reader);
                 break;
             case "type|showArtistFail":
                 System.out.println("Artist not Shown.");

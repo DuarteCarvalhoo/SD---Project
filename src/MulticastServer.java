@@ -622,14 +622,16 @@ public class MulticastServer extends Thread implements Serializable {
                         boolean isComposer=false;
                         ArrayList<String> albNames = new ArrayList<>();
                         ArrayList<Integer> albIds = new ArrayList<>();
+                        ArrayList<String> partial = new ArrayList<>();
+                        int partialV = 0;
 
                         PreparedStatement stmt = null;
                         try {
                             connection.setAutoCommit(false);
                             System.out.println("Opened database successfully");
-
-                            stmt = connection.prepareStatement("SELECT * FROM artista WHERE name = ?;");
-                            stmt.setString(1,n);
+                            String partialSearch = "%"+n+"%";
+                            stmt = connection.prepareStatement("SELECT * FROM artista WHERE name LIKE ?");
+                            stmt.setString(1,partialSearch);
                             ResultSet rs = stmt.executeQuery();
                             while (rs.next()) {
                                 id1 = rs.getInt("id");
@@ -639,6 +641,17 @@ public class MulticastServer extends Thread implements Serializable {
                                 isBand = rs.getBoolean("band_isband");
                                 isSongwriter = rs.getBoolean("songwriter_issongwriter");
                                 isComposer = rs.getBoolean("composer_iscomposer");
+                                if(name1.equals(n)){
+                                    partialV = 1;
+                                }
+                                else{
+                                    partial.add(name1);
+                                }
+                            }
+                            System.out.println(partialV);
+                            if(partialV == 0){
+                                sendMsg("type|partialSearchComplete;Found|"+printAlbuns(partial));
+                                System.out.println("Partial search returned.");
                             }
 
                             stmt = connection.prepareStatement("SELECT * FROM artista_album WHERE artista_id = ?;");
@@ -662,12 +675,13 @@ public class MulticastServer extends Thread implements Serializable {
 
                             rs.close();
                             stmt.close();
+
+                            System.out.println("Operation done successfully");
+                            sendMsg("type|notPartialSearchComplete;Name|"+name1+";Description|"+description1+";Functions|"+printFunctions(isMusician,isBand,isSongwriter,isComposer)+";Albums|"+printAlbuns(albNames));
                         } catch ( Exception e ) {
                             System.err.println( e.getClass().getName()+": "+ e.getMessage() );
                             System.exit(0);
                         }
-                        System.out.println("Operation done successfully");
-                        sendMsg("type|showArtistComplete;Name|"+name1+";Description|"+description1+";Functions|"+printFunctions(isMusician,isBand,isSongwriter,isComposer)+";Albums|"+printAlbuns(albNames));
                         break;
                     case "type|showArtistAlbums":
                         ArrayList<Integer> album_ids = new ArrayList<>();
