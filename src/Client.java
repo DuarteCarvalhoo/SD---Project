@@ -441,15 +441,56 @@ public class Client extends UnicastRemoteObject implements ClientHello{
             System.out.println("Showing artist failed.");
             return;
         }
-        String[] artistParts = responseSplit[1].trim().split("\\|");
+        String[] nameParts = responseSplit[1].split("\\|");
+        String[] descParts = responseSplit[2].split("\\|");
+        String[] funcParts = responseSplit[3].split("\\|");
+        String[] funcs = funcParts[1].split(",");
+        String[] albParts = responseSplit[4].split("\\|");
+        String[] albs = albParts[1].split(",");
         switch (responseSplit[0]) {
             case "type|showArtistComplete":
-                System.out.println(artistParts[1]); //easy way, i don't if i can use it
+                System.out.println(
+                    "Name: "+ nameParts[1] + " (" + printFuncs(funcs)+")"
+                +   "\nDescription: " + descParts[1]
+                +   "\nAlbums: \n" + printAlbuns(albs)
+                        );
                 break;
             case "type|showArtistFail":
                 System.out.println("Artist not Shown.");
                 break;
         }
+    }
+
+    private static String printAlbuns(String[] albs) {
+        if (!albs[0].equals("No albuns to show.")) {
+            String albunsNamesFinais = "";
+            int n = 1;
+            for (int i=0;i<albs.length;i++) {
+                albunsNamesFinais += n+". ";
+                albunsNamesFinais += albs[i];
+                albunsNamesFinais += "\n";
+                n++;
+            }
+            return albunsNamesFinais;
+        }
+        else{
+            return "This artist has no albums.";
+        }
+    }
+
+    private static String printFuncs(String[] funcs) {
+        String finalString = "";
+        for(int i=0;i<funcs.length;i++){
+            if(i!=(funcs.length-1)){
+                finalString += funcs[i];
+                finalString+=",";
+            }
+            else{
+                finalString += funcs[i];
+            }
+        }
+
+        return finalString;
     }
 
     public static void searchAlbumName(Hello rmi, Scanner reader) throws RemoteException {
