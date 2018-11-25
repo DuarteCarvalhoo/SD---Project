@@ -150,14 +150,14 @@ public class MulticastServer extends Thread implements Serializable {
                         sendMsg("Music saving on the server.");
                         break;
                     case "type|sendMusic":
-                        Artist artisT;
                         String[] loggedUserParts = aux[8].split("\\|");
                         String[] pathParts = aux[1].split("\\|");
                         String[] titleParts = aux[2].split("\\|");
                         String[] composerParts = aux[3].split("\\|");
                         String[] artistParts = aux[4].split("\\|");
-                        String[] durationParts = aux[5].split("\\|");
-                        String[] albumParts = aux[6].split("\\|");
+                        String[] sParts = aux[5].split("\\|");
+                        String[] durationParts = aux[6].split("\\|");
+                        String[] albumParts = aux[7].split("\\|");
 
                         connection.setAutoCommit(false);
                         PreparedStatement stmtUpload = connection.prepareStatement("INSERT INTO music(id, title, length)"
@@ -184,6 +184,24 @@ public class MulticastServer extends Thread implements Serializable {
 
                         stmtUpload.setInt(2,getFileArchiveByPath(pathParts[1]));
                         stmtUpload.setInt(1,Integer.parseInt(loggedUserParts[1]));
+                        stmtUpload.executeUpdate();
+
+                        stmtUpload = connection.prepareStatement("INSERT INTO composer_music(artista_id, music_id)"
+                        + "VALUES(?,?);");
+                        stmtUpload.setInt(1,getArtistIdByName(composerParts[1]));
+                        stmtUpload.setInt(2,getMusicIdByName(titleParts[1]));
+                        stmtUpload.executeUpdate();
+
+                        stmtUpload = connection.prepareStatement("INSERT INTO music_songwriter(music_id, artista_id)"
+                                + "VALUES(?,?);");
+                        stmtUpload.setInt(2,getArtistIdByName(sParts[1]));
+                        stmtUpload.setInt(1,getMusicIdByName(titleParts[1]));
+                        stmtUpload.executeUpdate();
+
+                        stmtUpload = connection.prepareStatement("INSERT INTO artista_music(artista_id, music_id)"
+                                + "VALUES(?,?);");
+                        stmtUpload.setInt(1,getArtistIdByName(sParts[1]));
+                        stmtUpload.setInt(2,getMusicIdByName(titleParts[1]));
                         stmtUpload.executeUpdate();
 
                         int lengthA = getAlbumLengthById(getAlbumIdByName(albumParts[1]));
@@ -595,7 +613,15 @@ public class MulticastServer extends Thread implements Serializable {
                     case "type|showArtist":
                         String[] nameArtist = aux[1].split("\\|");
                         String n = nameArtist[1];
-                        Artist art = new Musician();
+                        int id1 = 0;
+                        String  name1="";
+                        String description1="";
+                        boolean isMusician=false;
+                        boolean isBand=false;
+                        boolean isSongwriter=false;
+                        boolean isComposer=false;
+                        ArrayList<String> albNames = new ArrayList<>();
+                        ArrayList<Integer> albIds = new ArrayList<>();
 
                         PreparedStatement stmt = null;
                         try {
@@ -606,39 +632,42 @@ public class MulticastServer extends Thread implements Serializable {
                             stmt.setString(1,n);
                             ResultSet rs = stmt.executeQuery();
                             while (rs.next()) {
-                                String id = rs.getString("id");
-                                String  name1 = rs.getString("name");
-                                String description = rs.getString("description");
-                                boolean isMusician = rs.getBoolean("musician_ismusician");
-                                boolean isBand = rs.getBoolean("group_isgroup");
-                                boolean isSongwriter = rs.getBoolean("songwriter_issongwriter");
-                                boolean isComposer = rs.getBoolean("composer_iscomposer");
-                                art = new Musician(name1,description);
+                                id1 = rs.getInt("id");
+                                name1 = rs.getString("name");
+                                description1 = rs.getString("description");
+                                isMusician = rs.getBoolean("musician_ismusician");
+                                isBand = rs.getBoolean("band_isband");
+                                isSongwriter = rs.getBoolean("songwriter_issongwriter");
+                                isComposer = rs.getBoolean("composer_iscomposer");
                             }
+
+                            stmt = connection.prepareStatement("SELECT * FROM artista_album WHERE artista_id = ?;");
+                            stmt.setInt(1,id1);
+                            rs = stmt.executeQuery();
+                            while(rs.next()){
+                                int albid = rs.getInt("album_id");
+                                albIds.add(albid);
+                            }
+
+
+                            for(Integer ID : albIds){
+                                stmt = connection.prepareStatement("SELECT * FROM album WHERE id = ?;");
+                                stmt.setInt(1, ID);
+                                rs = stmt.executeQuery();
+
+                                while(rs.next()){
+                                    albNames.add(rs.getString("name"));
+                                }
+                            }
+
                             rs.close();
                             stmt.close();
-                            
                         } catch ( Exception e ) {
                             System.err.println( e.getClass().getName()+": "+ e.getMessage() );
                             System.exit(0);
                         }
                         System.out.println("Operation done successfully");
-                        sendMsg("type|showArtistComplete;Artist|"+art);
-                        /*if(artistsList.isEmpty()){
-                            sendMsg("type|showArtistFail");
-                            System.out.println("ERROR: No Artists on the database.");
-                        }
-                        else {
-                            /*if (!checkArtistExists(n)) {
-                                sendMsg("type|showArtistFail");
-                                System.out.println("ERROR: Artist Not Found.");
-                            } else {
-                                for(Artist a : artistsList){
-                                    if(a.getName().equals(n)){
-                                        art = a;
-                                    }
-                                }
-                            }*/
+                        sendMsg("type|showArtistComplete;Name|"+name1+";Description|"+description1+";Functions|"+printFunctions(isMusician,isBand,isSongwriter,isComposer)+";Albums|"+printAlbuns(albNames));
                         break;
                     case "type|showArtistAlbums":
                         ArrayList<Integer> album_ids = new ArrayList<>();
@@ -670,9 +699,6 @@ public class MulticastServer extends Thread implements Serializable {
                             sendMsg("type|showArtistAlbumsFailed");
                             System.out.println(e.getMessage());
                         }
-
-
-
                         break;
                     case "type|makeCritic":
                         String[] scoreParts = aux[1].split("\\|");
@@ -778,6 +804,25 @@ public class MulticastServer extends Thread implements Serializable {
         } finally {
             socket.close();
         }
+    }
+
+    private String printFunctions(boolean isMusician, boolean isBand, boolean isSongwriter, boolean isComposer) {
+        String finalString = "";
+
+        if(isMusician){
+            finalString += "Musician";
+        }
+        if(isSongwriter){
+            finalString += ",Songwriter";
+        }
+        if(isComposer){
+            finalString += ",Composer";
+        }
+        if(isBand){
+            finalString += "Band";
+        }
+
+        return finalString;
     }
 
     private String printAlbuns(ArrayList<String> album_names) {
