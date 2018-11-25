@@ -1044,7 +1044,7 @@ public class Client extends UnicastRemoteObject implements ClientHello{
         while(!flagOK) {
             text = reader.nextLine();
             if(text.trim().equals("")){
-                System.out.println("Insert your data('name-description')");
+                System.out.println("Insert your data('name')");
             }
             else {
                 flagOK = true;
