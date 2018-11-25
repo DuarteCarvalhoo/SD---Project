@@ -401,23 +401,22 @@ public class Client extends UnicastRemoteObject implements ClientHello{
         }
         String re = rmi.showArtistAlbums(nameA);
         String[] responseSplit = re.trim().split(";");
-        if (responseSplit.length > 1) {
-            String[] albunsParts = responseSplit[1].split("\\|");
+        String[] albunsParts = responseSplit[1].split("\\|");
+        String[] albunsNames = albunsParts[1].split(",");
+        if (!albunsNames[0].equals("No albuns to show.")) {
             String albunsNamesFinais = "";
-            int i;
-            for(i=1;i<albunsParts.length;i++){
-                if(i!=albunsParts.length-1){
-                    albunsNamesFinais += (albunsParts[i] + ",");
-                }
-                else{
-                    albunsNamesFinais += (albunsParts[i]);
-                }
+            int n = 1;
+            for (int i=0;i<albunsNames.length;i++) {
+                albunsNamesFinais += n+". ";
+                albunsNamesFinais += albunsNames[i];
+                albunsNamesFinais += "\n";
+                n++;
             }
-            System.out.println("\nAlbums:"+albunsNamesFinais);
+            System.out.println("\nAlbums:\n"+albunsNamesFinais);
             return 1;
         }
         else{
-            System.out.println("No albums");
+            System.out.println("This artist has no albums.");
             return 0;
         }
     }

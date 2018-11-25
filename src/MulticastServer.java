@@ -602,7 +602,7 @@ public class MulticastServer extends Thread implements Serializable {
                             connection.setAutoCommit(false);
                             System.out.println("Opened database successfully");
 
-                            stmt = connection.prepareStatement("SELECT * FROM artist WHERE name = ?;");
+                            stmt = connection.prepareStatement("SELECT * FROM artista WHERE name = ?;");
                             stmt.setString(1,n);
                             ResultSet rs = stmt.executeQuery();
                             while (rs.next()) {
@@ -641,22 +641,38 @@ public class MulticastServer extends Thread implements Serializable {
                             }*/
                         break;
                     case "type|showArtistAlbums":
+                        ArrayList<Integer> album_ids = new ArrayList<>();
+                        ArrayList<String> album_names = new ArrayList<>();
                         String[] nameA = aux[1].split("\\|");
                         String nA = nameA[1];
-                        Artist artista = new Musician();
-                        if(!checkArtistExists(nA)){
-                            sendMsg("type|showArtistAlbumsFail");
-                            System.out.println("ERROR: Artist Not Found.");
-                        }
-                        else{
-                            for(Artist a : artistsList){
-                                if(a.getName().equals(nA)){
-                                    artista = a;
+                        //proteção de db vazia
+                        try{
+                            PreparedStatement stmtShowArtistAlbum = connection.prepareStatement("SELECT * FROM artista_album WHERE artista_id = ?;");
+                            stmtShowArtistAlbum.setInt(1,getArtistIdByName(nA));
+
+                            ResultSet res = stmtShowArtistAlbum.executeQuery();
+                            while(res.next()){
+                                album_ids.add(res.getInt("album_id"));
+                            }
+
+                            for(Integer i : album_ids){
+                                stmtShowArtistAlbum = connection.prepareStatement("SELECT * FROM album WHERE id = ?;");
+                                stmtShowArtistAlbum.setInt(1, i);
+                                res = stmtShowArtistAlbum.executeQuery();
+
+                                while(res.next()){
+                                    album_names.add(res.getString("name"));
                                 }
                             }
-                            sendMsg("type|showArtistAlbumsComplete"+";Albums|"+artista.printAlbums(artista.getAlbums()));
-                            System.out.println("SUCCESS: Artist Albums Shown.");
+                            sendMsg("type|showArtistAlbumsComplete;Albums|"+printAlbuns(album_names));
                         }
+                        catch (org.postgresql.util.PSQLException e){
+                            sendMsg("type|showArtistAlbumsFailed");
+                            System.out.println(e.getMessage());
+                        }
+
+
+
                         break;
                     case "type|makeCritic":
                         String[] scoreParts = aux[1].split("\\|");
@@ -762,6 +778,25 @@ public class MulticastServer extends Thread implements Serializable {
         } finally {
             socket.close();
         }
+    }
+
+    private String printAlbuns(ArrayList<String> album_names) {
+        String finalString = "";
+        if(album_names.isEmpty()){
+            finalString += "No albuns to show.";
+        }
+        else{
+            for(int i = 0;i<album_names.size();i++){
+                if(i == (album_names.size()-1)){
+                    finalString += album_names.get(i);
+                }
+                else{
+                    finalString += album_names.get(i);
+                    finalString += ",";
+                }
+            }
+        }
+        return finalString;
     }
 
     private int getAlbumLengthById(int albumId) {
