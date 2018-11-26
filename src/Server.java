@@ -209,14 +209,14 @@ public class Server implements Hello {
     }
 
     ////////////// PARTILHA DE MUSICA /////////////
-    public String shareMusic(String music, String userName){
+    public String shareMusic(String music, String userName, int sharingId){
         MulticastSocket socket = null;
         //envia pra o multicast
         try {
             socket = new MulticastSocket();
             InetAddress group = InetAddress.getByName(MULTICAST_ADDRESS);
             socket.joinGroup(group);
-            String aux = "type|shareMusic;withUser|"+userName+";Music|"+music; //protocol
+            String aux = "type|shareMusic;withUser|"+userName+";Music|"+music+";SharingUser|"+sharingId; //protocol
             byte[] buffer = aux.getBytes();
             DatagramPacket packet = new DatagramPacket(buffer, buffer.length, group, PORT);
             socket.send(packet);

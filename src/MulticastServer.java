@@ -220,15 +220,17 @@ public class MulticastServer extends Thread implements Serializable {
                     case "type|shareMusic":
                         String[] musicParts = aux[2].split("\\|");
                         String[] shareUserParts = aux[1].split("\\|");
+                        String[] sharingUserParts = aux[3].split("\\|");
 
                         int musicId = getMusicIdByName(musicParts[1]);
 
                         connection.setAutoCommit(false);
-                        PreparedStatement stmtShare = connection.prepareStatement("INSERT INTO utilizador_filearchive(utilizador_id, filearchive_id)"
-                        + "VALUES(?,?);");
+                        PreparedStatement stmtShare = connection.prepareStatement("INSERT INTO utilizador_filearchive(utilizador_id, filearchive_utilizador_id, filearchive_music_id)"
+                        + "VALUES(?,?,?);");
 
-                        stmtShare.setInt(2,getFileArchiveByMusicId(musicId));
+                        stmtShare.setInt(3,musicId);
                         stmtShare.setInt(1,getUserIdByName(shareUserParts[1]));
+                        stmtShare.setInt(2,Integer.parseInt(sharingUserParts[1]));
                         stmtShare.executeUpdate();
 
                         stmtShare.close();
