@@ -44,7 +44,6 @@ public class MulticastServer extends Thread implements Serializable {
             socket = new MulticastSocket(PORT);
             InetAddress group = InetAddress.getByName(MULTICAST_ADDRESS);
             socket.joinGroup(group);
-            readFiles();
             if (usersList.isEmpty()) {
                 System.out.println("Users arraylist empty!");
             }
