@@ -270,7 +270,7 @@ public class Client extends UnicastRemoteObject implements ClientHello{
                                 System.out.println("With who you wanna share it?");
                             }
                         }
-                        String resposta = rmi.shareMusic(music,userName);
+                        String resposta = rmi.shareMusic(music,userName,loggedUser.getId());
                         switch (resposta){
                             case "type|isAlreadyDownloadable":
                                 System.out.println("User already had access to the song.");
@@ -1321,11 +1321,16 @@ public class Client extends UnicastRemoteObject implements ClientHello{
 
     private static String downloadMusic(Hello rmi, Scanner reader) throws IOException {
         ArrayList<Music> musicsList;
-        System.out.println("Choose one song:");
         String response = rmi.getMusicList(loggedUser.getId());
         String[] rSplit = response.split(";");
         String[] musicParts = rSplit[1].split("\\|");
         musicsList = createMusicsList(musicParts[1].split(","));
+
+        if(musicParts[1].equals("No musics to show.")){
+           return "You can't download any musics.";
+        }
+
+        System.out.println("Choose one song:");
         int i = 1;
         for (Music m : musicsList) {
             System.out.println(i+". "+m.toString());
@@ -1351,7 +1356,7 @@ public class Client extends UnicastRemoteObject implements ClientHello{
         String musicaEscolhida = "./musicasServer/" + escolha;
 
         //fazer o socket ligar primeiro no multi mas sem pedir pra aceitar
-        System.out.println(rmi.startServerSocket());
+        //System.out.println(rmi.startServerSocket()); -> print "ServerSocket Inicialiazada"
         Socket socket = new Socket("0.0.0.0", 5041);
         String print = rmi.downloadMusicRMI(musicaEscolhida);
         byte[] b = new byte [1024];
@@ -1373,9 +1378,7 @@ public class Client extends UnicastRemoteObject implements ClientHello{
         fOutStream.close();
         socket.close();
 
-        System.out.println("ficheiro 100% completo");
-
-        return print;
+        return "Download complete.";
     }
 
            ////////////// FAILOVER /////////////

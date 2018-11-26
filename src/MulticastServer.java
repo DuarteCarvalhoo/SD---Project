@@ -44,7 +44,6 @@ public class MulticastServer extends Thread implements Serializable {
             socket = new MulticastSocket(PORT);
             InetAddress group = InetAddress.getByName(MULTICAST_ADDRESS);
             socket.joinGroup(group);
-            readFiles();
             if (usersList.isEmpty()) {
                 System.out.println("Users arraylist empty!");
             }
@@ -172,18 +171,19 @@ public class MulticastServer extends Thread implements Serializable {
                         stmtUpload.setInt(2,getMusicIdByName(titleParts[1]));
                         stmtUpload.executeUpdate();
 
-                        stmtUpload = connection.prepareStatement("INSERT INTO filearchive(id,path, music_id,utilizador_id)"
-                        + "VALUES(DEFAULT,?,?,?);");
+                        stmtUpload = connection.prepareStatement("INSERT INTO filearchive(path, music_id,utilizador_id)"
+                        + "VALUES(?,?,?);");
                         stmtUpload.setString(1,pathParts[1]);
                         stmtUpload.setInt(2,getMusicIdByName(titleParts[1]));
                         stmtUpload.setInt(3,Integer.parseInt(loggedUserParts[1]));
                         stmtUpload.executeUpdate();
 
-                        stmtUpload = connection.prepareStatement("INSERT INTO utilizador_filearchive(utilizador_id, filearchive_id)"
-                        + "VALUES(?,?);");
+                        stmtUpload = connection.prepareStatement("INSERT INTO utilizador_filearchive(utilizador_id, filearchive_utilizador_id, filearchive_music_id)"
+                        + "VALUES(?,?,?);");
 
-                        stmtUpload.setInt(2,getFileArchiveByPath(pathParts[1]));
                         stmtUpload.setInt(1,Integer.parseInt(loggedUserParts[1]));
+                        stmtUpload.setInt(2,Integer.parseInt(loggedUserParts[1]));
+                        stmtUpload.setInt(3,getMusicIdByName(titleParts[1]));
                         stmtUpload.executeUpdate();
 
                         stmtUpload = connection.prepareStatement("INSERT INTO composer_music(artista_id, music_id)"
@@ -219,15 +219,17 @@ public class MulticastServer extends Thread implements Serializable {
                     case "type|shareMusic":
                         String[] musicParts = aux[2].split("\\|");
                         String[] shareUserParts = aux[1].split("\\|");
+                        String[] sharingUserParts = aux[3].split("\\|");
 
                         int musicId = getMusicIdByName(musicParts[1]);
 
                         connection.setAutoCommit(false);
-                        PreparedStatement stmtShare = connection.prepareStatement("INSERT INTO utilizador_filearchive(utilizador_id, filearchive_id)"
-                        + "VALUES(?,?);");
+                        PreparedStatement stmtShare = connection.prepareStatement("INSERT INTO utilizador_filearchive(utilizador_id, filearchive_utilizador_id, filearchive_music_id)"
+                        + "VALUES(?,?,?);");
 
-                        stmtShare.setInt(2,getFileArchiveByMusicId(musicId));
+                        stmtShare.setInt(3,musicId);
                         stmtShare.setInt(1,getUserIdByName(shareUserParts[1]));
+                        stmtShare.setInt(2,Integer.parseInt(sharingUserParts[1]));
                         stmtShare.executeUpdate();
 
                         stmtShare.close();
@@ -831,7 +833,6 @@ public class MulticastServer extends Thread implements Serializable {
                             sendMsg("type|notPartialSearchAlbumComplete" + ";AlbumName|" + nome +";ArtistName|"+artistName
                         + ";Description|"+description+";Length|"+length+";Genre|"+genre+";ScoreFinal|"+scoreFinal
                             +";CriticsList|"+printCritics(criticsList)+";MusicsList|"+printMusics(musicsList)+";Publisher|"+publisherN);
-                            //sendMsg("type|showAlbumComplete" + ";Album|" + album);
                         }
                         break;
                     default:
@@ -949,8 +950,8 @@ public class MulticastServer extends Thread implements Serializable {
 
 
             while(rs.next()){
-                int fileId = rs.getInt("filearchive_id");
-                String musicName = getMusicNameByFile(fileId);
+                int musicId = rs.getInt("filearchive_music_id");
+                String musicName = getMusicNameById(musicId);
                 m.add(new Music(musicName));
             }
 
@@ -959,6 +960,25 @@ public class MulticastServer extends Thread implements Serializable {
             e.printStackTrace();
         }
         return m;
+    }
+
+    private String getMusicNameById(int musicId) {
+        String musicName = "";
+
+        try{
+            PreparedStatement stmt = connection.prepareStatement("SELECT * FROM music WHERE id = ?;");
+            stmt.setInt(1,musicId);
+
+            ResultSet rs = stmt.executeQuery();
+
+            while(rs.next()){
+                musicName = rs.getString("title");
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return musicName;
     }
 
     private String getMusicNameByFile(int fileId) {
@@ -1543,51 +1563,4 @@ public class MulticastServer extends Thread implements Serializable {
         //Album a = getAlbumByName();
         return false;
     }
-
-    ////////////// READ AND WRITE FILES /////////////
-    private void readFiles(){
-        System.out.println("Reading.");
-        ArrayList<User> users = new ArrayList<>();
-        try {
-            ObjectInputStream objectIn = new ObjectInputStream(new BufferedInputStream(new FileInputStream("data.bin")));
-            this.usersList = (ArrayList) objectIn.readObject();
-            this.artistsList = (ArrayList) objectIn.readObject();
-            this.albunsList = (ArrayList) objectIn.readObject();
-            this.musicsList = (ArrayList) objectIn.readObject();
-            objectIn.close();
-            System.out.println("Read file successfully.");
-        }
-        catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            System.out.println("Empty file!");
-        }
-        catch (ClassNotFoundException e) {
-            e.printStackTrace();
-        }
-    }
-
-    public void writeFiles(){
-        System.out.println("Writing.");
-        try{
-            File file = new File("data.bin");
-            FileOutputStream out = new FileOutputStream(file);
-            ObjectOutputStream fout = new ObjectOutputStream(out);
-            fout.writeObject(this.usersList);
-            fout.writeObject(this.artistsList);
-            fout.writeObject(this.albunsList);
-            fout.writeObject(this.musicsList);
-            fout.close();
-            out.close();
-        }
-        catch (FileNotFoundException ex) {
-            Logger.getLogger(MulticastServer.class.getName()).log(Level.SEVERE, null, ex);
-            System.out.println("File not found!");
-        } catch (IOException ex) {
-            Logger.getLogger(MulticastServer.class.getName()).log(Level.SEVERE, null, ex);
-        }
-        System.out.println("Lists wrote successfully.");
-    }
-
-
 }
