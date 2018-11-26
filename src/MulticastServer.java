@@ -172,18 +172,19 @@ public class MulticastServer extends Thread implements Serializable {
                         stmtUpload.setInt(2,getMusicIdByName(titleParts[1]));
                         stmtUpload.executeUpdate();
 
-                        stmtUpload = connection.prepareStatement("INSERT INTO filearchive(id,path, music_id,utilizador_id)"
-                        + "VALUES(DEFAULT,?,?,?);");
+                        stmtUpload = connection.prepareStatement("INSERT INTO filearchive(path, music_id,utilizador_id)"
+                        + "VALUES(?,?,?);");
                         stmtUpload.setString(1,pathParts[1]);
                         stmtUpload.setInt(2,getMusicIdByName(titleParts[1]));
                         stmtUpload.setInt(3,Integer.parseInt(loggedUserParts[1]));
                         stmtUpload.executeUpdate();
 
-                        stmtUpload = connection.prepareStatement("INSERT INTO utilizador_filearchive(utilizador_id, filearchive_id)"
-                        + "VALUES(?,?);");
+                        stmtUpload = connection.prepareStatement("INSERT INTO utilizador_filearchive(utilizador_id, filearchive_utilizador_id, filearchive_music_id)"
+                        + "VALUES(?,?,?);");
 
-                        stmtUpload.setInt(2,getFileArchiveByPath(pathParts[1]));
                         stmtUpload.setInt(1,Integer.parseInt(loggedUserParts[1]));
+                        stmtUpload.setInt(2,Integer.parseInt(loggedUserParts[1]));
+                        stmtUpload.setInt(3,getMusicIdByName(titleParts[1]));
                         stmtUpload.executeUpdate();
 
                         stmtUpload = connection.prepareStatement("INSERT INTO composer_music(artista_id, music_id)"
@@ -831,7 +832,6 @@ public class MulticastServer extends Thread implements Serializable {
                             sendMsg("type|notPartialSearchAlbumComplete" + ";AlbumName|" + nome +";ArtistName|"+artistName
                         + ";Description|"+description+";Length|"+length+";Genre|"+genre+";ScoreFinal|"+scoreFinal
                             +";CriticsList|"+printCritics(criticsList)+";MusicsList|"+printMusics(musicsList)+";Publisher|"+publisherN);
-                            //sendMsg("type|showAlbumComplete" + ";Album|" + album);
                         }
                         break;
                     default:
@@ -949,8 +949,8 @@ public class MulticastServer extends Thread implements Serializable {
 
 
             while(rs.next()){
-                int fileId = rs.getInt("filearchive_id");
-                String musicName = getMusicNameByFile(fileId);
+                int musicId = rs.getInt("filearchive_music_id");
+                String musicName = getMusicNameById(musicId);
                 m.add(new Music(musicName));
             }
 
@@ -959,6 +959,25 @@ public class MulticastServer extends Thread implements Serializable {
             e.printStackTrace();
         }
         return m;
+    }
+
+    private String getMusicNameById(int musicId) {
+        String musicName = "";
+
+        try{
+            PreparedStatement stmt = connection.prepareStatement("SELECT * FROM music WHERE id = ?;");
+            stmt.setInt(1,musicId);
+
+            ResultSet rs = stmt.executeQuery();
+
+            while(rs.next()){
+                musicName = rs.getString("title");
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return musicName;
     }
 
     private String getMusicNameByFile(int fileId) {
