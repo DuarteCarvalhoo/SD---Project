@@ -1356,9 +1356,9 @@ public class Client extends UnicastRemoteObject implements ClientHello{
         String musicaEscolhida = "./musicasServer/" + escolha;
 
         //fazer o socket ligar primeiro no multi mas sem pedir pra aceitar
-        //System.out.println(rmi.startServerSocket()); -> print "ServerSocket Inicialiazada"
+        rmi.startServerSocket(); //-> print "ServerSocket Inicialiazada"
         Socket socket = new Socket("0.0.0.0", 5041);
-        String print = rmi.downloadMusicRMI(musicaEscolhida);
+        String print = rmi.downloadMusicRMI(musicaEscolhida); //-> print "tudo ok no download"
         byte[] b = new byte [1024];
         InputStream is = socket.getInputStream();
         FileOutputStream fOutStream = new FileOutputStream("./musicasServer/"+loggedUser.getUsername()+"/"+escolha);
@@ -1378,7 +1378,12 @@ public class Client extends UnicastRemoteObject implements ClientHello{
         fOutStream.close();
         socket.close();
 
-        return "Download complete.";
+        if(print.equals("tudo okay no download")){
+            return "Download complete.";
+        }
+        else{
+            return "Something went wrong.";
+        }
     }
 
            ////////////// FAILOVER /////////////
