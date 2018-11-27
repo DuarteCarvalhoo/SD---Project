@@ -288,19 +288,30 @@ public class MulticastServer extends Thread implements Serializable {
                         String[] sharingUserParts = aux[3].split("\\|");
 
                         int musicId = getMusicIdByName(musicParts[1]);
+                        if(musicId==0 || getUserIdByName(shareUserParts[1]) == 0){
+                            if(musicId==0){
+                                sendMsg("type|invalidMusic");
+                                System.out.println("Invalid music.");
+                            }
+                            else{
+                                sendMsg("type|invalidUser");
+                                System.out.println("Invalid user.");
+                            }
+                        }
+                        else{
+                            connection.setAutoCommit(false);
+                            PreparedStatement stmtShare = connection.prepareStatement("INSERT INTO utilizador_filearchive(utilizador_id, filearchive_utilizador_id, filearchive_music_id)"
+                                    + "VALUES(?,?,?);");
 
-                        connection.setAutoCommit(false);
-                        PreparedStatement stmtShare = connection.prepareStatement("INSERT INTO utilizador_filearchive(utilizador_id, filearchive_utilizador_id, filearchive_music_id)"
-                        + "VALUES(?,?,?);");
+                            stmtShare.setInt(3,musicId);
+                            stmtShare.setInt(1,getUserIdByName(shareUserParts[1]));
+                            stmtShare.setInt(2,Integer.parseInt(sharingUserParts[1]));
+                            stmtShare.executeUpdate();
 
-                        stmtShare.setInt(3,musicId);
-                        stmtShare.setInt(1,getUserIdByName(shareUserParts[1]));
-                        stmtShare.setInt(2,Integer.parseInt(sharingUserParts[1]));
-                        stmtShare.executeUpdate();
-
-                        stmtShare.close();
-                        connection.commit();
-                        sendMsg("type|musicShareCompleted");
+                            stmtShare.close();
+                            connection.commit();
+                            sendMsg("type|musicShareCompleted");
+                        }
                         break;
                     case "type|getMusicsList":
                         String[] userParts = aux[1].split("\\|");

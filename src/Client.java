@@ -259,6 +259,7 @@ public class Client extends UnicastRemoteObject implements ClientHello{
                                 System.out.println("Which music you wanna share?");
                             }
                         }
+
                         flagOK = false;
                         System.out.println("With who you wanna share it?");
                         while(!flagOK){
@@ -278,6 +279,14 @@ public class Client extends UnicastRemoteObject implements ClientHello{
                             case "type|musicShareCompleted":
                                 System.out.println("Music shared.");
                                 break;
+                            case "type|invalidMusic":
+                                System.out.println("Insert a valid music.");
+                                break;
+                            case "type|invalidUser":
+                                System.out.println("Insert a valid user.");
+                                break;
+                            default:
+                                System.out.println("Something went wrong.");
                         }
                         break;
                     case "/edit":
