@@ -320,17 +320,23 @@ public class Client extends UnicastRemoteObject implements ClientHello{
                         String resp = rmi.sendMusicRMI(musicInfo,loggedUser.getId());
                         String[] responseSpli = resp.split(";");
                         switch (responseSpli[0]){
-                            case "type|userNotFound":
-                                System.out.println("ERROR: User Not Found.");
+                            case "type|composerNotFound":
+                                System.out.println("ERROR: Not a valid composer.");
                                 break;
                             case "type|artistNotFound":
-                                System.out.println("ERROR: Artist Not Found.");
+                                System.out.println("ERROR: Not a valid artist.");
+                                break;
+                            case "type|songwriterNotFound":
+                                System.out.println("ERROR: Not a valid artist.");
+                                break;
+                            case"type|albumNotFound":
+                                System.out.println("ERROR: Not a valid album.");
                                 break;
                             case"type|sendMusicComplete":
-                                if(responseSpli.length>1){
-                                    String[] s = responseSpli[1].split("\\|");
-                                    loggedUser.addDownloadableMusic(s[1]);
-                                }
+                                System.out.println("Upload complete.");
+                                break;
+                            case "type|somethingWentWrong":
+                                System.out.println("Something went wrong.");
                                 break;
                         }
                         break;
@@ -811,6 +817,8 @@ public class Client extends UnicastRemoteObject implements ClientHello{
         }
         if(responseSplit[2].equals("yes")){
             createBand(rmi,reader);
+            isComposer = false;
+            isSongwriter = false;
         }
         createMusician(rmi,reader,isSongwriter,isComposer, isBand);
     }

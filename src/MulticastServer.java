@@ -32,11 +32,7 @@ public class MulticastServer extends Thread implements Serializable {
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
         }
-        try {
-            connection = DriverManager.getConnection("jdbc:postgresql://localhost:5432/BD/SD","postgres", "fabiogc1998");
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
+        initConnection();
         MulticastSocket socket = null;
         //System.out.println(this.getName() + "run...");
 
@@ -124,19 +120,25 @@ public class MulticastServer extends Thread implements Serializable {
                             try{
                                 connection.setAutoCommit(false);
                                 User u = new User(username,password);
-                                PreparedStatement stmt = connection.prepareStatement("INSERT INTO utilizador(id,username,password,iseditor)" +
-                                        "VALUES (DEFAULT,?,?,false)");
-                                stmt.setString(1,u.getUsername());
-                                stmt.setString(2,u.getPassword());
-                                stmt.executeUpdate();
+                                if(checkUsernameRegister(username) == 1){
+                                    sendMsg("type|usernameUsed");
+                                    System.out.println("Username already used.");
+                                } else {
+                                    PreparedStatement stmt = connection.prepareStatement("INSERT INTO utilizador(id,username,password,iseditor)" +
+                                            "VALUES (DEFAULT,?,?,false)");
+                                    stmt.setString(1,u.getUsername());
+                                    stmt.setString(2,u.getPassword());
+                                    stmt.executeUpdate();
 
-                                stmt.close();
-                                connection.commit();
-                                
-                                sendMsg("type|registComplete");
+                                    stmt.close();
+                                    connection.commit();
+
+                                    sendMsg("type|registComplete");
+                                }
                             } catch (org.postgresql.util.PSQLException e){
                                 System.out.println("Something went wrong.");
-                                sendMsg("type|usernameUsed");
+                                initConnection();
+                                sendMsg("type|somethingWentWrong");
                             }
                         }
                         break;
@@ -149,72 +151,108 @@ public class MulticastServer extends Thread implements Serializable {
                         sendMsg("Music saving on the server.");
                         break;
                     case "type|sendMusic":
-                        String[] loggedUserParts = aux[8].split("\\|");
-                        String[] pathParts = aux[1].split("\\|");
-                        String[] titleParts = aux[2].split("\\|");
-                        String[] composerParts = aux[3].split("\\|");
-                        String[] artistParts = aux[4].split("\\|");
-                        String[] sParts = aux[5].split("\\|");
-                        String[] durationParts = aux[6].split("\\|");
-                        String[] albumParts = aux[7].split("\\|");
+                        try{
+                            String[] loggedUserParts = aux[8].split("\\|");
+                            String[] pathParts = aux[1].split("\\|");
+                            String[] titleParts = aux[2].split("\\|");
+                            String[] composerParts = aux[3].split("\\|");
+                            String[] artistParts = aux[4].split("\\|");
+                            String[] sParts = aux[5].split("\\|");
+                            String[] durationParts = aux[6].split("\\|");
+                            String[] albumParts = aux[7].split("\\|");
 
-                        connection.setAutoCommit(false);
-                        PreparedStatement stmtUpload = connection.prepareStatement("INSERT INTO music(id, title, length)"
-                        + "VALUES(DEFAULT,?,?);");
-                        stmtUpload.setString(1,titleParts[1]);
-                        stmtUpload.setInt(2,Integer.parseInt(durationParts[1]));
-                        stmtUpload.executeUpdate();
+                            connection.setAutoCommit(false);
+                            PreparedStatement stmtUpload = null;
+                            System.out.println(checkDuplicatedUpload(Integer.parseInt(loggedUserParts[1]),titleParts[1]));
+                            if(checkDuplicatedUpload(Integer.parseInt(loggedUserParts[1]),titleParts[1])==1){
+                                sendMsg("type|duplicatedUpload");
+                                System.out.println("Music already uploaded.");
+                            }
+                            else if(checkDuplicatedUpload(Integer.parseInt(loggedUserParts[1]),titleParts[1])==0){
+                                System.out.println("Same music -> Other user");
+                                stmtUpload = connection.prepareStatement("INSERT INTO filearchive(path, music_id,utilizador_id)"
+                                        + "VALUES(?,?,?);");
+                                stmtUpload.setString(1,pathParts[1]);
+                                stmtUpload.setInt(2,getMusicIdByName(titleParts[1]));
+                                stmtUpload.setInt(3,Integer.parseInt(loggedUserParts[1]));
+                                System.out.println("Before update");
+                                stmtUpload.executeUpdate();
+                                System.out.println("After update update");
 
-                        stmtUpload = connection.prepareStatement("INSERT INTO album_music(album_id, music_id)"
-                        + "VALUES(?,?);");
-                        stmtUpload.setInt(1,getAlbumIdByName(albumParts[1]));
-                        stmtUpload.setInt(2,getMusicIdByName(titleParts[1]));
-                        stmtUpload.executeUpdate();
+                                stmtUpload = connection.prepareStatement("INSERT INTO utilizador_filearchive(utilizador_id, filearchive_utilizador_id, filearchive_music_id)"
+                                        + "VALUES(?,?,?);");
 
-                        stmtUpload = connection.prepareStatement("INSERT INTO filearchive(path, music_id,utilizador_id)"
-                        + "VALUES(?,?,?);");
-                        stmtUpload.setString(1,pathParts[1]);
-                        stmtUpload.setInt(2,getMusicIdByName(titleParts[1]));
-                        stmtUpload.setInt(3,Integer.parseInt(loggedUserParts[1]));
-                        stmtUpload.executeUpdate();
+                                stmtUpload.setInt(1,Integer.parseInt(loggedUserParts[1]));
+                                stmtUpload.setInt(2,Integer.parseInt(loggedUserParts[1]));
+                                stmtUpload.setInt(3,getMusicIdByName(titleParts[1]));
+                                stmtUpload.executeUpdate();
 
-                        stmtUpload = connection.prepareStatement("INSERT INTO utilizador_filearchive(utilizador_id, filearchive_utilizador_id, filearchive_music_id)"
-                        + "VALUES(?,?,?);");
+                                connection.commit();
+                                sendMsg("type|sendMusicComplete");
+                            }
+                            else if(checkDuplicatedUpload(Integer.parseInt(loggedUserParts[1]),titleParts[1])==-1){
+                                stmtUpload = connection.prepareStatement("INSERT INTO music(id, title, length)"
+                                        + "VALUES(DEFAULT,?,?);");
+                                stmtUpload.setString(1,titleParts[1]);
+                                stmtUpload.setInt(2,Integer.parseInt(durationParts[1]));
+                                stmtUpload.executeUpdate();
 
-                        stmtUpload.setInt(1,Integer.parseInt(loggedUserParts[1]));
-                        stmtUpload.setInt(2,Integer.parseInt(loggedUserParts[1]));
-                        stmtUpload.setInt(3,getMusicIdByName(titleParts[1]));
-                        stmtUpload.executeUpdate();
+                                stmtUpload = connection.prepareStatement("INSERT INTO album_music(album_id, music_id)"
+                                        + "VALUES(?,?);");
+                                stmtUpload.setInt(1,getAlbumIdByName(albumParts[1]));
+                                stmtUpload.setInt(2,getMusicIdByName(titleParts[1]));
+                                stmtUpload.executeUpdate();
 
-                        stmtUpload = connection.prepareStatement("INSERT INTO composer_music(artista_id, music_id)"
-                        + "VALUES(?,?);");
-                        stmtUpload.setInt(1,getArtistIdByName(composerParts[1]));
-                        stmtUpload.setInt(2,getMusicIdByName(titleParts[1]));
-                        stmtUpload.executeUpdate();
+                                stmtUpload = connection.prepareStatement("INSERT INTO filearchive(path, music_id,utilizador_id)"
+                                        + "VALUES(?,?,?);");
+                                stmtUpload.setString(1,pathParts[1]);
+                                stmtUpload.setInt(2,getMusicIdByName(titleParts[1]));
+                                stmtUpload.setInt(3,Integer.parseInt(loggedUserParts[1]));
+                                stmtUpload.executeUpdate();
 
-                        stmtUpload = connection.prepareStatement("INSERT INTO music_songwriter(music_id, artista_id)"
-                                + "VALUES(?,?);");
-                        stmtUpload.setInt(2,getArtistIdByName(sParts[1]));
-                        stmtUpload.setInt(1,getMusicIdByName(titleParts[1]));
-                        stmtUpload.executeUpdate();
+                                stmtUpload = connection.prepareStatement("INSERT INTO utilizador_filearchive(utilizador_id, filearchive_utilizador_id, filearchive_music_id)"
+                                        + "VALUES(?,?,?);");
 
-                        stmtUpload = connection.prepareStatement("INSERT INTO artista_music(artista_id, music_id)"
-                                + "VALUES(?,?);");
-                        stmtUpload.setInt(1,getArtistIdByName(sParts[1]));
-                        stmtUpload.setInt(2,getMusicIdByName(titleParts[1]));
-                        stmtUpload.executeUpdate();
+                                stmtUpload.setInt(1,Integer.parseInt(loggedUserParts[1]));
+                                stmtUpload.setInt(2,Integer.parseInt(loggedUserParts[1]));
+                                stmtUpload.setInt(3,getMusicIdByName(titleParts[1]));
+                                stmtUpload.executeUpdate();
 
-                        int lengthA = getAlbumLengthById(getAlbumIdByName(albumParts[1]));
-                        int newLength = lengthA + Integer.parseInt(durationParts[1]);
-                        stmtUpload = connection.prepareStatement("UPDATE album SET length = ? WHERE id = ?;");
-                        stmtUpload.setInt(1,newLength);
-                        stmtUpload.setInt(2,getAlbumIdByName(albumParts[1]));
-                        stmtUpload.executeUpdate();
+                                stmtUpload = connection.prepareStatement("INSERT INTO composer_music(artista_id, music_id)"
+                                        + "VALUES(?,?);");
+                                stmtUpload.setInt(1,getArtistIdByName(composerParts[1]));
+                                stmtUpload.setInt(2,getMusicIdByName(titleParts[1]));
+                                stmtUpload.executeUpdate();
 
-                        stmtUpload.close();
-                        connection.commit();
-                        receiveMusic(socketHelp,titleParts[1]);
-                        sendMsg("type|sendMusicComplete");
+                                stmtUpload = connection.prepareStatement("INSERT INTO music_songwriter(music_id, artista_id)"
+                                        + "VALUES(?,?);");
+                                stmtUpload.setInt(2,getArtistIdByName(sParts[1]));
+                                stmtUpload.setInt(1,getMusicIdByName(titleParts[1]));
+                                stmtUpload.executeUpdate();
+
+                                stmtUpload = connection.prepareStatement("INSERT INTO artista_music(artista_id, music_id)"
+                                        + "VALUES(?,?);");
+                                stmtUpload.setInt(1,getArtistIdByName(artistParts[1]));
+                                stmtUpload.setInt(2,getMusicIdByName(titleParts[1]));
+                                stmtUpload.executeUpdate();
+
+                                int lengthA = getAlbumLengthById(getAlbumIdByName(albumParts[1]));
+                                int newLength = lengthA + Integer.parseInt(durationParts[1]);
+                                stmtUpload = connection.prepareStatement("UPDATE album SET length = ? WHERE id = ?;");
+                                stmtUpload.setInt(1,newLength);
+                                stmtUpload.setInt(2,getAlbumIdByName(albumParts[1]));
+                                stmtUpload.executeUpdate();
+
+                                stmtUpload.close();
+                                connection.commit();
+                                receiveMusic(socketHelp,titleParts[1]);
+                                sendMsg("type|sendMusicComplete");
+                            }
+                        } catch(org.postgresql.util.PSQLException e){
+                            initConnection();
+                            System.out.println(e.getMessage());
+                            sendMsg("type|somethingWentWrong");
+                        }
                         break;
                     case "type|shareMusic":
                         String[] musicParts = aux[2].split("\\|");
@@ -394,7 +432,7 @@ public class MulticastServer extends Thread implements Serializable {
                             connection.setAutoCommit(false);
                             System.out.println("Opened database successfully");
 
-                            stmtBand = connection.prepareStatement("INSERT INTO artist (id,name,description,musician_ismusician,group_isgroup,songwriter_issongwriter,composer_iscomposer)"
+                            stmtBand = connection.prepareStatement("INSERT INTO artista (id,name,description,musician_ismusician,band_isband,songwriter_issongwriter,composer_iscomposer)"
                                     + "VALUES (DEFAULT,?,?,?,?,?,?);");
                             stmtBand.setString(1,a.getName());
                             stmtBand.setString(2,a.getDescription());
@@ -529,7 +567,7 @@ public class MulticastServer extends Thread implements Serializable {
                             stmtPublisher.close();
                             connection.commit();
 
-                        }catch(org.postgresql.util.PSQLException e) {
+                        }catch(org.postgresql.util.PSQLException e){
                             sendMsg("type|publisherExists");
                             System.out.println("ERRO: Publisher already exists.");
                         }
@@ -845,6 +883,43 @@ public class MulticastServer extends Thread implements Serializable {
         } finally {
             socket.close();
         }
+    }
+
+    private void initConnection() {
+        try{
+            connection = DriverManager.getConnection("jdbc:postgresql://localhost:5432/BD/SD","postgres", "fabiogc1998");
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private int checkDuplicatedUpload(int loggedUser, String title) {
+        try{
+            PreparedStatement stmt = connection.prepareStatement("SELECT * FROM music WHERE title = ?;");
+            stmt.setString(1,title);
+            ResultSet rs = stmt.executeQuery();
+
+            if(rs.next()){
+                int musicId = getMusicIdByName(title);
+                stmt = connection.prepareStatement("SELECT * FROM filearchive WHERE music_id = ?");
+                stmt.setInt(1,musicId);
+                rs = stmt.executeQuery();
+
+                if(rs.next()){
+                    int user_id = rs.getInt("utilizador_id");
+                    System.out.println("user check"+user_id+loggedUser+"="+(user_id==loggedUser));
+                    if(user_id == loggedUser){
+                        return 1;
+                    }
+                    else{
+                        return 0;
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return -1;
     }
 
     private String printFunctions(boolean isMusician, boolean isBand, boolean isSongwriter, boolean isComposer) {
@@ -1516,15 +1591,18 @@ public class MulticastServer extends Thread implements Serializable {
     }
 
     public int checkUsernameRegister(String username){
-        if(usersList.isEmpty()){
-            return -1;
-        }
-        else {
-            for (User user : usersList) {
-                if (user.getUsername().equals(username)) {
-                    return 1;
-                }
+        try{
+            PreparedStatement stmt = connection.prepareStatement("SELECT * FROM utilizador WHERE username = ?;");
+            stmt.setString(1,username);
+            ResultSet rs = stmt.executeQuery();
+            if(rs.next()){
+                return 1;
             }
+            else{
+                return 0;
+            }
+        } catch (SQLException e) {
+            System.out.println("Something went wrong verifying if exists.");
         }
         return 0;
     }

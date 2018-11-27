@@ -11,7 +11,7 @@ CREATE TABLE artista (
 
 CREATE TABLE music (
   id	 SERIAL,
-  title	 VARCHAR(512) UNIQUE NOT NULL,
+  title	 VARCHAR(512) NOT NULL,
   length INTEGER NOT NULL,
   PRIMARY KEY(id)
 );
@@ -50,7 +50,7 @@ CREATE TABLE concert (
 );
 
 CREATE TABLE utilizador (
-  id	 SERIAL,
+  id	 SERIAL UNIQUE,
   username VARCHAR(512) UNIQUE NOT NULL,
   password VARCHAR(512) NOT NULL,
   iseditor BOOL NOT NULL,
@@ -59,8 +59,8 @@ CREATE TABLE utilizador (
 
 CREATE TABLE filearchive (
   path		 VARCHAR(512) NOT NULL,
-  utilizador_id INTEGER UNIQUE,
-  music_id	 INTEGER UNIQUE,
+  utilizador_id INTEGER,
+  music_id	 INTEGER,
   PRIMARY KEY(utilizador_id,music_id)
 );
 
@@ -151,5 +151,4 @@ ALTER TABLE concert_artista ADD CONSTRAINT concert_artista_fk2 FOREIGN KEY (arti
 ALTER TABLE composer_music ADD CONSTRAINT composer_music_fk1 FOREIGN KEY (artista_id) REFERENCES artista(id);
 ALTER TABLE composer_music ADD CONSTRAINT composer_music_fk2 FOREIGN KEY (music_id) REFERENCES music(id);
 ALTER TABLE utilizador_filearchive ADD CONSTRAINT utilizador_filearchive_fk1 FOREIGN KEY (utilizador_id) REFERENCES utilizador(id);
-ALTER TABLE utilizador_filearchive ADD CONSTRAINT utilizador_filearchive_fk2 FOREIGN KEY (filearchive_utilizador_id) REFERENCES filearchive(utilizador_id);
-ALTER TABLE utilizador_filearchive ADD CONSTRAINT utilizador_filearchive_fk3 FOREIGN KEY (filearchive_music_id) REFERENCES filearchive(music_id);
+ALTER TABLE utilizador_filearchive ADD CONSTRAINT utilizador_filearchive_fk2 FOREIGN KEY (filearchive_utilizador_id,filearchive_music_id) REFERENCES filearchive(utilizador_id,music_id);
