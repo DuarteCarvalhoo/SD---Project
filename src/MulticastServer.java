@@ -164,9 +164,39 @@ public class MulticastServer extends Thread implements Serializable {
                             connection.setAutoCommit(false);
                             PreparedStatement stmtUpload = null;
                             System.out.println(checkDuplicatedUpload(Integer.parseInt(loggedUserParts[1]),titleParts[1]));
-                            if(checkDuplicatedUpload(Integer.parseInt(loggedUserParts[1]),titleParts[1])==1){
-                                sendMsg("type|duplicatedUpload");
-                                System.out.println("Music already uploaded.");
+                            if( checkDuplicatedUpload(Integer.parseInt(loggedUserParts[1]),titleParts[1])!=0 || checkArtistExists(artistParts[1]) != 1 || checkIfSongwriterValid(sParts[1]) != 1 || checkIfComposerValid(composerParts[1]) != 1 || checkAlbumExists(albumParts[1]) != 1){
+                                if(checkDuplicatedUpload(Integer.parseInt(loggedUserParts[1]),titleParts[1]) == 1){
+                                    sendMsg("type|duplicatedUpload");
+                                    System.out.println("Music already uploaded.");
+                                }
+                                else if(checkArtistExists(artistParts[1]) == 0){
+                                    sendMsg("type|artistNotFound");
+                                    System.out.println("Artist not found.");
+                                }
+                                else if(checkIfSongwriterValid(sParts[1]) == 0){
+                                    sendMsg("type|songwriterNotFound");
+                                    System.out.println("Songwriter not found.");
+                                }
+                                else if(checkIfSongwriterValid(sParts[1]) == 2){
+                                    sendMsg("type|songwriterNotValid");
+                                    System.out.println("Not a valid songwriter.");
+                                }
+                                else if(checkIfComposerValid(composerParts[1]) == 0){
+                                    sendMsg("type|composerNotFound");
+                                    System.out.println("Composer not found.");
+                                }
+                                else if(checkIfComposerValid(composerParts[1]) == 2){
+                                    sendMsg("type|composerNotValid");
+                                    System.out.println("Not a valid composer.");
+                                }
+                                else if(checkAlbumExists(albumParts[1]) == 0){
+                                    sendMsg("type|albumNotFound");
+                                    System.out.println("Album not found.");
+                                }
+                                else{
+                                    sendMsg("type|somethingWentWrong");
+                                    System.out.println("Something went wrong.");
+                                }
                             }
                             else if(checkDuplicatedUpload(Integer.parseInt(loggedUserParts[1]),titleParts[1])==0){
                                 System.out.println("Same music -> Other user");
@@ -175,9 +205,7 @@ public class MulticastServer extends Thread implements Serializable {
                                 stmtUpload.setString(1,pathParts[1]);
                                 stmtUpload.setInt(2,getMusicIdByName(titleParts[1]));
                                 stmtUpload.setInt(3,Integer.parseInt(loggedUserParts[1]));
-                                System.out.println("Before update");
                                 stmtUpload.executeUpdate();
-                                System.out.println("After update update");
 
                                 stmtUpload = connection.prepareStatement("INSERT INTO utilizador_filearchive(utilizador_id, filearchive_utilizador_id, filearchive_music_id)"
                                         + "VALUES(?,?,?);");
@@ -599,7 +627,7 @@ public class MulticastServer extends Thread implements Serializable {
                         sendMsg("type|createPlaylistComplete");
                         break;
                     case "type|editArtistName":
-                        String[] nameBeforeParts = aux[1].split("\\|");
+                        /*String[] nameBeforeParts = aux[1].split("\\|");
                         String[] nameAfterParts = aux[2].split("\\|");
                         if(!checkArtistExists(nameBeforeParts[1])){
                             sendMsg("type|nameNotChanged");
@@ -613,10 +641,10 @@ public class MulticastServer extends Thread implements Serializable {
                                     System.out.println("SUCCESS: Name Changed.");
                                 }
                             }
-                        }
+                        }*/
                         break;
                     case "type|editArtistDescription":
-                        String[] artistNamePartss = aux[1].split("\\|");
+                        /*String[] artistNamePartss = aux[1].split("\\|");
                         String[] descriptionAfterParts = aux[2].split("\\|");
                         if(!checkArtistExists(artistNamePartss[1])){
                             sendMsg("type|descriptionNotChanged");
@@ -630,10 +658,10 @@ public class MulticastServer extends Thread implements Serializable {
                                     System.out.println("SUCCESS: Description Changed.");
                                 }
                             }
-                        }
+                        }*/
                         break;
                     case "type|deleteArtist":
-                        String[] nameP = aux[1].split("\\|");
+                        /*String[] nameP = aux[1].split("\\|");
                         String name = nameP[1];
                         if(!checkArtistExists(nameP[1])){
                             sendMsg("type|artistNotFound");
@@ -648,7 +676,7 @@ public class MulticastServer extends Thread implements Serializable {
                                     System.out.println("SUCCESS: Artist deleted.");
                                 }
                             }
-                        }
+                        }*/
                         break;
                     case "type|showArtist":
                         String[] nameArtist = aux[1].split("\\|");
@@ -885,6 +913,62 @@ public class MulticastServer extends Thread implements Serializable {
         }
     }
 
+    private int checkIfSongwriterValid(String sPart) {
+            try{
+                boolean isSongwriter = false;
+                PreparedStatement stmt = connection.prepareStatement("SELECT * FROM artista WHERE name =?;");
+                stmt.setString(1,sPart);
+                ResultSet rs = stmt.executeQuery();
+
+                if(rs.next()){
+                    while(rs.next()){
+                        isSongwriter = rs.getBoolean("songwriter_issongwriter");
+                    }
+
+                    if(isSongwriter){
+                        return 1;
+                    }
+                    else{
+                        return 2;
+                    }
+                }
+                else{
+                    return 0;
+                }
+            } catch (SQLException e) {
+                System.out.println(e.getSQLState());
+            }
+        return -1;
+    }
+
+    private int checkIfComposerValid(String composerPart) {
+        try{
+            boolean isComposer = false;
+            PreparedStatement stmt = connection.prepareStatement("SELECT * FROM artista WHERE name =?;");
+            stmt.setString(1,composerPart);
+            ResultSet rs = stmt.executeQuery();
+
+            if(rs.next()){
+                while(rs.next()){
+                    isComposer = rs.getBoolean("composer_iscomposer");
+                }
+
+                if(isComposer){
+                    return 1;
+                }
+                else{
+                    return 2;
+                }
+            }
+            else{
+                return 0;
+            }
+        } catch (SQLException e) {
+            System.out.println(e.getSQLState());
+        }
+        return -1;
+    }
+
     private void initConnection() {
         try{
             connection = DriverManager.getConnection("jdbc:postgresql://localhost:5432/BD/SD","postgres", "fabiogc1998");
@@ -917,7 +1001,7 @@ public class MulticastServer extends Thread implements Serializable {
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            System.out.println(e.getSQLState());
         }
         return -1;
     }
@@ -1607,18 +1691,21 @@ public class MulticastServer extends Thread implements Serializable {
         return 0;
     }
 
-    public boolean checkArtistExists(String name){
-        if(artistsList.isEmpty()){
-            return false;
-        }
-        else {
-            for (Artist artist : artistsList) {
-                if (artist.getName().equals(name)) {
-                    return true;
-                }
+    public int checkArtistExists(String name){
+        try{
+            PreparedStatement stmt = connection.prepareStatement("SELECT * FROM artista WHERE name = ?;");
+            stmt.setString(1,name);
+            ResultSet rs = stmt.executeQuery();
+            if(rs.next()){
+                return 1;
             }
+            else{
+                return 0;
+            }
+        } catch (SQLException e) {
+            System.out.println("Something went wrong verifying if exists.");
         }
-        return false;
+        return -1;
     }
 
     public boolean checkMusicExists(String name,String artistName){
@@ -1637,8 +1724,22 @@ public class MulticastServer extends Thread implements Serializable {
         return false;
     }
 
-    public boolean checkAlbumExists(String name, String artist){
-        //Album a = getAlbumByName();
-        return false;
+    public int checkAlbumExists(String name){
+        try{
+            PreparedStatement stmt = connection.prepareStatement("SELECT * FROM album WHERE name = ?;");
+            stmt.setString(1,name);
+            ResultSet rs = stmt.executeQuery();
+
+            if(rs.next()){
+                return 1;
+            }
+            else{
+                return 0;
+            }
+
+        } catch (SQLException e) {
+            System.out.printf(e.getSQLState());
+        }
+        return -1;
     }
 }

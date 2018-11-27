@@ -308,41 +308,44 @@ public class Client extends UnicastRemoteObject implements ClientHello{
                     case "/upload":
                         String[] musicInfo = new String[7];
                         while(true){
-                            try{
-                                musicInfo = sendMusic(rmi,reader);
-                                break;
-                            }
-                            catch (FileNotFoundException e){
-                                System.out.println("Insert valid file!");
-                                menuPrincipal(rmi,reader);
-                            }
+                            musicInfo = sendMusic(rmi,reader);
+                            break;
                         }
-                        String resp = rmi.sendMusicRMI(musicInfo,loggedUser.getId());
-                        String[] responseSpli = resp.split(";");
-                        switch (responseSpli[0]){
-                            case "type|composerNotFound":
-                                System.out.println("ERROR: Not a valid composer.");
-                                break;
-                            case "type|artistNotFound":
-                                System.out.println("ERROR: Not a valid artist.");
-                                break;
-                            case "type|songwriterNotFound":
-                                System.out.println("ERROR: Not a valid artist.");
-                                break;
-                            case"type|albumNotFound":
-                                System.out.println("ERROR: Not a valid album.");
-                                break;
-                            case"type|sendMusicComplete":
-                                System.out.println("Upload complete.");
-                                break;
-                            case "type|somethingWentWrong":
-                                System.out.println("Something went wrong.");
-                                break;
+                        if(musicInfo == null){
+
                         }
-                        break;
-                    default:
-                        if (!text.trim().equals("/logout")){
-                            System.out.println("Este comando não faz nada. Para sair escreva '/logout'");
+                        else {
+                            String resp = rmi.sendMusicRMI(musicInfo, loggedUser.getId());
+                            String[] responseSpli = resp.split(";");
+                            switch (responseSpli[0]) {
+                                case "type|duplicatedUpload":
+                                    System.out.println("ERROR: Music already uploaded by you.");
+                                    break;
+                                case "type|composerNotValid":
+                                    System.out.println("ERROR: Not a valid composer.");
+                                    break;
+                                case "type|composerNotFound":
+                                    System.out.println("ERROR: Composer not found.");
+                                    break;
+                                case "type|artistNotFound":
+                                    System.out.println("ERROR: Artist not found..");
+                                    break;
+                                case "type|songwriterNotValid":
+                                    System.out.println("ERROR: Not a valid songwriter.");
+                                    break;
+                                case "type|songwriterNotFound":
+                                    System.out.println("ERROR: Songwriter not found.");
+                                    break;
+                                case "type|albumNotFound":
+                                    System.out.println("ERROR: Album not found.");
+                                    break;
+                                case "type|sendMusicComplete":
+                                    System.out.println("Upload complete.");
+                                    break;
+                                case "type|somethingWentWrong":
+                                    System.out.println("Something went wrong.");
+                                    break;
+                            }
                         }
                 }
             }
@@ -1211,119 +1214,133 @@ public class Client extends UnicastRemoteObject implements ClientHello{
     }
 
             ////////////// UPLOAD E DOWNLOAD DE MUSICAS /////////////
-    private static String[] sendMusic(Hello rmi,Scanner reader) throws IOException, FileNotFoundException {
+    private static String[] sendMusic(Hello rmi,Scanner reader) throws IOException, NotBoundException {
         String[] musicInfo = new String[7];
-        int auxi = 0;
         ServerSocket socket = new ServerSocket(5000);
-        System.out.println("check1");
-        String[] aux = socket.getLocalSocketAddress().toString().split("/");
-        rmi.startSocket(aux[0]);
-        Socket socketAcept = socket.accept();
-        System.out.println("Write down the directory of your music: (example:'C:\\music\\example.wav').");
-        Scanner direc = new Scanner(System.in);
-        String auxx;
-        while(true){
-            auxx = direc.nextLine();
-            break;
-        }
-        musicInfo[auxi] = auxx;
-        auxi++;
-        File file = new File(auxx);
-        String[] aux1 = auxx.split("\\\\");
-        System.out.println("can it split?");
-        System.out.println(aux1[aux1.length-1]);
-        FilePermission permission = new FilePermission(auxx, "read");
-        FileInputStream fInStream= new FileInputStream(file);
-        System.out.println("too much bytes?");
-        OutputStream outStream = socketAcept.getOutputStream();
-        byte b[];
-        System.out.println("no");
-        int current =0;
-        long len = file.length();
-        while(current!=len){
-            int size = 1024;
-
-            if(len - current >= size)
-                current += size;
-            else{
-                size = (int)(len - current);
-                current = (int) len;
+        Socket socketAcept = null;
+        File file;
+        FileInputStream fInStream = null;
+        OutputStream outStream = null;
+        try {
+            int auxi = 0;
+            System.out.println("check1");
+            String[] aux = socket.getLocalSocketAddress().toString().split("/");
+            rmi.startSocket(aux[0]);
+            socketAcept = socket.accept();
+            System.out.println("Write down the directory of your music: (example:'C:\\music\\example.wav').");
+            Scanner direc = new Scanner(System.in);
+            String auxx;
+            while (true) {
+                auxx = direc.nextLine();
+                break;
             }
-            b = new byte[size];
-            System.out.println("antes de fstream");
-            fInStream.read(b, 0, size);
-            System.out.println("antes de outstream");
-            outStream.write(b);
-            System.out.println("Sending file ... "+(current*100)/len+"% complete!");
+            musicInfo[auxi] = auxx;
+            auxi++;
+            file = new File(auxx);
+            String[] aux1 = auxx.split("\\\\");
+            //System.out.println("can it split?");
+            //System.out.println(aux1[aux1.length - 1]);
+            FilePermission permission = new FilePermission(auxx, "read");
+            //System.out.println(permission);
+            fInStream = new FileInputStream(file);
+            //System.out.println("too much bytes?");
+            outStream = socketAcept.getOutputStream();
+            byte b[];
+            //System.out.println("no");
+            int current = 0;
+            long len = file.length();
+            while (current != len) {
+                int size = 1024;
 
-        }
-        System.out.println("uff");
-        fInStream.close();
-        outStream.flush();
-        outStream.close();
-        socketAcept.close();
-        socket.close();
-        musicInfo[auxi] = aux1[aux1.length-1];
-        auxi++;
-        boolean flagOK = false;
-        String composer = "";
-        while(!flagOK){
-            System.out.print("Insert composer: ");
-            composer = reader.nextLine();
-            if(!composer.trim().equals("")){
-                flagOK=true;
-            }
-        }
-        musicInfo[auxi] = composer;
-        auxi++;
-        flagOK=false;
-        String artist = "";
-        while(!flagOK){
-            System.out.print("Insert artist: ");
-            artist = reader.nextLine();
-            if(!artist.trim().equals("")){
-                flagOK=true;
-            }
-        }
-        musicInfo[auxi] = artist;
-        auxi++;
+                if (len - current >= size)
+                    current += size;
+                else {
+                    size = (int) (len - current);
+                    current = (int) len;
+                }
+                b = new byte[size];
+                //System.out.println("antes de fstream");
+                fInStream.read(b, 0, size);
+                //System.out.println("antes de outstream");
+                outStream.write(b);
+                //System.out.println("Sending file ... " + (current * 100) / len + "% complete!");
 
-        flagOK=false;
-        String songwriter = "";
-        while(!flagOK){
-            System.out.print("Insert songwriter: ");
-            songwriter = reader.nextLine();
-            if(!songwriter.trim().equals("")){
-                flagOK=true;
             }
-        }
-        musicInfo[auxi] = songwriter;
-        auxi++;
-
-        flagOK=false;
-        String duration = "";
-        while(!flagOK){
-            System.out.print("Insert duration(seconds): ");
-            duration = reader.nextLine();
-            if(!duration.trim().equals("")){
-                flagOK=true;
+            System.out.println("File uploaded.");
+            fInStream.close();
+            outStream.flush();
+            outStream.close();
+            socketAcept.close();
+            socket.close();
+            musicInfo[auxi] = aux1[aux1.length - 1];
+            auxi++;
+            boolean flagOK = false;
+            String composer = "";
+            while (!flagOK) {
+                System.out.print("Insert composer: ");
+                composer = reader.nextLine();
+                if (!composer.trim().equals("")) {
+                    flagOK = true;
+                }
             }
-        }
-        musicInfo[auxi] = duration;
-        auxi++;
-
-        flagOK=false;
-        String album = "";
-        while(!flagOK){
-            System.out.print("Insert album: ");
-            album = reader.nextLine();
-            if(!album.trim().equals("")){
-                flagOK=true;
+            musicInfo[auxi] = composer;
+            auxi++;
+            flagOK = false;
+            String artist = "";
+            while (!flagOK) {
+                System.out.print("Insert artist: ");
+                artist = reader.nextLine();
+                if (!artist.trim().equals("")) {
+                    flagOK = true;
+                }
             }
-        }
-        musicInfo[auxi] = album;
-        auxi++;
+            musicInfo[auxi] = artist;
+            auxi++;
 
+            flagOK = false;
+            String songwriter = "";
+            while (!flagOK) {
+                System.out.print("Insert songwriter: ");
+                songwriter = reader.nextLine();
+                if (!songwriter.trim().equals("")) {
+                    flagOK = true;
+                }
+            }
+            musicInfo[auxi] = songwriter;
+            auxi++;
+
+            flagOK = false;
+            String duration = "";
+            while (!flagOK) {
+                System.out.print("Insert duration(seconds): ");
+                duration = reader.nextLine();
+                if (!duration.trim().equals("")) {
+                    flagOK = true;
+                }
+            }
+            musicInfo[auxi] = duration;
+            auxi++;
+
+            flagOK = false;
+            String album = "";
+            while (!flagOK) {
+                System.out.print("Insert album: ");
+                album = reader.nextLine();
+                if (!album.trim().equals("")) {
+                    flagOK = true;
+                }
+            }
+            musicInfo[auxi] = album;
+            auxi++;
+        }catch (RemoteException e) {
+            e.printStackTrace();
+        } catch (FileNotFoundException e) {
+            socket.close();
+            System.out.println("Insert valid file!");
+            return null;
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         return musicInfo;
     }
 
