@@ -810,9 +810,63 @@ public class Client extends UnicastRemoteObject implements ClientHello{
             case "/concert":
                 editConcert(rmi,reader);
                 break;
+            case "/playlist":
+                editPlaylist(rmi,reader);
             default:
                 //Something;
         }
+    }
+
+    private static void editPlaylist(Hello rmi, Scanner reader) throws RemoteException {
+        System.out.println("What do you want to do: Change name, Add Music, Remove Music");
+        String reposta = reader.nextLine();
+        switch (reposta){
+            case "/name":
+                changePlaylistName(rmi,reader);
+                break;
+        }
+    }
+
+    private static void changePlaylistName(Hello rmi, Scanner reader) throws RemoteException {
+            System.out.println("Which playlist do you wanna change? ");
+            boolean flagOK = false;
+            String playlist = "";
+            String nameAfter="";
+            while(!flagOK) {
+                playlist = reader.nextLine();
+                if (!playlist.trim().equals("")){
+                    flagOK = true;
+                }
+                else{
+                    System.out.println("Which playlist do you wanna change? ");
+                }
+            }
+            System.out.println("To what name you wanna change it? ");
+            flagOK = false;
+            while(!flagOK) {
+                nameAfter = reader.nextLine();
+                if (!nameAfter.trim().equals("")){
+                    flagOK = true;
+                }
+                else{
+                    System.out.println("To what name you wanna change it? ");
+                }
+            }
+            String response = rmi.editPlaylistName(playlist,nameAfter);
+            switch(response.trim()){
+                case "type|nameChanged":
+                    System.out.println("Name changed.");
+                    break;
+                case "type|playlistDatabaseEmpty":
+                    System.out.println("No playlists on the database.");
+                    break;
+                case "type|playlistNotFound":
+                    System.out.println("Playlist not found.");
+                    break;
+                default:
+                    System.out.println("Something went wrong.");
+                    break;
+            }
     }
 
     private static void editConcert(Hello rmi, Scanner reader) throws RemoteException {

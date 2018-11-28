@@ -560,6 +560,30 @@ public class Server implements Hello {
         return null;
     }
 
+    public String editPlaylistName(String playlist, String nameAfter) throws RemoteException {
+        MulticastSocket socket = null;
+        //envia para o multicast
+        try {
+            socket = new MulticastSocket();
+            InetAddress group = InetAddress.getByName(MULTICAST_ADDRESS);
+            socket.joinGroup(group);
+            String aux = "type|editPlaylistName;NameBefore|"+playlist+";NameAfter|"+nameAfter; //protocol
+            byte[] buffer = aux.getBytes();
+            DatagramPacket packet = new DatagramPacket(buffer, buffer.length, group, PORT);
+            socket.send(packet);
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            socket.close();
+        }
+
+        //recebe do multicast
+        String msg = receiveMulticast();
+        if (msg != null) return msg;
+
+        return null;
+    }
+
     ///////////// CRIAR!! /////////////
     public String createSongwriter(String name, String description){
         MulticastSocket socket = null;
