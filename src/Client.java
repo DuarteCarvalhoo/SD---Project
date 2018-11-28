@@ -1195,7 +1195,6 @@ public class Client extends UnicastRemoteObject implements ClientHello{
             isComposer = true;
         }
         if(responseSplit[2].equals("yes")){
-            createBand(rmi,reader);
             isComposer = false;
             isSongwriter = false;
         }
@@ -1258,10 +1257,10 @@ public class Client extends UnicastRemoteObject implements ClientHello{
         String response = rmi.createMusician(data[0], data[1], isSongwriter, isComposer, isBand);
         switch (response.trim()){
             case "type|musicianExists":
-                System.out.println("Musician already exists.");
+                System.out.println("Artist already exists.");
                 break;
             case "type|createMusicianComplete":
-                System.out.println("SUCCESS: Musician created successfully.");
+                System.out.println("SUCCESS: Artist created successfully.");
                 break;
             default:
                 //something;
