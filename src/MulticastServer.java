@@ -71,8 +71,6 @@ public class MulticastServer extends Thread implements Serializable {
                         catch (org.postgresql.util.PSQLException e){
                             System.out.println(e);
                         }
-                        //funçao passa como argumentos o user e pw
-                        //funçao pra confirmar se o user existe, se a pw ta certa e por fim enviar a resposta
                         break;
                     case "type|register":
                         connection = initConnection();
@@ -1181,40 +1179,6 @@ public class MulticastServer extends Thread implements Serializable {
                             sendMsg("type|somethingWentWrong");
                         }
                         break;
-                    /*case "type|deleteArtist":
-                        ArrayList<Integer> AlbumIds = new ArrayList<>();
-                        ArrayList<Music> MusicIds = new ArrayList<>();
-                        ArrayList<Integer> ConcertIds = new ArrayList<>();
-                        connection = initConnection();
-                        connection.setAutoCommit(false);
-                        String[] naa = aux[1].split("\\|");
-                        int ArtistId = getArtistIdByName(naa[1]);
-                        AlbumIds = getArtistAlbumsIdByArtistId(ArtistId);
-                        PreparedStatement stmtDelete;
-
-                        for(int i : AlbumIds) {
-                            stmtDelete = connection.prepareStatement("DELETE FROM album WHERE id = ?;");
-                            stmtDelete.setInt(1, i);
-                            stmtDelete.executeUpdate();
-                            MusicIds = getMusicsByAlbumId(i);
-                        }
-
-                        for(Music m : MusicIds){
-                            stmtDelete = connection.prepareStatement("DELETE FROM music WHERE title = ?;");
-                            stmtDelete.setString(1, m.getTitle());
-                            stmtDelete.executeUpdate();
-                        }
-
-                        stmtDelete = connection.prepareStatement("DELETE FROM artista WHERE name = ?;");
-                        stmtDelete.setString(1,naa[1]);
-                        stmtDelete.executeUpdate();
-
-                        connection.commit();
-                        connection.close();
-                        sendMsg("type|deleteArtistComplete");
-                        System.out.println("Apagou");
-
-                        break;*/
                     case "type|showMusic":
                         ArrayList<String> partialM  = new ArrayList<>();
                         connection = initConnection();
@@ -1510,6 +1474,7 @@ public class MulticastServer extends Thread implements Serializable {
                         String[] textParts = aux[2].split("\\|");
                         String[] albName = aux[3].split("\\|");
                         String[] userId = aux[4].split("\\|");
+                        double score = Double.parseDouble(scoreParts[1]);
 
                         if(albumDatabaseEmpty()){
                             connection.close();
@@ -1521,10 +1486,14 @@ public class MulticastServer extends Thread implements Serializable {
 
                             try{
                                 int albumId = getAlbumIdByName(albName[1]);
-                                if(albumId == 0 || albumDatabaseEmpty()){
+                                if(albumId == 0 || albumDatabaseEmpty() || (score<0 && score>10)){
                                     if(albumId==0){
                                         sendMsg("type|albumNotFound");
                                         System.out.println("Album not found.");
+                                    }
+                                    else if((score<0 && score>10)){
+                                        sendMsg("type|invalidScore");
+                                        System.out.println("Invalid score.");
                                     }
                                     else{
                                         sendMsg("type|albumDatabaseEmpty");

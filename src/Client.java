@@ -379,9 +379,30 @@ public class Client extends UnicastRemoteObject implements ClientHello{
             case "/create":
                 createPlaylist(rmi,reader);
                 break;
+            case "/delete":
+                deletePlaylist(rmi,reader);
+                break;
             default:
                 System.out.println("Inser a valid answer.");
         }
+    }
+
+    private static void deletePlaylist(Hello rmi, Scanner reader) {
+        System.out.println("Which playlist do you wanna delete? ");
+        boolean flagOK = false;
+        String playlist = "";
+        String nameAfter="";
+        while(!flagOK) {
+            playlist = reader.nextLine();
+            if (!playlist.trim().equals("")){
+                flagOK = true;
+            }
+            else{
+                System.out.println("Which playlist do you wanna delete?");
+            }
+        }
+
+
     }
 
     ////////////// MENU DE PESQUISA COM AS SUAS FUNÇÕES/////////////
@@ -798,7 +819,7 @@ public class Client extends UnicastRemoteObject implements ClientHello{
             System.out.println("You don't have permission to do this.");
         }
         else{
-            System.out.println("What do you want to do: Create, Edit, Delete?");
+            System.out.println("What do you want to do: Create, Edit?");
             String response = reader.nextLine();
             switch (response.trim()){
                 case "/create":
@@ -807,10 +828,8 @@ public class Client extends UnicastRemoteObject implements ClientHello{
                 case "/edit":
                     editMenu(rmi,reader);
                     break;
-                case "/delete":
-                    deleteMenu(rmi,reader);
-                    break;
                 default:
+                    System.out.println("Insert a valid answer.");
                     break;
             }
         }
@@ -1476,17 +1495,11 @@ public class Client extends UnicastRemoteObject implements ClientHello{
 
             ////////////// MENU DE CRIAR COM AS SUAS FUNÇÕES/////////////
     public static void createMenu(Hello rmi, Scanner reader) throws RemoteException{
-        System.out.println("What do you want to create: Artist, Album, Concert, Publisher, Playlist?");
+        System.out.println("What do you want to create: Artist, Album, Concert, Publisher?");
         String response = reader.nextLine();
         switch(response.trim()){
             case "/artist":
                 createArtist(rmi,reader);
-                break;
-            case "/songwriter":
-                createSongwriter(rmi,reader);
-                break;
-            case "/composer":
-                createComposer(rmi,reader);
                 break;
             case "/album":
                 createAlbum(rmi,reader);
@@ -1784,49 +1797,6 @@ public class Client extends UnicastRemoteObject implements ClientHello{
         }
     }
 
-            ////////////// MENU DE DELETE COM AS SUAS FUNÇÕES/////////////
-    public static void deleteMenu(Hello rmi, Scanner reader) throws RemoteException{
-        System.out.println("What do you want to delete: Artist, Music, Album");
-        String response = reader.nextLine();
-        switch(response.trim()){
-            case "/artist":
-                //deleteArtist(rmi,reader); -> not sure se será usado
-                break;
-            case "/music":
-                //createMusic();
-                break;
-            case "/album":
-                //createAlbum();
-                break;
-            default:
-                //Something;
-        }
-    }
-
-    public static void deleteArtist(Hello rmi,Scanner reader) throws RemoteException{
-        System.out.print("Insert artist name: ");
-        boolean flagK = false;
-        String name = "";
-        while (!flagK) {
-            name = reader.nextLine();
-            if (!name.trim().equals("")) {
-                flagK = true;
-            } else {
-                System.out.print("Insert artist name: ");
-            }
-        }
-        String response = rmi.deleteArtist(name);
-        switch (response.trim()){
-            case "type|artistNotFound":
-                System.out.println("Artist not found.");
-                break;
-            case "type|deleteArtistComplete":
-                System.out.println("SUCCESS: Artist deleted successfully.");
-                break;
-            default:
-                //something;
-        }
-    }
 
             ////////////// DAR PREMISSÕES /////////////
     public static void makeEditor(Hello rmi, Scanner reader) throws RemoteException{
@@ -1897,6 +1867,15 @@ public class Client extends UnicastRemoteObject implements ClientHello{
 
         String response = rmi.makeCritic(score,criticText,album,loggedUser);
         switch (response.trim()){
+            case "type|albumNotFound":
+                System.out.println("Album not found.");
+                break;
+            case "type|invalidScore":
+                System.out.println("Invalid score.");
+                break;
+            case "type|albumDatabaseEmpty":
+                System.out.println("Album database empty.");
+                break;
             case "type|criticComplete":
                 System.out.println("SUCCESS: Critic made.");
                 break;
