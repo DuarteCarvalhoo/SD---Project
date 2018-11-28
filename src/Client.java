@@ -276,7 +276,7 @@ public class Client extends UnicastRemoteObject implements ClientHello{
                         String resposta = rmi.shareMusic(music,userName,loggedUser.getId());
                         switch (resposta){
                             case "type|isAlreadyDownloadable":
-                                System.out.println("User already had access to the song.");
+                                System.out.println("User already has access to the song.");
                                 break;
                             case "type|musicShareCompleted":
                                 System.out.println("Music shared.");

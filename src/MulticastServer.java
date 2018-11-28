@@ -280,10 +280,14 @@ public class MulticastServer extends Thread implements Serializable {
                         String[] sharingUserParts = aux[3].split("\\|");
 
                         int musicId = getMusicIdByName(musicParts[1]);
-                        if(musicId==0 || getUserIdByName(shareUserParts[1]) == 0){
+                        if(musicId==0 || getUserIdByName(shareUserParts[1]) == 0 || checkHasAccess(musicParts[1],shareUserParts[1])==1){
                             if(musicId==0){
                                 sendMsg("type|invalidMusic");
                                 System.out.println("Invalid music.");
+                            }
+                            else if(checkHasAccess(musicParts[1],shareUserParts[1])==1){
+                                sendMsg("type|isAlreadyDownloadable");
+                                System.out.println("Already has access to that music.");
                             }
                             else{
                                 sendMsg("type|invalidUser");
@@ -1531,6 +1535,25 @@ public class MulticastServer extends Thread implements Serializable {
         } finally {
             socket.close();
         }
+    }
+
+    private int checkHasAccess(String musicPart, String shareUserPart) {
+        connection = initConnection();
+        try{
+            PreparedStatement stmt = connection.prepareStatement("SELECT * FROM utilizador_filearchive WHERE utilizador_id = ? AND filearchive_music_id = ?;");
+            stmt.setInt(1,getUserIdByName(shareUserPart));
+            stmt.setInt(2,getMusicIdByName(musicPart));
+            ResultSet rs = stmt.executeQuery();
+            if(rs.next()){
+                return 1;
+            }
+            else{
+                return 0;
+            }
+        } catch (SQLException e) {
+            System.out.println("Something went wrong verifying if exists.");
+        }
+        return 0;
     }
 
     private int getPlaylistIdByName(String s) {
