@@ -36,6 +36,7 @@
  * maintenance of any nuclear facility.
  */
 
+import com.sun.org.apache.xpath.internal.SourceTree;
 import com.sun.org.apache.xpath.internal.operations.Bool;
 import com.sun.scenario.effect.impl.sw.sse.SSEBlend_SRC_OUTPeer;
 
@@ -206,6 +207,7 @@ public class Client extends UnicastRemoteObject implements ClientHello{
                             "Make editor\n" +
                             "Make Critic\n"+
                             "Share music\n"+
+                            "Playlists\n"+
                             "Upload\n" +
                             "Download\n\n" +
                             "Choose an option: ");
@@ -289,6 +291,9 @@ public class Client extends UnicastRemoteObject implements ClientHello{
                                 System.out.println("Something went wrong.");
                         }
                         break;
+                    case "/playlist":
+                        menuPlaylist(rmi,reader);
+                        break;
                     case "/edit":
                         if(loggedUser.isEditor()){
                             editorMenu(rmi, reader);
@@ -364,7 +369,22 @@ public class Client extends UnicastRemoteObject implements ClientHello{
         }
     }
 
-            ////////////// MENU DE PESQUISA COM AS SUAS FUNÇÕES/////////////
+    private static void menuPlaylist(Hello rmi, Scanner reader) throws RemoteException {
+        System.out.println("What do you want to do: Create or Edit?");
+        String resp = reader.nextLine();
+        switch(resp){
+            case "/edit":
+                editPlaylist(rmi,reader);
+                break;
+            case "/create":
+                createPlaylist(rmi,reader);
+                break;
+            default:
+                System.out.println("Inser a valid answer.");
+        }
+    }
+
+    ////////////// MENU DE PESQUISA COM AS SUAS FUNÇÕES/////////////
     public static void menuDePesquisa(Hello rmi, Scanner reader) throws RemoteException{
         System.out.println("What do you want to search: Artist, Music, Album?");
         boolean flagOK = false;
@@ -810,8 +830,6 @@ public class Client extends UnicastRemoteObject implements ClientHello{
             case "/concert":
                 editConcert(rmi,reader);
                 break;
-            case "/playlist":
-                editPlaylist(rmi,reader);
             default:
                 //Something;
         }
@@ -1333,9 +1351,6 @@ public class Client extends UnicastRemoteObject implements ClientHello{
                 break;
             case "/publisher":
                 createPublisher(rmi,reader);
-                break;
-            case "/playlist":
-                createPlaylist(rmi,reader);
                 break;
             default:
                 //Something;
