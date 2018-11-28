@@ -122,4 +122,10 @@ public interface Hello extends Remote {
     String addMusicPlaylist(String music, String playlist, int id) throws RemoteException;
 
     String removeMusicPlaylist(String music, String playlist, int id) throws RemoteException;
+
+    String editAlbumName(String album, String nameAfter) throws RemoteException;
+
+    String editAlbumDescription(String album, String descriptionAfter) throws RemoteException;
+
+    String editAlbumGenre(String album, String genreAfter) throws RemoteException;
 }
