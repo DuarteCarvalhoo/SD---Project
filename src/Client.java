@@ -400,8 +400,174 @@ public class Client extends UnicastRemoteObject implements ClientHello{
 
                 }
                 break;
+            case "/music":
+                System.out.println("How do you wanna search for musics: Name, Songwriter, Composer");
+                String ans = reader.nextLine();
+                switch (ans){
+                    case "/name":
+                        searchMusicName(rmi,reader);
+                        break;
+                    case "/songwriter":
+                        int i = searchMusicSongwriter(rmi,reader);
+                        if(i==1){
+                            searchMusicName(rmi,reader);
+                        }
+                        break;
+                    case "/composer":
+                        int j = searchMusicComposer(rmi,reader);
+                        if(j==1){
+                            searchMusicName(rmi,reader);
+                        }
+                        break;
+                    default:
+                        System.out.println("Insert valid answer.");
+                        break;
+                }
+                break;
             default:
                 System.out.println("Inseriu mal o comando. Por favor volte a tentar.");
+        }
+    }
+
+    private static int searchMusicSongwriter(Hello rmi, Scanner reader) throws RemoteException {
+        System.out.print("Insert songwriters's name: ");
+        boolean flagK = false;
+        String nameA = "";
+        while (!flagK) {
+            nameA = reader.nextLine();
+            if (!nameA.trim().equals("")) {
+                flagK = true;
+            } else {
+                System.out.print("Insert songwriters's name: ");
+            }
+        }
+        String re = rmi.showSongwriterMusics(nameA);
+        String[] responseSplit = re.trim().split(";");
+        switch(responseSplit[0]){
+            case "type|musicDatabaseEmpty":
+                System.out.println("No musics in the database.");
+                break;
+            case "type|songwriterNotFound":
+                System.out.println("Songwriter not found.");
+                break;
+            case "type|showSongwriterMusicsComplete":
+                String[] musicsPartss = responseSplit[1].split("\\|");
+                String[] musicsNamess = musicsPartss[1].split(",");
+                if (!musicsNamess[0].equals("No musics to show.")) {
+                    String albunsNamesFinais = "";
+                    int n = 1;
+                    for (int i=0;i<musicsNamess.length;i++) {
+                        albunsNamesFinais += n+". ";
+                        albunsNamesFinais += musicsNamess[i];
+                        albunsNamesFinais += "\n";
+                        n++;
+                    }
+                    System.out.println("\nMusics:\n"+albunsNamesFinais);
+                    return 1;
+                }
+                else{
+                    System.out.println("This songwriter has no musics.");
+                    return 0;
+                }
+            default:
+                System.out.println("Something went wrong.");
+        }
+        return 0;
+    }
+
+    private static int searchMusicComposer(Hello rmi, Scanner reader) throws RemoteException {
+        System.out.print("Insert composer's name: ");
+        boolean flagK = false;
+        String nameA = "";
+        while (!flagK) {
+            nameA = reader.nextLine();
+            if (!nameA.trim().equals("")) {
+                flagK = true;
+            } else {
+                System.out.print("Insert composer's name: ");
+            }
+        }
+        String re = rmi.showComposerMusics(nameA);
+        String[] responseSplit = re.trim().split(";");
+        switch(responseSplit[0]){
+            case "type|musicDatabaseEmpty":
+                System.out.println("No musics in the database.");
+                break;
+            case "type|composerNotFound":
+                System.out.println("Composer not found.");
+                break;
+            case "type|type|showComposerMusicsComplete":
+                String[] musicsParts = responseSplit[1].split("\\|");
+                String[] musicsNames = musicsParts[1].split(",");
+                if (!musicsNames[0].equals("No musics to show.")) {
+                    String albunsNamesFinais = "";
+                    int n = 1;
+                    for (int i=0;i<musicsNames.length;i++) {
+                        albunsNamesFinais += n+". ";
+                        albunsNamesFinais += musicsNames[i];
+                        albunsNamesFinais += "\n";
+                        n++;
+                    }
+                    System.out.println("\nMusics:\n"+albunsNamesFinais);
+                    return 1;
+                }
+                else{
+                    System.out.println("This composer has no musics.");
+                    return 0;
+                }
+            default:
+                System.out.println("Something went wrong.");
+        }
+        return 0;
+    }
+
+    private static void searchMusicName(Hello rmi, Scanner reader) throws RemoteException {
+        boolean flagOK;
+        flagOK = false;
+        String name = "";
+        System.out.println("Which music you wanna search? ");
+        while(!flagOK){
+            name = reader.nextLine();
+            if(!name.trim().equals("")){
+                flagOK=true;
+            }
+            else{
+                System.out.println("Which music you wanna show? ");
+            }
+        }
+        String response = rmi.showMusic(name);
+        String[] responseSplit = response.trim().split(";");
+        if(!(responseSplit.length>1)){
+            System.out.println("Showing music failed.");
+            return;
+        }
+
+        switch (responseSplit[0]) {
+            case "type|notPartialSearchComplete":
+                String[] nameParts = responseSplit[1].split("\\|");
+                String[] artistParts = responseSplit[2].split("\\|");
+                String[] composerParts = responseSplit[3].split("\\|");
+                String[] songwriterParts = responseSplit[4].split("\\|");
+                String[] albParts = responseSplit[5].split("\\|");
+                String[] lenParts = responseSplit[6].split("\\|");
+                System.out.println(
+                        "Name: "+ nameParts[1] +
+                        "\nArtist: " + artistParts[1]+
+                        "\nComposer: "+composerParts[1]
+                        +   "\nSongwriter: " + songwriterParts[1]
+                        +   "\nAlbum: " + albParts[1]
+                        +   "\nLength: "+ lenParts[1]
+                );
+                break;
+            case "type|partialSearchComplete":
+                String[] resultsParts = responseSplit[1].split("\\|");
+                String[] results = resultsParts[1].split(",");
+                System.out.println("Which one did you mean?\n"+printAlbuns(results));
+                searchMusicName(rmi,reader);
+                break;
+            case "type|showMusicFail":
+                System.out.println("Music not shown.");
+                break;
         }
     }
 
@@ -1306,7 +1472,7 @@ public class Client extends UnicastRemoteObject implements ClientHello{
         String response = reader.nextLine();
         switch(response.trim()){
             case "/artist":
-                deleteArtist(rmi,reader);
+                //deleteArtist(rmi,reader); -> not sure se será usado
                 break;
             case "/music":
                 //createMusic();

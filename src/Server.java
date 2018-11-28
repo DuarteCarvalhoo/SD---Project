@@ -491,6 +491,75 @@ public class Server implements Hello {
         return null;
     }
 
+    public String showMusic(String name) throws RemoteException {
+        MulticastSocket socket = null;
+        //envia para o multicast
+        try {
+            socket = new MulticastSocket();
+            InetAddress group = InetAddress.getByName(MULTICAST_ADDRESS);
+            socket.joinGroup(group);
+            String aux = "type|showMusic;Name|"+name; //protocol
+            byte[] buffer = aux.getBytes();
+            DatagramPacket packet = new DatagramPacket(buffer, buffer.length, group, PORT);
+            socket.send(packet);
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            socket.close();
+        }
+
+        //recebe do multicast
+        String msg = receiveMulticast();
+        if (msg != null) return msg;
+        return null;
+    }
+
+    public String showSongwriterMusics(String nameA) throws RemoteException {
+        MulticastSocket socket = null;
+        //envia para o multicast
+        try {
+            socket = new MulticastSocket();
+            InetAddress group = InetAddress.getByName(MULTICAST_ADDRESS);
+            socket.joinGroup(group);
+            String aux = "type|showSongwriterMusics;Name|"+nameA; //protocol
+            byte[] buffer = aux.getBytes();
+            DatagramPacket packet = new DatagramPacket(buffer, buffer.length, group, PORT);
+            socket.send(packet);
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            socket.close();
+        }
+
+        //recebe do multicast
+        String msg = receiveMulticast();
+        if (msg != null) return msg;
+        return null;
+    }
+
+    public String showComposerMusics(String nameA) throws RemoteException {
+        MulticastSocket socket = null;
+        //envia para o multicast
+        try {
+            socket = new MulticastSocket();
+            InetAddress group = InetAddress.getByName(MULTICAST_ADDRESS);
+            socket.joinGroup(group);
+            String aux = "type|showComposerMusics;Name|"+nameA; //protocol
+            byte[] buffer = aux.getBytes();
+            DatagramPacket packet = new DatagramPacket(buffer, buffer.length, group, PORT);
+            socket.send(packet);
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            socket.close();
+        }
+
+        //recebe do multicast
+        String msg = receiveMulticast();
+        if (msg != null) return msg;
+        return null;
+    }
+
     ///////////// CRIAR!! /////////////
     public String createSongwriter(String name, String description){
         MulticastSocket socket = null;

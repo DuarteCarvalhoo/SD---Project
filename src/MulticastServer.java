@@ -988,6 +988,173 @@ public class MulticastServer extends Thread implements Serializable {
                         System.out.println("Apagou");
 
                         break;*/
+                    case "type|showMusic":
+                        ArrayList<String> partialM  = new ArrayList<>();
+                        connection = initConnection();
+                        String[] nameMusic = aux[1].split("\\|");
+                        String nM = nameMusic[1];
+                        int mId = getMusicIdByName(nM);
+                        int partialMu = 0;
+                        String title = "";
+                        int lengthM = 0;
+
+                        PreparedStatement stmtMusic = null;
+                        try{
+                            if(musicDataBaseEmpty()){
+                                connection.close();
+                                sendMsg("type|musicDatabaseEmpty");
+                                System.out.println("Musics database empty.");
+                            }
+                            else{
+                                connection.setAutoCommit(false);
+                                System.out.println("Opened database successfully");
+                                String partialSearch = "%"+nM+"%";
+                                stmtMusic = connection.prepareStatement("SELECT * FROM music WHERE title LIKE ?");
+                                stmtMusic.setString(1,partialSearch);
+                                ResultSet rs = stmtMusic.executeQuery();
+                                while (rs.next()) {
+                                    mId = rs.getInt("id");
+                                    title = rs.getString("title");
+                                    lengthM = rs.getInt("length");
+                                    if(title.equals(nM)){
+                                        partialMu = 1;
+                                    }
+                                    else{
+                                        partialM.add(title);
+                                    }
+                                }
+                                System.out.println(partialMu);
+                                if(partialMu == 0){
+                                    if(partialM.isEmpty()){
+                                        sendMsg("type|noMatchesFound");
+                                    }
+                                    else{
+                                        sendMsg("type|partialSearchComplete;Found|"+printAlbuns(partialM));
+                                        System.out.println("Partial search returned.");
+                                    }
+                                }
+                                else{
+                                    String composer = getComposerByMusicId(mId);
+                                    String songwriter = getSongwriterByMusicId(mId);
+                                    String album = getAlbumByMusicId(mId);
+                                    String artista = getArtistNameByMusicId(mId);
+
+                                    connection.close();
+                                    System.out.println("Operation done successfully");
+                                    sendMsg("type|notPartialSearchComplete;Name|"+title+";Artist|"+artista+";Composer|"+composer+";Songwriter|"+songwriter+";Album|"+album+";Length|"+lengthM);
+
+                                }
+                            }
+                        }catch (org.postgresql.util.PSQLException e){
+                            sendMsg("type|somethingWentWrong");
+                            System.out.println(e.getMessage());
+                        }
+                        break;
+                    case "type|showComposerMusics":
+                        connection = initConnection();
+                        String[] composerName = aux[1].split("\\|");
+                        ArrayList<Integer> music_idss = new ArrayList<>();
+                        ArrayList<String> music_namess = new ArrayList<>();
+                        String nC = composerName[1];
+                        try{
+                            if(musicDataBaseEmpty() || checkArtistExists(nC)!=1){
+                                if(musicDataBaseEmpty()){
+                                    connection.close();
+                                    sendMsg("type|musicDatabaseEmpty");
+                                    System.out.println("Musics database empty.");
+                                }
+                                else if(checkArtistExists(nC)==0){
+                                    connection.close();
+                                    sendMsg("type|composerNotFound");
+                                    System.out.println("Composer not found.");
+                                }
+                                else{
+                                    connection.close();
+                                    sendMsg("type|somethingWentWrong");
+                                    System.out.println("Something went wrong.");
+                                }
+                            }
+                            else{
+                                PreparedStatement stmtShowArtistAlbum = connection.prepareStatement("SELECT * FROM composer_music WHERE artista_id = ?;");
+                                stmtShowArtistAlbum.setInt(1,getArtistIdByName(nC));
+
+                                ResultSet res = stmtShowArtistAlbum.executeQuery();
+                                while(res.next()){
+                                    music_idss.add(res.getInt("music_id"));
+                                }
+
+                                for(Integer i : music_idss){
+                                    stmtShowArtistAlbum = connection.prepareStatement("SELECT * FROM music WHERE id = ?;");
+                                    stmtShowArtistAlbum.setInt(1, i);
+                                    res = stmtShowArtistAlbum.executeQuery();
+
+                                    while(res.next()){
+                                        music_namess.add(res.getString("title"));
+                                    }
+                                }
+
+                                connection.close();
+                                sendMsg("type|showComposerMusicsComplete;Albums|"+printAlbuns(music_namess));
+                            }
+                        }
+                        catch (org.postgresql.util.PSQLException e){
+                            sendMsg("type|somethingWentWrong");
+                            System.out.println(e.getMessage());
+                        }
+                        break;
+                    case "type|showSongwriterMusics":
+                        connection = initConnection();
+                        String[] songName = aux[1].split("\\|");
+                        ArrayList<Integer> music_ids = new ArrayList<>();
+                        ArrayList<String> music_names = new ArrayList<>();
+                        String nS = songName[1];
+                        try{
+                            if(musicDataBaseEmpty() || checkArtistExists(nS)!=1){
+                                if(musicDataBaseEmpty()){
+                                    connection.close();
+                                    sendMsg("type|musicDatabaseEmpty");
+                                    System.out.println("Musics database empty.");
+                                }
+                                else if(checkArtistExists(nS)==0){
+                                    connection.close();
+                                    sendMsg("type|songwriterNotFound");
+                                    System.out.println("Songwriter not found.");
+                                }
+                                else{
+                                    connection.close();
+                                    sendMsg("type|somethingWentWrong");
+                                    System.out.println("Something went wrong.");
+                                }
+                            }
+                            else{
+                                PreparedStatement stmtShowArtistAlbum = connection.prepareStatement("SELECT * FROM music_songwriter WHERE artista_id = ?;");
+                                stmtShowArtistAlbum.setInt(1,getArtistIdByName(nS));
+
+                                ResultSet res = stmtShowArtistAlbum.executeQuery();
+                                while(res.next()){
+                                    music_ids.add(res.getInt("music_id"));
+                                }
+
+                                for(Integer i : music_ids){
+                                    stmtShowArtistAlbum = connection.prepareStatement("SELECT * FROM music WHERE id = ?;");
+                                    stmtShowArtistAlbum.setInt(1, i);
+                                    res = stmtShowArtistAlbum.executeQuery();
+
+                                    while(res.next()){
+                                        music_names.add(res.getString("title"));
+                                    }
+                                }
+
+                                connection.close();
+                                sendMsg("type|showSongwriterMusicsComplete;Albums|"+printAlbuns(music_names));
+                            }
+                        }
+                        catch (org.postgresql.util.PSQLException e){
+                            sendMsg("type|somethingWentWrong");
+                            System.out.println(e.getMessage());
+                        }
+
+                        break;
                     case "type|showArtist":
                         connection = initConnection();
                         String[] nameArtist = aux[1].split("\\|");
@@ -1251,6 +1418,96 @@ public class MulticastServer extends Thread implements Serializable {
         }
     }
 
+    private String getArtistNameByMusicId(int mId) {
+        try{
+            connection.setAutoCommit(false);
+            PreparedStatement stmt = connection.prepareStatement("SELECT * FROM artista_music WHERE music_id = ?;");
+            stmt.setInt(1,mId);
+            ResultSet rs = stmt.executeQuery();
+
+            int artistId = 0;
+            while(rs.next()){
+                artistId = rs.getInt("artista_id");
+            }
+            return getArtistNameById(artistId);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return "";
+    }
+
+    private String getAlbumByMusicId(int mId) {
+        try{
+            connection.setAutoCommit(false);
+            PreparedStatement stmt = connection.prepareStatement("SELECT * FROM album_music WHERE music_id = ?;");
+            stmt.setInt(1,mId);
+            ResultSet rs = stmt.executeQuery();
+
+            int albumId = 0;
+            while(rs.next()){
+                albumId = rs.getInt("album_id");
+            }
+            return getAlbumNameById(albumId);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return "";
+    }
+
+    private String getAlbumNameById(int albumId) {
+        try{
+            connection.setAutoCommit(false);
+            PreparedStatement stmt = connection.prepareStatement("SELECT * FROM album WHERE id = ?;");
+            stmt.setInt(1,albumId);
+            ResultSet rs = stmt.executeQuery();
+
+            String albumName = "";
+            while(rs.next()){
+                albumName = rs.getString("name");
+            }
+            return albumName;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return "";
+    }
+
+    private String getSongwriterByMusicId(int mId) {
+        try{
+            connection.setAutoCommit(false);
+            PreparedStatement stmt = connection.prepareStatement("SELECT * FROM music_songwriter WHERE music_id = ?;");
+            stmt.setInt(1,mId);
+            ResultSet rs = stmt.executeQuery();
+
+            int artistId = 0;
+            while(rs.next()){
+                artistId = rs.getInt("artista_id");
+            }
+            return getArtistNameById(artistId);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return "";
+    }
+
+    private String getComposerByMusicId(int mId) {
+        try{
+            connection.setAutoCommit(false);
+            PreparedStatement stmt = connection.prepareStatement("SELECT * FROM composer_music WHERE music_id = ?;");
+            stmt.setInt(1,mId);
+            ResultSet rs = stmt.executeQuery();
+
+            int artistId = 0;
+            while(rs.next()){
+                artistId = rs.getInt("artista_id");
+            }
+            return getArtistNameById(artistId);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return "";
+    }
+
     private ArrayList<Integer> getArtistAlbumsIdByArtistId(int id1) {
         ArrayList<Integer> albIds = new ArrayList<>();
         try{
@@ -1286,6 +1543,20 @@ public class MulticastServer extends Thread implements Serializable {
         try{
             Statement stmt = connection.createStatement();
             ResultSet rs = stmt.executeQuery("SELECT * FROM publisher");
+            return !rs.next();
+        }
+        catch (org.postgresql.util.PSQLException e){
+            System.out.println(e.getMessage());
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    private boolean musicDataBaseEmpty() {
+        try{
+            Statement stmt = connection.createStatement();
+            ResultSet rs = stmt.executeQuery("SELECT * FROM music");
             return !rs.next();
         }
         catch (org.postgresql.util.PSQLException e){
