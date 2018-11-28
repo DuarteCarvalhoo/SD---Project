@@ -1185,7 +1185,7 @@ public class Client extends UnicastRemoteObject implements ClientHello{
 
     public static void createArtist(Hello rmi,Scanner reader) throws RemoteException{
         boolean isComposer = false, isSongwriter = false, isBand = false;
-        System.out.println("Is the new artist a Songwriter, a Composer or a Group? (Yes-Yes-Yes means all)");
+        System.out.println("Is the new artist a Musician, Songwriter, a Composer or a Group? (Yes/no camps)");
         String response = reader.nextLine();
         String[] responseSplit = response.split("-");
         if(responseSplit[0].equals("yes")){
