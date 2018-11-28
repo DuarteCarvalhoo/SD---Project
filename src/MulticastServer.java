@@ -346,6 +346,114 @@ public class MulticastServer extends Thread implements Serializable {
                         }
 
                         break;
+                    case "type|editAlbumName":
+                        connection = initConnection();
+                        connection.setAutoCommit(false);
+                        String[] ANameB = aux[1].split("\\|");
+                        String[] ANameA = aux[2].split("\\|");
+
+                        try{
+                            if(albumDatabaseEmpty() || getAlbumIdByName(ANameB[1])==0){
+                                if(albumDatabaseEmpty()){
+                                    connection.close();
+                                    sendMsg("type|albumDatabaseEmpty");
+                                    System.out.println("Album database empty.");
+                                }
+                                else{
+                                    connection.close();
+                                    sendMsg("type|albumNotFound");
+                                    System.out.println("Album not found.");
+                                }
+                            }
+                            else{
+                                PreparedStatement stmtEditPub = connection.prepareStatement("UPDATE album SET name = ? WHERE name = ?;");
+                                stmtEditPub.setString(1,ANameA[1]);
+                                stmtEditPub.setString(2,ANameB[1]);
+                                stmtEditPub.executeUpdate();
+
+                                connection.commit();
+                                connection.close();
+
+                                sendMsg("type|nameChanged");
+                                System.out.println("Name changed.");
+                            }
+                        }catch(org.postgresql.util.PSQLException e){
+                            System.out.println("Something went wrong.");
+                            sendMsg("type|somethingWentWrong");
+                        }
+                        break;
+                    case "type|editAlbumDescription":
+                        connection = initConnection();
+                        connection.setAutoCommit(false);
+                        String[] ANB = aux[1].split("\\|");
+                        String[] ADescripA = aux[2].split("\\|");
+
+                        try{
+                            if(albumDatabaseEmpty() || getAlbumIdByName(ANB[1])==0){
+                                if(albumDatabaseEmpty()){
+                                    connection.close();
+                                    sendMsg("type|albumDatabaseEmpty");
+                                    System.out.println("Album database empty.");
+                                }
+                                else{
+                                    connection.close();
+                                    sendMsg("type|albumNotFound");
+                                    System.out.println("Album not found.");
+                                }
+                            }
+                            else{
+                                PreparedStatement stmtEditAlb = connection.prepareStatement("UPDATE album SET description = ? WHERE name = ?;");
+                                stmtEditAlb.setString(2,ANB[1]);
+                                stmtEditAlb.setString(1,ADescripA[1]);
+                                stmtEditAlb.executeUpdate();
+
+                                connection.commit();
+                                connection.close();
+
+                                sendMsg("type|descriptionChanged");
+                                System.out.println("Description changed.");
+                            }
+                        }catch(org.postgresql.util.PSQLException e){
+                            System.out.println("Something went wrong.");
+                            sendMsg("type|somethingWentWrong");
+                        }
+                        break;
+                    case "type|editAlbumGenre":
+                        connection = initConnection();
+                        connection.setAutoCommit(false);
+                        String[] ANaB = aux[1].split("\\|");
+                        String[] AGenreA = aux[2].split("\\|");
+
+                        try{
+                            if(albumDatabaseEmpty() || getAlbumIdByName(ANaB[1])==0){
+                                if(albumDatabaseEmpty()){
+                                    connection.close();
+                                    sendMsg("type|albumDatabaseEmpty");
+                                    System.out.println("Album database empty.");
+                                }
+                                else{
+                                    connection.close();
+                                    sendMsg("type|albumNotFound");
+                                    System.out.println("Album not found.");
+                                }
+                            }
+                            else{
+                                PreparedStatement stmtEditPub = connection.prepareStatement("UPDATE album SET genre = ? WHERE name = ?;");
+                                stmtEditPub.setString(2,ANaB[1]);
+                                stmtEditPub.setString(1,AGenreA[1]);
+                                stmtEditPub.executeUpdate();
+
+                                connection.commit();
+                                connection.close();
+
+                                sendMsg("type|genreChanged");
+                                System.out.println("Genre changed.");
+                            }
+                        }catch(org.postgresql.util.PSQLException e){
+                            System.out.println("Something went wrong.");
+                            sendMsg("type|somethingWentWrong");
+                        }
+                        break;
                     case "type|getMusicsList":
                         connection = initConnection();
                         String[] userParts = aux[1].split("\\|");

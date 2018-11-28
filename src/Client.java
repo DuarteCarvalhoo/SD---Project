@@ -818,7 +818,7 @@ public class Client extends UnicastRemoteObject implements ClientHello{
 
             ////////////// MENU DE EDITAR COM AS SUAS FUNÇÕES/////////////
     public static void editMenu(Hello rmi, Scanner reader) throws RemoteException{
-        System.out.println("What do you want to edit: Artist, Album, Concert, Playlist, Publisher?");
+        System.out.println("What do you want to edit: Artist, Album, Concert, Publisher?");
         String response = reader.nextLine();
         switch(response.trim()){
             case "/artist":
@@ -830,8 +830,153 @@ public class Client extends UnicastRemoteObject implements ClientHello{
             case "/concert":
                 editConcert(rmi,reader);
                 break;
+            case "/album":
+                editAlbum(rmi,reader);
+                break;
             default:
                 //Something;
+        }
+    }
+
+    private static void editAlbum(Hello rmi, Scanner reader) throws RemoteException {
+        System.out.println("What do you want to change: Name, Description, Genre");
+        String reposta = reader.nextLine();
+        switch (reposta){
+            case "/name":
+                changeAlbumName(rmi,reader);
+                break;
+            case "/description":
+                changeAlbumDescription(rmi,reader);
+                break;
+            case "/genre":
+                changeAlbumGenre(rmi,reader);
+                break;
+        }
+    }
+
+    private static void changeAlbumGenre(Hello rmi, Scanner reader) throws RemoteException {
+        System.out.println("Which album do you wanna change? ");
+        boolean flagOK = false;
+        String album = "";
+        String genreAfter="";
+        while(!flagOK) {
+            album = reader.nextLine();
+            if (!album.trim().equals("")){
+                flagOK = true;
+            }
+            else{
+                System.out.println("Which album do you wanna change? ");
+            }
+        }
+        System.out.println("To what genre you wanna change it? ");
+        flagOK = false;
+        while(!flagOK) {
+            genreAfter = reader.nextLine();
+            if (!genreAfter.trim().equals("")){
+                flagOK = true;
+            }
+            else{
+                System.out.println("To what description you wanna change it? ");
+            }
+        }
+        String response = rmi.editAlbumGenre(album,genreAfter);
+        switch(response.trim()){
+            case "type|genreChanged":
+                System.out.println("Genre changed.");
+                break;
+            case "type|albumDatabaseEmpty":
+                System.out.println("No albums on the database.");
+                break;
+            case "type|albumNotFound":
+                System.out.println("Album not found.");
+                break;
+            default:
+                System.out.println("Something went wrong.");
+                break;
+        }
+    }
+
+    private static void changeAlbumDescription(Hello rmi, Scanner reader) throws RemoteException {
+        System.out.println("Which album do you wanna change? ");
+        boolean flagOK = false;
+        String album = "";
+        String descriptionAfter="";
+        while(!flagOK) {
+            album = reader.nextLine();
+            if (!album.trim().equals("")){
+                flagOK = true;
+            }
+            else{
+                System.out.println("Which album do you wanna change? ");
+            }
+        }
+        System.out.println("To what description you wanna change it? ");
+        flagOK = false;
+        while(!flagOK) {
+            descriptionAfter = reader.nextLine();
+            if (!descriptionAfter.trim().equals("")){
+                flagOK = true;
+            }
+            else{
+                System.out.println("To what description you wanna change it? ");
+            }
+        }
+        String response = rmi.editAlbumDescription(album,descriptionAfter);
+        switch(response.trim()){
+            case "type|descriptionChanged":
+                System.out.println("Description changed.");
+                break;
+            case "type|albumDatabaseEmpty":
+                System.out.println("No albums on the database.");
+                break;
+            case "type|albumNotFound":
+                System.out.println("Album not found.");
+                break;
+            default:
+                System.out.println("Something went wrong.");
+                break;
+        }
+    }
+
+    private static void changeAlbumName(Hello rmi, Scanner reader) throws RemoteException {
+        System.out.println("Which album do you wanna change? ");
+        boolean flagOK = false;
+        String album = "";
+        String nameAfter="";
+        while(!flagOK) {
+            album = reader.nextLine();
+            if (!album.trim().equals("")){
+                flagOK = true;
+            }
+            else{
+                System.out.println("Which album do you wanna change? ");
+            }
+        }
+        System.out.println("To what name you wanna change it? ");
+        flagOK = false;
+        while(!flagOK) {
+            nameAfter = reader.nextLine();
+            if (!nameAfter.trim().equals("")){
+                flagOK = true;
+            }
+            else{
+                System.out.println("To what name you wanna change it? ");
+            }
+        }
+        String response = rmi.editAlbumName(album,nameAfter);
+        switch(response.trim()){
+            case "type|nameChanged":
+                System.out.println("Name changed.");
+                break;
+            case "type|albumDatabaseEmpty":
+                System.out.println("No albums on the database.");
+                break;
+            case "type|albumNotFound":
+                System.out.println("Album not found.");
+                break;
+            default:
+                System.out.println("Something went wrong.");
+                break;
         }
     }
 
