@@ -95,22 +95,6 @@ public class Server implements Hello {
         }
     }
 
-    /*public void readOnlineUsers() {
-        System.out.println("Reading.");
-        ArrayList<User> users = new ArrayList<>();
-        try {
-            ObjectInputStream objectIn = new ObjectInputStream(new BufferedInputStream(new FileInputStream("data.bin")));
-            this.userOnlines = (ArrayList) objectIn.readObject();
-            objectIn.close();
-            System.out.println("Read file successfully.");
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (ClassNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-
-        }
-    }*/
 
     public static String readIPFile() {
         String line = null;
