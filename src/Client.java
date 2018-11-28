@@ -828,6 +828,52 @@ public class Client extends UnicastRemoteObject implements ClientHello{
                 playlistAdd(rmi,reader);
                 break;
             case "/removemusic":
+                playlistMusicRemove(rmi,reader);
+                break;
+        }
+    }
+
+    private static void playlistMusicRemove(Hello rmi, Scanner reader) throws RemoteException {
+        ArrayList<Music> musicsList = new ArrayList<>();
+        String music ="";
+        String playlist="";
+        boolean flagOK = false;
+        System.out.println("From which playlist you wanna remove a music?");
+        while(!flagOK){
+            playlist = reader.nextLine();
+            if(!playlist.trim().equals("")){
+                flagOK=true;
+            }
+            else{
+                System.out.println("From which playlist you wanna remove a music?");
+            }
+        }
+
+
+        flagOK = false;
+        System.out.println("Which music do you wanna remove?");
+        while(!flagOK){
+            music = reader.nextLine();
+            if(!music.trim().equals("")){
+                flagOK=true;
+            }
+            else{
+                System.out.println("Which music do you wanna remove?");
+            }
+        }
+        String resposta = rmi.removeMusicPlaylist(music,playlist,loggedUser.getId());
+        switch (resposta){
+            case "type|removeMusicCompleted":
+                System.out.println("Music removed.");
+                break;
+            case "type|invalidMusic":
+                System.out.println("Insert a valid music.");
+                break;
+            case "type|invalidPlaylist":
+                System.out.println("Insert a valid playlist.");
+                break;
+            default:
+                System.out.println("Something went wrong.");
                 break;
         }
     }
@@ -872,7 +918,7 @@ public class Client extends UnicastRemoteObject implements ClientHello{
         String resposta = rmi.addMusicPlaylist(music,playlist,loggedUser.getId());
         switch (resposta){
             case "type|musicAddCompleted":
-                System.out.println("Music shared.");
+                System.out.println("Music added.");
                 break;
             case "type|invalidMusic":
                 System.out.println("Insert a valid music.");

@@ -306,6 +306,42 @@ public class MulticastServer extends Thread implements Serializable {
                             sendMsg("type|musicShareCompleted");
                         }
                         break;
+                    case "type|removeMusicsPlaylist":
+                        connection = initConnection();
+                        String[] nP = aux[1].split("\\|");
+                        String[] nomeMusica = aux[2].split("\\|");
+
+                        try{
+                            if(playlistDataBaseEmpty() || getPlaylistIdByName(nP[1])==0){
+                                if(playlistDataBaseEmpty()){
+                                    connection.close();
+                                    sendMsg("type|playlistDatabaseEmpty");
+                                    System.out.println("Playlist database empty.");
+                                }
+                                else{
+                                    connection.close();
+                                    sendMsg("type|playlistNotFound");
+                                    System.out.println("Playlist not found.");
+                                }
+                            }
+                            else{
+                                PreparedStatement stmtRemoveMusic = connection.prepareStatement("DELETE FROM playlist_music WHERE music_id = ? AND playlist_id=?;");
+                                stmtRemoveMusic.setInt(1,getMusicIdByName(nomeMusica[1]));
+                                stmtRemoveMusic.setInt(2,getPlaylistIdByName(nP[1]));
+                                stmtRemoveMusic.executeUpdate();
+
+                                connection.commit();
+                                connection.close();
+                                sendMsg("type|removeMusicCompleted");
+                                System.out.println("Music removed.");
+                            }
+
+                        }catch (org.postgresql.util.PSQLException e) {
+                            sendMsg("type|somethingWentWrong");
+                            System.out.println("ERRO: Something went wrong");
+                        }
+
+                        break;
                     case "type|getMusicsList":
                         connection = initConnection();
                         String[] userParts = aux[1].split("\\|");
