@@ -2195,6 +2195,7 @@ public class MulticastServer extends Thread implements Serializable {
 
         return finalString;
     }
+
     private double calculateScore(ArrayList<Critic> criticsList) {
         double score=0;
         for(Critic c : criticsList){
@@ -2546,6 +2547,7 @@ public class MulticastServer extends Thread implements Serializable {
         socket.send(packet);
         socket.close();
     }
+
     ////////////// FUNÇOES AUXILIAR /////////////
     private boolean userDatabaseEmpty() throws SQLException {
         connection = initConnection();
