@@ -1057,10 +1057,22 @@ public class MulticastServer extends Thread implements Serializable {
                         ArrayList<String> music_namess = new ArrayList<>();
                         String nC = composerName[1];
                         try{
-                            if(musicDataBaseEmpty()){
-                                connection.close();
-                                sendMsg("type|musicDatabaseEmpty");
-                                System.out.println("Musics database empty.");
+                            if(musicDataBaseEmpty() || checkArtistExists(nC)!=1){
+                                if(musicDataBaseEmpty()){
+                                    connection.close();
+                                    sendMsg("type|musicDatabaseEmpty");
+                                    System.out.println("Musics database empty.");
+                                }
+                                else if(checkArtistExists(nC)==0){
+                                    connection.close();
+                                    sendMsg("type|composerNotFound");
+                                    System.out.println("Composer not found.");
+                                }
+                                else{
+                                    connection.close();
+                                    sendMsg("type|somethingWentWrong");
+                                    System.out.println("Something went wrong.");
+                                }
                             }
                             else{
                                 PreparedStatement stmtShowArtistAlbum = connection.prepareStatement("SELECT * FROM composer_music WHERE artista_id = ?;");
@@ -1082,7 +1094,7 @@ public class MulticastServer extends Thread implements Serializable {
                                 }
 
                                 connection.close();
-                                sendMsg("type|showSongwriterMusicsComplete;Albums|"+printAlbuns(music_namess));
+                                sendMsg("type|showComposerMusicsComplete;Albums|"+printAlbuns(music_namess));
                             }
                         }
                         catch (org.postgresql.util.PSQLException e){
@@ -1097,10 +1109,22 @@ public class MulticastServer extends Thread implements Serializable {
                         ArrayList<String> music_names = new ArrayList<>();
                         String nS = songName[1];
                         try{
-                            if(musicDataBaseEmpty()){
-                                connection.close();
-                                sendMsg("type|musicDatabaseEmpty");
-                                System.out.println("Musics database empty.");
+                            if(musicDataBaseEmpty() || checkArtistExists(nS)!=1){
+                                if(musicDataBaseEmpty()){
+                                    connection.close();
+                                    sendMsg("type|musicDatabaseEmpty");
+                                    System.out.println("Musics database empty.");
+                                }
+                                else if(checkArtistExists(nS)==0){
+                                    connection.close();
+                                    sendMsg("type|songwriterNotFound");
+                                    System.out.println("Songwriter not found.");
+                                }
+                                else{
+                                    connection.close();
+                                    sendMsg("type|somethingWentWrong");
+                                    System.out.println("Something went wrong.");
+                                }
                             }
                             else{
                                 PreparedStatement stmtShowArtistAlbum = connection.prepareStatement("SELECT * FROM music_songwriter WHERE artista_id = ?;");

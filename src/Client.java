@@ -423,6 +423,7 @@ public class Client extends UnicastRemoteObject implements ClientHello{
                         System.out.println("Insert valid answer.");
                         break;
                 }
+                break;
             default:
                 System.out.println("Inseriu mal o comando. Por favor volte a tentar.");
         }
@@ -442,24 +443,36 @@ public class Client extends UnicastRemoteObject implements ClientHello{
         }
         String re = rmi.showSongwriterMusics(nameA);
         String[] responseSplit = re.trim().split(";");
-        String[] musicsParts = responseSplit[1].split("\\|");
-        String[] musicsNames = musicsParts[1].split(",");
-        if (!musicsNames[0].equals("No musics to show.")) {
-            String albunsNamesFinais = "";
-            int n = 1;
-            for (int i=0;i<musicsNames.length;i++) {
-                albunsNamesFinais += n+". ";
-                albunsNamesFinais += musicsNames[i];
-                albunsNamesFinais += "\n";
-                n++;
-            }
-            System.out.println("\nMusics:\n"+albunsNamesFinais);
-            return 1;
+        switch(responseSplit[0]){
+            case "type|musicDatabaseEmpty":
+                System.out.println("No musics in the database.");
+                break;
+            case "type|songwriterNotFound":
+                System.out.println("Songwriter not found.");
+                break;
+            case "type|showSongwriterMusicsComplete":
+                String[] musicsPartss = responseSplit[1].split("\\|");
+                String[] musicsNamess = musicsPartss[1].split(",");
+                if (!musicsNamess[0].equals("No musics to show.")) {
+                    String albunsNamesFinais = "";
+                    int n = 1;
+                    for (int i=0;i<musicsNamess.length;i++) {
+                        albunsNamesFinais += n+". ";
+                        albunsNamesFinais += musicsNamess[i];
+                        albunsNamesFinais += "\n";
+                        n++;
+                    }
+                    System.out.println("\nMusics:\n"+albunsNamesFinais);
+                    return 1;
+                }
+                else{
+                    System.out.println("This songwriter has no musics.");
+                    return 0;
+                }
+            default:
+                System.out.println("Something went wrong.");
         }
-        else{
-            System.out.println("This songwriter has no musics.");
-            return 0;
-        }
+        return 0;
     }
 
     private static int searchMusicComposer(Hello rmi, Scanner reader) throws RemoteException {
@@ -476,24 +489,36 @@ public class Client extends UnicastRemoteObject implements ClientHello{
         }
         String re = rmi.showComposerMusics(nameA);
         String[] responseSplit = re.trim().split(";");
-        String[] musicsParts = responseSplit[1].split("\\|");
-        String[] musicsNames = musicsParts[1].split(",");
-        if (!musicsNames[0].equals("No musics to show.")) {
-            String albunsNamesFinais = "";
-            int n = 1;
-            for (int i=0;i<musicsNames.length;i++) {
-                albunsNamesFinais += n+". ";
-                albunsNamesFinais += musicsNames[i];
-                albunsNamesFinais += "\n";
-                n++;
-            }
-            System.out.println("\nMusics:\n"+albunsNamesFinais);
-            return 1;
+        switch(responseSplit[0]){
+            case "type|musicDatabaseEmpty":
+                System.out.println("No musics in the database.");
+                break;
+            case "type|composerNotFound":
+                System.out.println("Composer not found.");
+                break;
+            case "type|type|showComposerMusicsComplete":
+                String[] musicsParts = responseSplit[1].split("\\|");
+                String[] musicsNames = musicsParts[1].split(",");
+                if (!musicsNames[0].equals("No musics to show.")) {
+                    String albunsNamesFinais = "";
+                    int n = 1;
+                    for (int i=0;i<musicsNames.length;i++) {
+                        albunsNamesFinais += n+". ";
+                        albunsNamesFinais += musicsNames[i];
+                        albunsNamesFinais += "\n";
+                        n++;
+                    }
+                    System.out.println("\nMusics:\n"+albunsNamesFinais);
+                    return 1;
+                }
+                else{
+                    System.out.println("This composer has no musics.");
+                    return 0;
+                }
+            default:
+                System.out.println("Something went wrong.");
         }
-        else{
-            System.out.println("This composer has no musics.");
-            return 0;
-        }
+        return 0;
     }
 
     private static void searchMusicName(Hello rmi, Scanner reader) throws RemoteException {
