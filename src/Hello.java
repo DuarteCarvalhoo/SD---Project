@@ -110,4 +110,10 @@ public interface Hello extends Remote {
     String editConcertLocation(String concert, String locationAfter) throws RemoteException;
 
     String editConcertDescription(String concert, String descriptionAfter) throws RemoteException;
+
+    String showMusic(String name) throws RemoteException;
+
+    String showSongwriterMusics(String nameA) throws RemoteException;
+
+    String showComposerMusics(String nameA) throws RemoteException;
 }
