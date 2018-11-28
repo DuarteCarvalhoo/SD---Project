@@ -824,6 +824,65 @@ public class Client extends UnicastRemoteObject implements ClientHello{
             case "/name":
                 changePlaylistName(rmi,reader);
                 break;
+            case "/addmusic":
+                playlistAdd(rmi,reader);
+                break;
+            case "/removemusic":
+                break;
+        }
+    }
+
+    private static void playlistAdd(Hello rmi, Scanner reader) throws RemoteException {
+        ArrayList<Music> musicsList = new ArrayList<>();
+        String music ="";
+        String playlist="";
+        boolean flagOK = false;
+        System.out.println("Which music you wanna add?");
+        String response = rmi.getMusicList(loggedUser.getId());
+        String[] rSplit = response.split(";");
+        String[] musicParts = rSplit[1].split("\\|");
+        musicsList = createMusicsList(musicParts[1].split(","));
+        int i = 1;
+        for (Music m : musicsList) {
+            System.out.println(i+". "+m.toString());
+            i++;
+        }
+
+        while(!flagOK){
+            music = reader.nextLine();
+            if(!music.trim().equals("")){
+                flagOK=true;
+            }
+            else{
+                System.out.println("Which music you wanna add?");
+            }
+        }
+
+        flagOK = false;
+        System.out.println("To what playlist you wanna add?");
+        while(!flagOK){
+            playlist = reader.nextLine();
+            if(!playlist.trim().equals("")){
+                flagOK=true;
+            }
+            else{
+                System.out.println("To what playlist you wanna add?");
+            }
+        }
+        String resposta = rmi.addMusicPlaylist(music,playlist,loggedUser.getId());
+        switch (resposta){
+            case "type|musicAddCompleted":
+                System.out.println("Music shared.");
+                break;
+            case "type|invalidMusic":
+                System.out.println("Insert a valid music.");
+                break;
+            case "type|invalidPlaylist":
+                System.out.println("Insert a valid playlist.");
+                break;
+            default:
+                System.out.println("Something went wrong.");
+                break;
         }
     }
 

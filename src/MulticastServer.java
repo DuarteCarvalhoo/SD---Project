@@ -307,6 +307,7 @@ public class MulticastServer extends Thread implements Serializable {
                         }
                         break;
                     case "type|getMusicsList":
+                        connection = initConnection();
                         String[] userParts = aux[1].split("\\|");
                         ArrayList<Music> UploadedMusics;
 
@@ -840,6 +841,48 @@ public class MulticastServer extends Thread implements Serializable {
 
                                 sendMsg("type|nameChanged");
                                 System.out.println("Name changed.");
+                            }
+                        }catch(org.postgresql.util.PSQLException e){
+                            System.out.println("Something went wrong.");
+                            sendMsg("type|somethingWentWrong");
+                        }
+                        break;
+                    case "type|addMusicPlaylist":
+                        String[] playlist = aux[1].split("\\|");
+                        String[] music = aux[2].split("\\|");
+                        String[] userIds = aux[3].split("\\|");
+
+                        connection = initConnection();
+                        connection.setAutoCommit(false);
+
+                        try{
+                            if(playlistDataBaseEmpty() || getPlaylistIdByName(playlist[1])==0){
+                                if(playlistDataBaseEmpty()){
+                                    connection.close();
+                                    sendMsg("type|playlistDatabaseEmpty");
+                                    System.out.println("Playlist database empty.");
+                                }
+                                else{
+                                    connection.close();
+                                    sendMsg("type|playlistNotFound");
+                                    System.out.println("Playlist not found.");
+                                }
+                            }
+                            else{
+                                int musicI = getMusicIdByName(music[1]);
+                                int playId = getPlaylistIdByName(playlist[1]);
+
+                                PreparedStatement stmtAddMusic = connection.prepareStatement("INSERT INTO playlist_music(playlist_id, playlist_utilizador_id, music_id)"
+                                        +"VALUES(?,?,?)");
+                                stmtAddMusic.setInt(1,playId);
+                                stmtAddMusic.setInt(2,Integer.parseInt(userIds[1]));
+                                stmtAddMusic.setInt(3,musicI);
+                                stmtAddMusic.executeUpdate();
+
+
+                                connection.commit();
+                                connection.close();
+                                sendMsg("type|musicAddCompleted");
                             }
                         }catch(org.postgresql.util.PSQLException e){
                             System.out.println("Something went wrong.");
