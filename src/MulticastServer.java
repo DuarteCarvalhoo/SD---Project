@@ -625,7 +625,7 @@ public class MulticastServer extends Thread implements Serializable {
                         String[] publisherName = aux[1].split("\\|");
                         PreparedStatement stmtPublisher = null;
                         try {
-                            if(checkPublisherExists(publisherName[1]) == 0){
+                            if(checkPublisherExists(publisherName[1]) == 1){
                                 connection.close();
                                 sendMsg("type|publisherExists");
                                 System.out.println("Publisher already exists.");
@@ -802,6 +802,155 @@ public class MulticastServer extends Thread implements Serializable {
                                 System.out.println("Description changed.");
                             }
 
+                        }catch(org.postgresql.util.PSQLException e){
+                            System.out.println("Something went wrong.");
+                            sendMsg("type|somethingWentWrong");
+                        }
+                        break;
+                    case "type|editPublisherName":
+                        connection = initConnection();
+                        connection.setAutoCommit(false);
+                        String[] PNameB = aux[1].split("\\|");
+                        String[] PNameA = aux[2].split("\\|");
+
+                        try{
+                            if(publisherDataBaseEmpty() || getPublisherById(PNameB[1])==0 || getPublisherById(PNameA[1])!=0){
+                                if(publisherDataBaseEmpty()){
+                                    connection.close();
+                                    sendMsg("type|publisherDatabaseEmpty");
+                                    System.out.println("Publisher database empty.");
+                                }
+                                else if(getPublisherById(PNameB[1])==0){
+                                    connection.close();
+                                    sendMsg("type|publisherNotFound");
+                                    System.out.println("Publisher not found.");
+                                }
+                                else{
+                                    connection.close();
+                                    sendMsg("type|nameAlreadyTaken");
+                                    System.out.println("Name already taken by another publisher.");
+                                }
+                            }
+                            else{
+                                PreparedStatement stmtEditPub = connection.prepareStatement("UPDATE publisher SET name = ? WHERE name = ?;");
+                                stmtEditPub.setString(1,PNameA[1]);
+                                stmtEditPub.setString(2,PNameB[1]);
+                                stmtEditPub.executeUpdate();
+
+                                connection.commit();
+                                connection.close();
+
+                                sendMsg("type|nameChanged");
+                                System.out.println("Name changed.");
+                            }
+                        }catch(org.postgresql.util.PSQLException e){
+                            System.out.println("Something went wrong.");
+                            sendMsg("type|somethingWentWrong");
+                        }
+                        break;
+                    case "type|editConcertName":
+                        connection = initConnection();
+                        connection.setAutoCommit(false);
+                        String[] CNameB = aux[1].split("\\|");
+                        String[] CNameA = aux[2].split("\\|");
+
+                        try{
+                            if(publisherDataBaseEmpty() || getConcertIdByName(CNameB[1])==0){
+                                if(concertDataBaseEmpty()){
+                                    connection.close();
+                                    sendMsg("type|concertDatabaseEmpty");
+                                    System.out.println("Concert database empty.");
+                                }
+                                else{
+                                    connection.close();
+                                    sendMsg("type|concertNotFound");
+                                    System.out.println("Concert not found.");
+                                }
+                            }
+                            else{
+                                PreparedStatement stmtEditPub = connection.prepareStatement("UPDATE concert SET name = ? WHERE name = ?;");
+                                stmtEditPub.setString(1,CNameA[1]);
+                                stmtEditPub.setString(2,CNameB[1]);
+                                stmtEditPub.executeUpdate();
+
+                                connection.commit();
+                                connection.close();
+
+                                sendMsg("type|nameChanged");
+                                System.out.println("Name changed.");
+                            }
+                        }catch(org.postgresql.util.PSQLException e){
+                            System.out.println("Something went wrong.");
+                            sendMsg("type|somethingWentWrong");
+                        }
+                        break;
+                    case "type|editConcertLocation":
+                        connection = initConnection();
+                        connection.setAutoCommit(false);
+                        String[] CName = aux[1].split("\\|");
+                        String[] CLocationA = aux[2].split("\\|");
+
+                        try{
+                            if(concertDataBaseEmpty() || getConcertIdByName(CName[1])==0){
+                                if(concertDataBaseEmpty()){
+                                    connection.close();
+                                    sendMsg("type|concertDatabaseEmpty");
+                                    System.out.println("Concert database empty.");
+                                }
+                                else{
+                                    connection.close();
+                                    sendMsg("type|concertNotFound");
+                                    System.out.println("Concert not found.");
+                                }
+                            }
+                            else{
+                                PreparedStatement stmtEditPub = connection.prepareStatement("UPDATE concert SET location = ? WHERE name = ?;");
+                                stmtEditPub.setString(1,CLocationA[1]);
+                                stmtEditPub.setString(2,CName[1]);
+                                stmtEditPub.executeUpdate();
+
+                                connection.commit();
+                                connection.close();
+
+                                sendMsg("type|locationChanged");
+                                System.out.println("Location changed.");
+                            }
+                        }catch(org.postgresql.util.PSQLException e){
+                            System.out.println("Something went wrong.");
+                            sendMsg("type|somethingWentWrong");
+                        }
+                        break;
+                    case "type|editConcertDescription":
+                        connection = initConnection();
+                        connection.setAutoCommit(false);
+                        String[] CN = aux[1].split("\\|");
+                        String[] CDescriptionA = aux[2].split("\\|");
+
+                        try{
+                            if(concertDataBaseEmpty() || getConcertIdByName(CN[1])==0){
+                                if(concertDataBaseEmpty()){
+                                    connection.close();
+                                    sendMsg("type|concertDatabaseEmpty");
+                                    System.out.println("Concert database empty.");
+                                }
+                                else{
+                                    connection.close();
+                                    sendMsg("type|concertNotFound");
+                                    System.out.println("Concert not found.");
+                                }
+                            }
+                            else{
+                                PreparedStatement stmtEditPub = connection.prepareStatement("UPDATE concert SET description = ? WHERE name = ?;");
+                                stmtEditPub.setString(1,CDescriptionA[1]);
+                                stmtEditPub.setString(2,CN[1]);
+                                stmtEditPub.executeUpdate();
+
+                                connection.commit();
+                                connection.close();
+
+                                sendMsg("type|descriptionChanged");
+                                System.out.println("Description changed.");
+                            }
                         }catch(org.postgresql.util.PSQLException e){
                             System.out.println("Something went wrong.");
                             sendMsg("type|somethingWentWrong");
@@ -1092,6 +1241,34 @@ public class MulticastServer extends Thread implements Serializable {
         } finally {
             socket.close();
         }
+    }
+
+    private boolean concertDataBaseEmpty() {
+        try{
+            Statement stmt = connection.createStatement();
+            ResultSet rs = stmt.executeQuery("SELECT * FROM concert");
+            return !rs.next();
+        }
+        catch (org.postgresql.util.PSQLException e){
+            System.out.println(e.getMessage());
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    private boolean publisherDataBaseEmpty() {
+        try{
+            Statement stmt = connection.createStatement();
+            ResultSet rs = stmt.executeQuery("SELECT * FROM publisher");
+            return !rs.next();
+        }
+        catch (org.postgresql.util.PSQLException e){
+            System.out.println(e.getMessage());
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
     }
 
     private boolean artistDataBaseEmpty() {

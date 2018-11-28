@@ -87,6 +87,8 @@ public interface Hello extends Remote {
 
     String editArtistType(String name, String newType) throws RemoteException;
 
+    String editPublisherName(String nameBefore, String nameAfter) throws RemoteException;
+
     String showArtist(String name) throws RemoteException;
 
     String editArtistDescription(String name, String newDescription) throws RemoteException;
@@ -102,4 +104,10 @@ public interface Hello extends Remote {
     String shareMusic(String music, String userName, int sharingId) throws RemoteException;
 
     String getMusicList(int id) throws RemoteException;
+
+    String editConcertName(String concert, String nameAfter) throws RemoteException;
+
+    String editConcertLocation(String concert, String locationAfter) throws RemoteException;
+
+    String editConcertDescription(String concert, String descriptionAfter) throws RemoteException;
 }

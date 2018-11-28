@@ -395,6 +395,102 @@ public class Server implements Hello {
         return null;
     }
 
+    public String editPublisherName(String nameBefore, String nameAfter){
+        MulticastSocket socket = null;
+        //envia para o multicast
+        try {
+            socket = new MulticastSocket();
+            InetAddress group = InetAddress.getByName(MULTICAST_ADDRESS);
+            socket.joinGroup(group);
+            String aux = "type|editPublisherName;NameBefore|"+nameBefore+";NameAfter|"+nameAfter; //protocol
+            byte[] buffer = aux.getBytes();
+            DatagramPacket packet = new DatagramPacket(buffer, buffer.length, group, PORT);
+            socket.send(packet);
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            socket.close();
+        }
+
+        //recebe do multicast
+        String msg = receiveMulticast();
+        if (msg != null) return msg;
+
+        return null;
+    }
+
+    public String editConcertName(String concert, String nameAfter){
+        MulticastSocket socket = null;
+        //envia para o multicast
+        try {
+            socket = new MulticastSocket();
+            InetAddress group = InetAddress.getByName(MULTICAST_ADDRESS);
+            socket.joinGroup(group);
+            String aux = "type|editConcertName;NameBefore|"+concert+";NameAfter|"+nameAfter; //protocol
+            byte[] buffer = aux.getBytes();
+            DatagramPacket packet = new DatagramPacket(buffer, buffer.length, group, PORT);
+            socket.send(packet);
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            socket.close();
+        }
+
+        //recebe do multicast
+        String msg = receiveMulticast();
+        if (msg != null) return msg;
+
+        return null;
+    }
+
+    public String editConcertLocation(String concert, String locationAfter){
+        MulticastSocket socket = null;
+        //envia para o multicast
+        try {
+            socket = new MulticastSocket();
+            InetAddress group = InetAddress.getByName(MULTICAST_ADDRESS);
+            socket.joinGroup(group);
+            String aux = "type|editConcertLocation;Concert|"+concert+";LocationAfter|"+locationAfter; //protocol
+            byte[] buffer = aux.getBytes();
+            DatagramPacket packet = new DatagramPacket(buffer, buffer.length, group, PORT);
+            socket.send(packet);
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            socket.close();
+        }
+
+        //recebe do multicast
+        String msg = receiveMulticast();
+        if (msg != null) return msg;
+
+        return null;
+    }
+
+    public String editConcertDescription(String concert, String descriptionAfter) throws RemoteException {
+        MulticastSocket socket = null;
+        //envia para o multicast
+        try {
+            socket = new MulticastSocket();
+            InetAddress group = InetAddress.getByName(MULTICAST_ADDRESS);
+            socket.joinGroup(group);
+            String aux = "type|editConcertDescription;Concert|"+concert+";DescriptionAfter|"+descriptionAfter; //protocol
+            byte[] buffer = aux.getBytes();
+            DatagramPacket packet = new DatagramPacket(buffer, buffer.length, group, PORT);
+            socket.send(packet);
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            socket.close();
+        }
+
+        //recebe do multicast
+        String msg = receiveMulticast();
+        if (msg != null) return msg;
+
+        return null;
+    }
+
     ///////////// CRIAR!! /////////////
     public String createSongwriter(String name, String description){
         MulticastSocket socket = null;

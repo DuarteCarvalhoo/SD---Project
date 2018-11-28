@@ -632,20 +632,209 @@ public class Client extends UnicastRemoteObject implements ClientHello{
 
             ////////////// MENU DE EDITAR COM AS SUAS FUNÇÕES/////////////
     public static void editMenu(Hello rmi, Scanner reader) throws RemoteException{
-        System.out.println("What do you want to edit: Artist, Album, Concert, Playlist, Publisher, ?");
+        System.out.println("What do you want to edit: Artist, Album, Concert, Playlist, Publisher?");
         String response = reader.nextLine();
         switch(response.trim()){
             case "/artist":
                 editArtist(rmi,reader);
                 break;
-            case "/music":
-                //createMusic();
+            case "/publisher":
+                editPublisher(rmi,reader);
                 break;
-            case "/album":
-                //createAlbum();
+            case "/concert":
+                editConcert(rmi,reader);
                 break;
             default:
                 //Something;
+        }
+    }
+
+    private static void editConcert(Hello rmi, Scanner reader) throws RemoteException {
+        System.out.println("What do you wanna change: Name, Location, Description");
+        String text = reader.nextLine();
+        switch(text.trim()){
+            case "/name":
+                editConcertName(rmi,reader);
+                break;
+            case "/location":
+                editConcertLocation(rmi,reader);
+                break;
+            case "/description":
+                editConcertDescription(rmi,reader);
+                break;
+            default:
+                //something();
+        }
+    }
+
+    private static void editConcertName(Hello rmi, Scanner reader) throws RemoteException {
+        System.out.println("Which concert do you wanna change? ");
+        boolean flagOK = false;
+        String concert = "";
+        String nameAfter="";
+        while(!flagOK) {
+            concert = reader.nextLine();
+            if (!concert.trim().equals("")){
+                flagOK = true;
+            }
+            else{
+                System.out.println("Which concert do you wanna change? ");
+            }
+        }
+        System.out.println("To what name you wanna change it? ");
+        flagOK = false;
+        while(!flagOK) {
+            nameAfter = reader.nextLine();
+            if (!nameAfter.trim().equals("")){
+                flagOK = true;
+            }
+            else{
+                System.out.println("To what name you wanna change it? ");
+            }
+        }
+        String response = rmi.editConcertName(concert,nameAfter);
+        switch(response.trim()){
+            case "type|nameChanged":
+                System.out.println("Name changed.");
+                break;
+            case "type|concertDatabaseEmpty":
+                System.out.println("No concerts on the database.");
+                break;
+            case "type|concertNotFound":
+                System.out.println("Concert not found.");
+                break;
+            default:
+                System.out.println("Something went wrong.");
+                break;
+        }
+    }
+
+    private static void editConcertLocation(Hello rmi, Scanner reader) throws RemoteException {
+        System.out.println("Which concert do you wanna change? ");
+        boolean flagOK = false;
+        String concert = "";
+        String locationAfter="";
+        while(!flagOK) {
+            concert = reader.nextLine();
+            if (!concert.trim().equals("")){
+                flagOK = true;
+            }
+            else{
+                System.out.println("Which concert do you wanna change? ");
+            }
+        }
+        System.out.println("To what location you wanna change it? ");
+        flagOK = false;
+        while(!flagOK) {
+            locationAfter = reader.nextLine();
+            if (!locationAfter.trim().equals("")){
+                flagOK = true;
+            }
+            else{
+                System.out.println("To what location you wanna change it? ");
+            }
+        }
+        String response = rmi.editConcertLocation(concert,locationAfter);
+        switch(response.trim()){
+            case "type|locationChanged":
+                System.out.println("Location changed.");
+                break;
+            case "type|concertDatabaseEmpty":
+                System.out.println("No concerts on the database.");
+                break;
+            case "type|concertNotFound":
+                System.out.println("Concert not found.");
+                break;
+            default:
+                System.out.println("Something went wrong.");
+                break;
+        }
+    }
+
+    private static void editConcertDescription(Hello rmi, Scanner reader) throws RemoteException {
+        System.out.println("Which concert do you wanna change? ");
+        boolean flagOK = false;
+        String concert = "";
+        String descriptionAfter="";
+        while(!flagOK) {
+            concert = reader.nextLine();
+            if (!concert.trim().equals("")){
+                flagOK = true;
+            }
+            else{
+                System.out.println("Which concert do you wanna change? ");
+            }
+        }
+        System.out.println("To what description you wanna change it? ");
+        flagOK = false;
+        while(!flagOK) {
+            descriptionAfter = reader.nextLine();
+            if (!descriptionAfter.trim().equals("")){
+                flagOK = true;
+            }
+            else{
+                System.out.println("To what description you wanna change it? ");
+            }
+        }
+        String response = rmi.editConcertDescription(concert,descriptionAfter);
+        switch(response.trim()){
+            case "type|descriptionChanged":
+                System.out.println("Description changed.");
+                break;
+            case "type|concertDatabaseEmpty":
+                System.out.println("No concerts on the database.");
+                break;
+            case "type|concertNotFound":
+                System.out.println("Concert not found.");
+                break;
+            default:
+                System.out.println("Something went wrong.");
+                break;
+        }
+    }
+
+    private static void editPublisher(Hello rmi, Scanner reader) throws RemoteException {
+        System.out.println("Which publisher do you wanna change? ");
+        boolean flagOK = false;
+        String publisher = "";
+        String nameAfter="";
+        while(!flagOK) {
+            publisher = reader.nextLine();
+            if (!publisher.trim().equals("")){
+                flagOK = true;
+            }
+            else{
+                System.out.println("Which publisher do you wanna change? ");
+            }
+        }
+        System.out.println("To what name you wanna change it? ");
+        flagOK = false;
+        while(!flagOK) {
+            nameAfter = reader.nextLine();
+            if (!nameAfter.trim().equals("")){
+                flagOK = true;
+            }
+            else{
+                System.out.println("To what name you wanna change it? ");
+            }
+        }
+        String response = rmi.editPublisherName(publisher,nameAfter);
+        switch(response.trim()){
+            case "type|nameChanged":
+                System.out.println("Name changed.");
+                break;
+            case "type|publisherDatabaseEmpty":
+                System.out.println("No publishers on the database.");
+                break;
+            case "type|publisherNotFound":
+                System.out.println("Publisher not found.");
+                break;
+            case "type|nameAlreadyTaken":
+                System.out.println("Name already taken by another publisher.");
+                break;
+            default:
+                System.out.println("Something went wrong.");
+                break;
         }
     }
 
