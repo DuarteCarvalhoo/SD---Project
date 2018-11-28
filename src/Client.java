@@ -259,6 +259,7 @@ public class Client extends UnicastRemoteObject implements ClientHello{
                                 System.out.println("Which music you wanna share?");
                             }
                         }
+
                         flagOK = false;
                         System.out.println("With who you wanna share it?");
                         while(!flagOK){
@@ -278,6 +279,14 @@ public class Client extends UnicastRemoteObject implements ClientHello{
                             case "type|musicShareCompleted":
                                 System.out.println("Music shared.");
                                 break;
+                            case "type|invalidMusic":
+                                System.out.println("Insert a valid music.");
+                                break;
+                            case "type|invalidUser":
+                                System.out.println("Insert a valid user.");
+                                break;
+                            default:
+                                System.out.println("Something went wrong.");
                         }
                         break;
                     case "/edit":
@@ -308,41 +317,44 @@ public class Client extends UnicastRemoteObject implements ClientHello{
                     case "/upload":
                         String[] musicInfo = new String[7];
                         while(true){
-                            try{
-                                musicInfo = sendMusic(rmi,reader);
-                                break;
-                            }
-                            catch (FileNotFoundException e){
-                                System.out.println("Insert valid file!");
-                                menuPrincipal(rmi,reader);
-                            }
+                            musicInfo = sendMusic(rmi,reader);
+                            break;
                         }
-                        String resp = rmi.sendMusicRMI(musicInfo,loggedUser.getId());
-                        String[] responseSpli = resp.split(";");
-                        switch (responseSpli[0]){
-                            case "type|composerNotFound":
-                                System.out.println("ERROR: Not a valid composer.");
-                                break;
-                            case "type|artistNotFound":
-                                System.out.println("ERROR: Not a valid artist.");
-                                break;
-                            case "type|songwriterNotFound":
-                                System.out.println("ERROR: Not a valid artist.");
-                                break;
-                            case"type|albumNotFound":
-                                System.out.println("ERROR: Not a valid album.");
-                                break;
-                            case"type|sendMusicComplete":
-                                System.out.println("Upload complete.");
-                                break;
-                            case "type|somethingWentWrong":
-                                System.out.println("Something went wrong.");
-                                break;
+                        if(musicInfo == null){
+
                         }
-                        break;
-                    default:
-                        if (!text.trim().equals("/logout")){
-                            System.out.println("Este comando não faz nada. Para sair escreva '/logout'");
+                        else {
+                            String resp = rmi.sendMusicRMI(musicInfo, loggedUser.getId());
+                            String[] responseSpli = resp.split(";");
+                            switch (responseSpli[0]) {
+                                case "type|duplicatedUpload":
+                                    System.out.println("ERROR: Music already uploaded by you.");
+                                    break;
+                                case "type|composerNotValid":
+                                    System.out.println("ERROR: Not a valid composer.");
+                                    break;
+                                case "type|composerNotFound":
+                                    System.out.println("ERROR: Composer not found.");
+                                    break;
+                                case "type|artistNotFound":
+                                    System.out.println("ERROR: Artist not found..");
+                                    break;
+                                case "type|songwriterNotValid":
+                                    System.out.println("ERROR: Not a valid songwriter.");
+                                    break;
+                                case "type|songwriterNotFound":
+                                    System.out.println("ERROR: Songwriter not found.");
+                                    break;
+                                case "type|albumNotFound":
+                                    System.out.println("ERROR: Album not found.");
+                                    break;
+                                case "type|sendMusicComplete":
+                                    System.out.println("Upload complete.");
+                                    break;
+                                case "type|somethingWentWrong":
+                                    System.out.println("Something went wrong.");
+                                    break;
+                            }
                         }
                 }
             }
@@ -620,32 +632,221 @@ public class Client extends UnicastRemoteObject implements ClientHello{
 
             ////////////// MENU DE EDITAR COM AS SUAS FUNÇÕES/////////////
     public static void editMenu(Hello rmi, Scanner reader) throws RemoteException{
-        System.out.println("What do you want to edit: Artist, Music, Album?");
+        System.out.println("What do you want to edit: Artist, Album, Concert, Playlist, Publisher?");
         String response = reader.nextLine();
         switch(response.trim()){
             case "/artist":
                 editArtist(rmi,reader);
                 break;
-            case "/music":
-                //createMusic();
+            case "/publisher":
+                editPublisher(rmi,reader);
                 break;
-            case "/album":
-                //createAlbum();
+            case "/concert":
+                editConcert(rmi,reader);
                 break;
             default:
                 //Something;
         }
     }
 
+    private static void editConcert(Hello rmi, Scanner reader) throws RemoteException {
+        System.out.println("What do you wanna change: Name, Location, Description");
+        String text = reader.nextLine();
+        switch(text.trim()){
+            case "/name":
+                editConcertName(rmi,reader);
+                break;
+            case "/location":
+                editConcertLocation(rmi,reader);
+                break;
+            case "/description":
+                editConcertDescription(rmi,reader);
+                break;
+            default:
+                //something();
+        }
+    }
+
+    private static void editConcertName(Hello rmi, Scanner reader) throws RemoteException {
+        System.out.println("Which concert do you wanna change? ");
+        boolean flagOK = false;
+        String concert = "";
+        String nameAfter="";
+        while(!flagOK) {
+            concert = reader.nextLine();
+            if (!concert.trim().equals("")){
+                flagOK = true;
+            }
+            else{
+                System.out.println("Which concert do you wanna change? ");
+            }
+        }
+        System.out.println("To what name you wanna change it? ");
+        flagOK = false;
+        while(!flagOK) {
+            nameAfter = reader.nextLine();
+            if (!nameAfter.trim().equals("")){
+                flagOK = true;
+            }
+            else{
+                System.out.println("To what name you wanna change it? ");
+            }
+        }
+        String response = rmi.editConcertName(concert,nameAfter);
+        switch(response.trim()){
+            case "type|nameChanged":
+                System.out.println("Name changed.");
+                break;
+            case "type|concertDatabaseEmpty":
+                System.out.println("No concerts on the database.");
+                break;
+            case "type|concertNotFound":
+                System.out.println("Concert not found.");
+                break;
+            default:
+                System.out.println("Something went wrong.");
+                break;
+        }
+    }
+
+    private static void editConcertLocation(Hello rmi, Scanner reader) throws RemoteException {
+        System.out.println("Which concert do you wanna change? ");
+        boolean flagOK = false;
+        String concert = "";
+        String locationAfter="";
+        while(!flagOK) {
+            concert = reader.nextLine();
+            if (!concert.trim().equals("")){
+                flagOK = true;
+            }
+            else{
+                System.out.println("Which concert do you wanna change? ");
+            }
+        }
+        System.out.println("To what location you wanna change it? ");
+        flagOK = false;
+        while(!flagOK) {
+            locationAfter = reader.nextLine();
+            if (!locationAfter.trim().equals("")){
+                flagOK = true;
+            }
+            else{
+                System.out.println("To what location you wanna change it? ");
+            }
+        }
+        String response = rmi.editConcertLocation(concert,locationAfter);
+        switch(response.trim()){
+            case "type|locationChanged":
+                System.out.println("Location changed.");
+                break;
+            case "type|concertDatabaseEmpty":
+                System.out.println("No concerts on the database.");
+                break;
+            case "type|concertNotFound":
+                System.out.println("Concert not found.");
+                break;
+            default:
+                System.out.println("Something went wrong.");
+                break;
+        }
+    }
+
+    private static void editConcertDescription(Hello rmi, Scanner reader) throws RemoteException {
+        System.out.println("Which concert do you wanna change? ");
+        boolean flagOK = false;
+        String concert = "";
+        String descriptionAfter="";
+        while(!flagOK) {
+            concert = reader.nextLine();
+            if (!concert.trim().equals("")){
+                flagOK = true;
+            }
+            else{
+                System.out.println("Which concert do you wanna change? ");
+            }
+        }
+        System.out.println("To what description you wanna change it? ");
+        flagOK = false;
+        while(!flagOK) {
+            descriptionAfter = reader.nextLine();
+            if (!descriptionAfter.trim().equals("")){
+                flagOK = true;
+            }
+            else{
+                System.out.println("To what description you wanna change it? ");
+            }
+        }
+        String response = rmi.editConcertDescription(concert,descriptionAfter);
+        switch(response.trim()){
+            case "type|descriptionChanged":
+                System.out.println("Description changed.");
+                break;
+            case "type|concertDatabaseEmpty":
+                System.out.println("No concerts on the database.");
+                break;
+            case "type|concertNotFound":
+                System.out.println("Concert not found.");
+                break;
+            default:
+                System.out.println("Something went wrong.");
+                break;
+        }
+    }
+
+    private static void editPublisher(Hello rmi, Scanner reader) throws RemoteException {
+        System.out.println("Which publisher do you wanna change? ");
+        boolean flagOK = false;
+        String publisher = "";
+        String nameAfter="";
+        while(!flagOK) {
+            publisher = reader.nextLine();
+            if (!publisher.trim().equals("")){
+                flagOK = true;
+            }
+            else{
+                System.out.println("Which publisher do you wanna change? ");
+            }
+        }
+        System.out.println("To what name you wanna change it? ");
+        flagOK = false;
+        while(!flagOK) {
+            nameAfter = reader.nextLine();
+            if (!nameAfter.trim().equals("")){
+                flagOK = true;
+            }
+            else{
+                System.out.println("To what name you wanna change it? ");
+            }
+        }
+        String response = rmi.editPublisherName(publisher,nameAfter);
+        switch(response.trim()){
+            case "type|nameChanged":
+                System.out.println("Name changed.");
+                break;
+            case "type|publisherDatabaseEmpty":
+                System.out.println("No publishers on the database.");
+                break;
+            case "type|publisherNotFound":
+                System.out.println("Publisher not found.");
+                break;
+            case "type|nameAlreadyTaken":
+                System.out.println("Name already taken by another publisher.");
+                break;
+            default:
+                System.out.println("Something went wrong.");
+                break;
+        }
+    }
+
     public static void editArtist(Hello rmi,Scanner reader) throws RemoteException{
-        System.out.println("What do you wanna change: Name, Genre, Description");
+        System.out.println("What do you wanna change: Name, Type, Description");
         String text = reader.nextLine();
         switch(text.trim()){
             case "/name":
                 editName(rmi,reader);
                 break;
-            case "/genre":
-                editGenre(rmi,reader);
+            case "/type":
+                editType(rmi,reader);
                 break;
             case "/description":
                 editDescription(rmi,reader);
@@ -685,19 +886,26 @@ public class Client extends UnicastRemoteObject implements ClientHello{
             case "type|nameChanged":
                 System.out.println("Name changed.");
                 break;
-            case "type|nameNotChanged":
-                System.out.println("Name not changed.");
+            case "type|artistDatabaseEmpty":
+                System.out.println("No artists on the database.");
+                break;
+            case "type|artistNotFound":
+                System.out.println("Artist not found.");
+                break;
+            case "type|nameAlreadyTaken":
+                System.out.println("Name already taken by another artist.");
                 break;
             default:
-                //something();
+                System.out.println("Something went wrong.");
+                break;
         }
     }
 
-    public static void editGenre(Hello rmi,Scanner reader) throws RemoteException{
+    public static void editType(Hello rmi,Scanner reader) throws RemoteException{
         System.out.println("Which artist you wanna change? ");
         boolean flagOK = false;
         String artist = "";
-        String genreAfter="";
+        String typeAfter="";
         while(!flagOK) {
             artist = reader.nextLine();
             if (!artist.trim().equals("")){
@@ -707,27 +915,31 @@ public class Client extends UnicastRemoteObject implements ClientHello{
                 System.out.println("Which artist you wanna change? ");
             }
         }
-        System.out.println("To what music genre you wanna change it? ");
+        System.out.println("To what musician type (Songwriter, Composer) you wanna change it? ");//Options -> songwriter, composer and both
         flagOK = false;
         while(!flagOK) {
-            genreAfter = reader.nextLine();
-            if (!genreAfter.trim().equals("")){
+            typeAfter = reader.nextLine();
+            if (typeAfter.trim().equals("songwriter") || typeAfter.trim().equals("composer") || typeAfter.trim().equals("both")){
                 flagOK = true;
             }
             else{
-                System.out.println("To what music genre you wanna change it? ");
+                System.out.println("To what musician type (Songwriter, Composer) you wanna change it? ");//Options -> songwriter, composer and both
             }
         }
-        String response = rmi.editArtistGenre(artist,genreAfter);
+        String response = rmi.editArtistType(artist,typeAfter);
         switch(response.trim()){
-            case "type|genreChanged":
-                System.out.println("Genre changed.");
+            case "type|changesApplied":
+                System.out.println("Type changed.");
                 break;
-            case "type|genreNotChanged":
-                System.out.println("Genre not changed.");
+            case "type|artistDatabaseEmpty":
+                System.out.println("No artists on the database.");
+                break;
+            case "type|artistNotFound":
+                System.out.println("Artist not found.");
                 break;
             default:
-                //something();
+                System.out.println("Something went wrong.");
+                break;
         }
     }
 
@@ -756,20 +968,21 @@ public class Client extends UnicastRemoteObject implements ClientHello{
                 System.out.println("To what description you wanna change it? ");
             }
         }
-        /*System.out.println("Which artist you wanna change? ");
-        String artist = reader.nextLine();
-        System.out.println("To what description you wanna change it? ");
-        String description = reader.nextLine();*/
+
         String response = rmi.editArtistDescription(artist,description);
         switch(response.trim()){
             case "type|descriptionChanged":
                 System.out.println("Description changed.");
                 break;
-            case "type|descriptionNotChanged":
-                System.out.println("Description not changed.");
+            case "type|artistDatabaseEmpty":
+                System.out.println("No artists on the database.");
+                break;
+            case "type|artistNotFound":
+                System.out.println("Artist not found.");
                 break;
             default:
-                //something();
+                System.out.println("Something went wrong.");
+                break;
         }
     }
 
@@ -1107,7 +1320,7 @@ public class Client extends UnicastRemoteObject implements ClientHello{
     }
 
     public static void deleteArtist(Hello rmi,Scanner reader) throws RemoteException{
-        System.out.print("Insert user's name: ");
+        System.out.print("Insert artist name: ");
         boolean flagK = false;
         String name = "";
         while (!flagK) {
@@ -1115,7 +1328,7 @@ public class Client extends UnicastRemoteObject implements ClientHello{
             if (!name.trim().equals("")) {
                 flagK = true;
             } else {
-                System.out.print("Insert user's name: ");
+                System.out.print("Insert artist name: ");
             }
         }
         String response = rmi.deleteArtist(name);
@@ -1211,119 +1424,133 @@ public class Client extends UnicastRemoteObject implements ClientHello{
     }
 
             ////////////// UPLOAD E DOWNLOAD DE MUSICAS /////////////
-    private static String[] sendMusic(Hello rmi,Scanner reader) throws IOException, FileNotFoundException {
+    private static String[] sendMusic(Hello rmi,Scanner reader) throws IOException, NotBoundException {
         String[] musicInfo = new String[7];
-        int auxi = 0;
         ServerSocket socket = new ServerSocket(5000);
-        System.out.println("check1");
-        String[] aux = socket.getLocalSocketAddress().toString().split("/");
-        rmi.startSocket(aux[0]);
-        Socket socketAcept = socket.accept();
-        System.out.println("Write down the directory of your music: (example:'C:\\music\\example.wav').");
-        Scanner direc = new Scanner(System.in);
-        String auxx;
-        while(true){
-            auxx = direc.nextLine();
-            break;
-        }
-        musicInfo[auxi] = auxx;
-        auxi++;
-        File file = new File(auxx);
-        String[] aux1 = auxx.split("\\\\");
-        System.out.println("can it split?");
-        System.out.println(aux1[aux1.length-1]);
-        FilePermission permission = new FilePermission(auxx, "read");
-        FileInputStream fInStream= new FileInputStream(file);
-        System.out.println("too much bytes?");
-        OutputStream outStream = socketAcept.getOutputStream();
-        byte b[];
-        System.out.println("no");
-        int current =0;
-        long len = file.length();
-        while(current!=len){
-            int size = 1024;
-
-            if(len - current >= size)
-                current += size;
-            else{
-                size = (int)(len - current);
-                current = (int) len;
+        Socket socketAcept = null;
+        File file;
+        FileInputStream fInStream = null;
+        OutputStream outStream = null;
+        try {
+            int auxi = 0;
+            System.out.println("check1");
+            String[] aux = socket.getLocalSocketAddress().toString().split("/");
+            rmi.startSocket(aux[0]);
+            socketAcept = socket.accept();
+            System.out.println("Write down the directory of your music: (example:'C:\\music\\example.wav').");
+            Scanner direc = new Scanner(System.in);
+            String auxx;
+            while (true) {
+                auxx = direc.nextLine();
+                break;
             }
-            b = new byte[size];
-            System.out.println("antes de fstream");
-            fInStream.read(b, 0, size);
-            System.out.println("antes de outstream");
-            outStream.write(b);
-            System.out.println("Sending file ... "+(current*100)/len+"% complete!");
+            musicInfo[auxi] = auxx;
+            auxi++;
+            file = new File(auxx);
+            String[] aux1 = auxx.split("\\\\");
+            //System.out.println("can it split?");
+            //System.out.println(aux1[aux1.length - 1]);
+            FilePermission permission = new FilePermission(auxx, "read");
+            //System.out.println(permission);
+            fInStream = new FileInputStream(file);
+            //System.out.println("too much bytes?");
+            outStream = socketAcept.getOutputStream();
+            byte b[];
+            //System.out.println("no");
+            int current = 0;
+            long len = file.length();
+            while (current != len) {
+                int size = 1024;
 
-        }
-        System.out.println("uff");
-        fInStream.close();
-        outStream.flush();
-        outStream.close();
-        socketAcept.close();
-        socket.close();
-        musicInfo[auxi] = aux1[aux1.length-1];
-        auxi++;
-        boolean flagOK = false;
-        String composer = "";
-        while(!flagOK){
-            System.out.print("Insert composer: ");
-            composer = reader.nextLine();
-            if(!composer.trim().equals("")){
-                flagOK=true;
-            }
-        }
-        musicInfo[auxi] = composer;
-        auxi++;
-        flagOK=false;
-        String artist = "";
-        while(!flagOK){
-            System.out.print("Insert artist: ");
-            artist = reader.nextLine();
-            if(!artist.trim().equals("")){
-                flagOK=true;
-            }
-        }
-        musicInfo[auxi] = artist;
-        auxi++;
+                if (len - current >= size)
+                    current += size;
+                else {
+                    size = (int) (len - current);
+                    current = (int) len;
+                }
+                b = new byte[size];
+                //System.out.println("antes de fstream");
+                fInStream.read(b, 0, size);
+                //System.out.println("antes de outstream");
+                outStream.write(b);
+                //System.out.println("Sending file ... " + (current * 100) / len + "% complete!");
 
-        flagOK=false;
-        String songwriter = "";
-        while(!flagOK){
-            System.out.print("Insert songwriter: ");
-            songwriter = reader.nextLine();
-            if(!songwriter.trim().equals("")){
-                flagOK=true;
             }
-        }
-        musicInfo[auxi] = songwriter;
-        auxi++;
-
-        flagOK=false;
-        String duration = "";
-        while(!flagOK){
-            System.out.print("Insert duration(seconds): ");
-            duration = reader.nextLine();
-            if(!duration.trim().equals("")){
-                flagOK=true;
+            System.out.println("File uploaded.");
+            fInStream.close();
+            outStream.flush();
+            outStream.close();
+            socketAcept.close();
+            socket.close();
+            musicInfo[auxi] = aux1[aux1.length - 1];
+            auxi++;
+            boolean flagOK = false;
+            String composer = "";
+            while (!flagOK) {
+                System.out.print("Insert composer: ");
+                composer = reader.nextLine();
+                if (!composer.trim().equals("")) {
+                    flagOK = true;
+                }
             }
-        }
-        musicInfo[auxi] = duration;
-        auxi++;
-
-        flagOK=false;
-        String album = "";
-        while(!flagOK){
-            System.out.print("Insert album: ");
-            album = reader.nextLine();
-            if(!album.trim().equals("")){
-                flagOK=true;
+            musicInfo[auxi] = composer;
+            auxi++;
+            flagOK = false;
+            String artist = "";
+            while (!flagOK) {
+                System.out.print("Insert artist: ");
+                artist = reader.nextLine();
+                if (!artist.trim().equals("")) {
+                    flagOK = true;
+                }
             }
-        }
-        musicInfo[auxi] = album;
-        auxi++;
+            musicInfo[auxi] = artist;
+            auxi++;
 
+            flagOK = false;
+            String songwriter = "";
+            while (!flagOK) {
+                System.out.print("Insert songwriter: ");
+                songwriter = reader.nextLine();
+                if (!songwriter.trim().equals("")) {
+                    flagOK = true;
+                }
+            }
+            musicInfo[auxi] = songwriter;
+            auxi++;
+
+            flagOK = false;
+            String duration = "";
+            while (!flagOK) {
+                System.out.print("Insert duration(seconds): ");
+                duration = reader.nextLine();
+                if (!duration.trim().equals("")) {
+                    flagOK = true;
+                }
+            }
+            musicInfo[auxi] = duration;
+            auxi++;
+
+            flagOK = false;
+            String album = "";
+            while (!flagOK) {
+                System.out.print("Insert album: ");
+                album = reader.nextLine();
+                if (!album.trim().equals("")) {
+                    flagOK = true;
+                }
+            }
+            musicInfo[auxi] = album;
+            auxi++;
+        }catch (RemoteException e) {
+            e.printStackTrace();
+        } catch (FileNotFoundException e) {
+            socket.close();
+            System.out.println("Insert valid file!");
+            return null;
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         return musicInfo;
     }
 

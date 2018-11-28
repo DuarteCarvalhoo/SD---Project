@@ -74,7 +74,7 @@ CREATE TABLE belongs (
 CREATE TABLE playlist (
   id		 SERIAL UNIQUE,
   name		 VARCHAR(512) NOT NULL,
-  utilizador_id INTEGER UNIQUE,
+  utilizador_id INTEGER,
   PRIMARY KEY(id,utilizador_id)
 );
 
@@ -135,8 +135,7 @@ ALTER TABLE filearchive ADD CONSTRAINT filearchive_fk1 FOREIGN KEY (utilizador_i
 ALTER TABLE filearchive ADD CONSTRAINT filearchive_fk2 FOREIGN KEY (music_id) REFERENCES music(id);
 ALTER TABLE belongs ADD CONSTRAINT belongs_fk1 FOREIGN KEY (artista_id) REFERENCES artista(id);
 ALTER TABLE playlist ADD CONSTRAINT playlist_fk1 FOREIGN KEY (utilizador_id) REFERENCES utilizador(id);
-ALTER TABLE playlist_music ADD CONSTRAINT playlist_music_fk1 FOREIGN KEY (playlist_id) REFERENCES playlist(id);
-ALTER TABLE playlist_music ADD CONSTRAINT playlist_music_fk2 FOREIGN KEY (playlist_utilizador_id) REFERENCES playlist(utilizador_id);
+ALTER TABLE playlist_music ADD CONSTRAINT playlist_music_fk1 FOREIGN KEY (playlist_id,playlist_utilizador_id) REFERENCES playlist(id,utilizador_id);
 ALTER TABLE playlist_music ADD CONSTRAINT playlist_music_fk3 FOREIGN KEY (music_id) REFERENCES music(id);
 ALTER TABLE album_music ADD CONSTRAINT album_music_fk1 FOREIGN KEY (album_id) REFERENCES album(id);
 ALTER TABLE album_music ADD CONSTRAINT album_music_fk2 FOREIGN KEY (music_id) REFERENCES music(id);

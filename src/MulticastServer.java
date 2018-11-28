@@ -1,21 +1,13 @@
-import com.sun.org.apache.xpath.internal.operations.Bool;
-
 import java.io.*;
 import java.net.*;
 import java.sql.*;
 import java.util.*;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 public class MulticastServer extends Thread implements Serializable {
     private String MULTICAST_ADDRESS = "224.0.224.0";
     private int PORT = 4321;
-    private ArrayList<User> usersList = new ArrayList<>();
-    private ArrayList<Artist> artistsList = new ArrayList<>();
-    private ArrayList<Album> albunsList = new ArrayList<>();
-    private ArrayList<Music> musicsList = new ArrayList<>();
     private Connection connection = null;
 
     public static void main(String[] args){
@@ -32,7 +24,6 @@ public class MulticastServer extends Thread implements Serializable {
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
         }
-        initConnection();
         MulticastSocket socket = null;
         //System.out.println(this.getName() + "run...");
 
@@ -40,15 +31,7 @@ public class MulticastServer extends Thread implements Serializable {
             socket = new MulticastSocket(PORT);
             InetAddress group = InetAddress.getByName(MULTICAST_ADDRESS);
             socket.joinGroup(group);
-            if (usersList.isEmpty()) {
-                System.out.println("Users arraylist empty!");
-            }
-            if(artistsList.isEmpty()){
-                System.out.println("Artists arraylist empty!");
-            }
-            if(albunsList.isEmpty()){
-                System.out.println("Albuns arraylist empty!");
-            }
+            System.out.println("Multicast working!");
             String aux2= "";
             Socket socketHelp= null;
             ServerSocket auxSocket = null;
@@ -92,15 +75,17 @@ public class MulticastServer extends Thread implements Serializable {
                         //funçao pra confirmar se o user existe, se a pw ta certa e por fim enviar a resposta
                         break;
                     case "type|register":
+                        connection = initConnection();
                         String username;
                         String password;
                         try {
                             aux2 = aux[1];
                             String[] registerUsernameParts = aux2.split("\\|");
                             String[] registerPasswordParts = aux[2].split("\\|");
-                            username = registerUsernameParts[1];
-                            password = registerPasswordParts[1];
+                            username = registerUsernameParts[1].trim();
+                            password = registerPasswordParts[1].trim();
                         }catch (Exception e){
+                            connection.close();
                             return;
                         }
                         if(userDatabaseEmpty()){
@@ -114,6 +99,7 @@ public class MulticastServer extends Thread implements Serializable {
 
                             stmt.close();
                             connection.commit();
+                            connection.close();
                             sendMsg("type|registComplete");
                         }
                         else{
@@ -132,12 +118,11 @@ public class MulticastServer extends Thread implements Serializable {
 
                                     stmt.close();
                                     connection.commit();
-
+                                    connection.close();
                                     sendMsg("type|registComplete");
                                 }
                             } catch (org.postgresql.util.PSQLException e){
                                 System.out.println("Something went wrong.");
-                                initConnection();
                                 sendMsg("type|somethingWentWrong");
                             }
                         }
@@ -152,6 +137,7 @@ public class MulticastServer extends Thread implements Serializable {
                         break;
                     case "type|sendMusic":
                         try{
+                            connection = initConnection();
                             String[] loggedUserParts = aux[8].split("\\|");
                             String[] pathParts = aux[1].split("\\|");
                             String[] titleParts = aux[2].split("\\|");
@@ -161,12 +147,47 @@ public class MulticastServer extends Thread implements Serializable {
                             String[] durationParts = aux[6].split("\\|");
                             String[] albumParts = aux[7].split("\\|");
 
-                            connection.setAutoCommit(false);
+                            connection.setAutoCommit(false); // + " " +
                             PreparedStatement stmtUpload = null;
-                            System.out.println(checkDuplicatedUpload(Integer.parseInt(loggedUserParts[1]),titleParts[1]));
-                            if(checkDuplicatedUpload(Integer.parseInt(loggedUserParts[1]),titleParts[1])==1){
-                                sendMsg("type|duplicatedUpload");
-                                System.out.println("Music already uploaded.");
+                            if( checkDuplicatedUpload(Integer.parseInt(loggedUserParts[1]),titleParts[1])==1 || checkArtistExists(artistParts[1]) != 1 || checkIfSongwriterValid(sParts[1]) != 1 || checkIfComposerValid(composerParts[1]) != 1 || checkAlbumExists(albumParts[1]) != 1){
+                                if(checkDuplicatedUpload(Integer.parseInt(loggedUserParts[1]),titleParts[1]) == 1){
+                                    sendMsg("type|duplicatedUpload");
+                                    System.out.println("Music already uploaded.");
+                                }
+                                else if(checkArtistExists(artistParts[1]) == 0){
+                                    connection.close();
+                                    sendMsg("type|artistNotFound");
+                                    System.out.println("Artist not found.");
+                                }
+                                else if(checkIfSongwriterValid(sParts[1]) == 0){
+                                    connection.close();
+                                    sendMsg("type|songwriterNotFound");
+                                    System.out.println("Songwriter not found.");
+                                }
+                                else if(checkIfSongwriterValid(sParts[1]) == 2){
+                                    connection.close();
+                                    sendMsg("type|songwriterNotValid");
+                                    System.out.println("Not a valid songwriter.");
+                                }
+                                else if(checkIfComposerValid(composerParts[1]) == 0){
+                                    connection.close();
+                                    sendMsg("type|composerNotFound");
+                                    System.out.println("Composer not found.");
+                                }
+                                else if(checkIfComposerValid(composerParts[1]) == 2){
+                                    connection.close();
+                                    sendMsg("type|composerNotValid");
+                                    System.out.println("Not a valid composer.");
+                                }
+                                else if(checkAlbumExists(albumParts[1]) == 0){
+                                    connection.close();
+                                    sendMsg("type|albumNotFound");
+                                    System.out.println("Album not found.");
+                                }
+                                else{
+                                    System.out.println(checkDuplicatedUpload(Integer.parseInt(loggedUserParts[1]),titleParts[1]) + " " + checkArtistExists(artistParts[1]) + " " + checkIfSongwriterValid(sParts[1]) + " " + checkIfComposerValid(composerParts[1]) + " " + checkAlbumExists(albumParts[1]));
+                                    sendMsg("type|somethingWentWrong");
+                                }
                             }
                             else if(checkDuplicatedUpload(Integer.parseInt(loggedUserParts[1]),titleParts[1])==0){
                                 System.out.println("Same music -> Other user");
@@ -175,9 +196,7 @@ public class MulticastServer extends Thread implements Serializable {
                                 stmtUpload.setString(1,pathParts[1]);
                                 stmtUpload.setInt(2,getMusicIdByName(titleParts[1]));
                                 stmtUpload.setInt(3,Integer.parseInt(loggedUserParts[1]));
-                                System.out.println("Before update");
                                 stmtUpload.executeUpdate();
-                                System.out.println("After update update");
 
                                 stmtUpload = connection.prepareStatement("INSERT INTO utilizador_filearchive(utilizador_id, filearchive_utilizador_id, filearchive_music_id)"
                                         + "VALUES(?,?,?);");
@@ -245,34 +264,47 @@ public class MulticastServer extends Thread implements Serializable {
 
                                 stmtUpload.close();
                                 connection.commit();
+                                connection.close();
                                 receiveMusic(socketHelp,titleParts[1]);
                                 sendMsg("type|sendMusicComplete");
                             }
                         } catch(org.postgresql.util.PSQLException e){
-                            initConnection();
                             System.out.println(e.getMessage());
                             sendMsg("type|somethingWentWrong");
                         }
                         break;
                     case "type|shareMusic":
+                        connection = initConnection();
                         String[] musicParts = aux[2].split("\\|");
                         String[] shareUserParts = aux[1].split("\\|");
                         String[] sharingUserParts = aux[3].split("\\|");
 
                         int musicId = getMusicIdByName(musicParts[1]);
+                        if(musicId==0 || getUserIdByName(shareUserParts[1]) == 0){
+                            if(musicId==0){
+                                sendMsg("type|invalidMusic");
+                                System.out.println("Invalid music.");
+                            }
+                            else{
+                                sendMsg("type|invalidUser");
+                                System.out.println("Invalid user.");
+                            }
+                        }
+                        else{
+                            connection.setAutoCommit(false);
+                            PreparedStatement stmtShare = connection.prepareStatement("INSERT INTO utilizador_filearchive(utilizador_id, filearchive_utilizador_id, filearchive_music_id)"
+                                    + "VALUES(?,?,?);");
 
-                        connection.setAutoCommit(false);
-                        PreparedStatement stmtShare = connection.prepareStatement("INSERT INTO utilizador_filearchive(utilizador_id, filearchive_utilizador_id, filearchive_music_id)"
-                        + "VALUES(?,?,?);");
+                            stmtShare.setInt(3,musicId);
+                            stmtShare.setInt(1,getUserIdByName(shareUserParts[1]));
+                            stmtShare.setInt(2,Integer.parseInt(sharingUserParts[1]));
+                            stmtShare.executeUpdate();
 
-                        stmtShare.setInt(3,musicId);
-                        stmtShare.setInt(1,getUserIdByName(shareUserParts[1]));
-                        stmtShare.setInt(2,Integer.parseInt(sharingUserParts[1]));
-                        stmtShare.executeUpdate();
-
-                        stmtShare.close();
-                        connection.commit();
-                        sendMsg("type|musicShareCompleted");
+                            stmtShare.close();
+                            connection.commit();
+                            connection.close();
+                            sendMsg("type|musicShareCompleted");
+                        }
                         break;
                     case "type|getMusicsList":
                         String[] userParts = aux[1].split("\\|");
@@ -283,7 +315,7 @@ public class MulticastServer extends Thread implements Serializable {
                         break;
                     case "type|openSocket":
                         auxSocket = openSocket();
-                        System.out.println("oi");
+                        System.out.println("ServerSocket inicializada");
                         sendMsg("ServerSocket inicializada");
                         break;
                     case"type|downloadMusic":
@@ -307,7 +339,7 @@ public class MulticastServer extends Thread implements Serializable {
                         }
                         break;
                     case"type|addNotification":
-                        aux2 = aux[1];
+                        /*aux2 = aux[1];
                         String mensagem = aux[2];
                         String[] nameUser = aux2.split("\\|");
                         String[] notif = mensagem.split("\\|");
@@ -321,48 +353,47 @@ public class MulticastServer extends Thread implements Serializable {
                                 System.out.println("check");
                                 break;
                             }
-                        }
+                        }*/
                         break;
-                    /*case"type|sendNotif":
-                        aux2 = aux[1];
-                        String[] nome = aux2.split("\\|");
-                        for (int i=0; i<usersList.size(); i++) {
-                            if (usersList.get(i).getUsername().equals(nome[1])) {
-                                for(int j=0; j<user)
-                                sendMsg(usersList.get(i);
-                            }
-                        }
-                     */
                     case "type|createSongwriter":
+                        connection = initConnection();
                         String[] nameParts1 = aux[1].split("\\|");
                         String[] descriptionParts = aux[2].split("\\|");
                         PreparedStatement stmtSongwriter = null;
                         try {
-                            Songwriter a = new Songwriter(nameParts1[1],descriptionParts[1]);
-                            connection.setAutoCommit(false);
-                            System.out.println("Opened database successfully");
+                            if(checkArtistExists(nameParts1[1]) == 1){
+                                connection.close();
+                                sendMsg("type|artistExists");
+                                System.out.println("Artist already exists.");
+                            }
+                            else{
+                                Songwriter a = new Songwriter(nameParts1[1],descriptionParts[1]);
+                                connection.setAutoCommit(false);
+                                System.out.println("Opened database successfully");
 
-                            stmtSongwriter = connection.prepareStatement("INSERT INTO artist (id,name,description,musician_ismusician,group_isgroup,songwriter_issongwriter,composer_iscomposer)"
-                                    + "VALUES (DEFAULT,?,?,?,?,?,?);");
-                            stmtSongwriter.setString(1,a.getName());
-                            stmtSongwriter.setString(2,a.getDescription());
-                            stmtSongwriter.setBoolean(3,a.isMusician());
-                            stmtSongwriter.setBoolean(4,a.isBand());
-                            stmtSongwriter.setBoolean(5,a.isSongwriter());
-                            stmtSongwriter.setBoolean(6,a.isComposer());
-                            stmtSongwriter.executeUpdate();
+                                stmtSongwriter = connection.prepareStatement("INSERT INTO artist (id,name,description,musician_ismusician,group_isgroup,songwriter_issongwriter,composer_iscomposer)"
+                                        + "VALUES (DEFAULT,?,?,?,?,?,?);");
+                                stmtSongwriter.setString(1,a.getName());
+                                stmtSongwriter.setString(2,a.getDescription());
+                                stmtSongwriter.setBoolean(3,a.isMusician());
+                                stmtSongwriter.setBoolean(4,a.isBand());
+                                stmtSongwriter.setBoolean(5,a.isSongwriter());
+                                stmtSongwriter.setBoolean(6,a.isComposer());
+                                stmtSongwriter.executeUpdate();
 
-                            stmtSongwriter.close();
-                            connection.commit();
-
+                                stmtSongwriter.close();
+                                connection.commit();
+                                connection.close();
+                                System.out.println("Records created successfully");
+                                sendMsg("type|createSongwriterComplete");
+                            }
                         } catch (org.postgresql.util.PSQLException e) {
-                            sendMsg("type|stmtSongwriter");
-                            System.out.println("ERRO: Artist already exists.");
+                            sendMsg("type|somethingWentWrong");
+                            System.out.println("ERRO: Something went wrong");
                         }
-                        System.out.println("Records created successfully");
-                        sendMsg("type|createSongwriterComplete");
                         break;
                     case "type|createMusician":
+                        connection = initConnection();
                         String[] namePartsMusician = aux[1].split("\\|");
                         String[] descriptionPartsMusician = aux[2].split("\\|");
                         String[] songwriterParts = aux[3].split("\\|");
@@ -370,89 +401,114 @@ public class MulticastServer extends Thread implements Serializable {
                         String[] isBandParts = aux[5].split("\\|");
                         PreparedStatement stmtMusician = null;
                         try {
-                            Musician a = new Musician(namePartsMusician[1],descriptionPartsMusician[1]);
-                            connection.setAutoCommit(false);
-                            System.out.println("Opened database successfully");
+                            if(checkArtistExists(namePartsMusician[1]) == 1){
+                                connection.close();
+                                sendMsg("type|artistExists");
+                                System.out.println("Artist already exists.");
+                            }
+                            else{
+                                Musician a = new Musician(namePartsMusician[1],descriptionPartsMusician[1]);
+                                connection.setAutoCommit(false);
+                                System.out.println("Opened database successfully");
 
-                            stmtMusician = connection.prepareStatement("INSERT INTO artista (id,name,description,musician_ismusician,band_isband,songwriter_issongwriter,composer_iscomposer)"
-                                    + "VALUES (DEFAULT,?,?,?,?,?,?);");
-                            stmtMusician.setString(1,a.getName());
-                            stmtMusician.setString(2,a.getDescription());
-                            stmtMusician.setBoolean(3,!(Boolean.parseBoolean(isBandParts[1])));
-                            stmtMusician.setBoolean(4,Boolean.parseBoolean(isBandParts[1]));
-                            stmtMusician.setBoolean(5,Boolean.parseBoolean(songwriterParts[1]));
-                            stmtMusician.setBoolean(6,Boolean.parseBoolean(isComposerParts[1]));
-                            stmtMusician.executeUpdate();
+                                stmtMusician = connection.prepareStatement("INSERT INTO artista (id,name,description,musician_ismusician,band_isband,songwriter_issongwriter,composer_iscomposer)"
+                                        + "VALUES (DEFAULT,?,?,?,?,?,?);");
+                                stmtMusician.setString(1,a.getName());
+                                stmtMusician.setString(2,a.getDescription());
+                                stmtMusician.setBoolean(3,!(Boolean.parseBoolean(isBandParts[1])));
+                                stmtMusician.setBoolean(4,Boolean.parseBoolean(isBandParts[1]));
+                                stmtMusician.setBoolean(5,Boolean.parseBoolean(songwriterParts[1]));
+                                stmtMusician.setBoolean(6,Boolean.parseBoolean(isComposerParts[1]));
+                                stmtMusician.executeUpdate();
 
-                            stmtMusician.close();
-                            connection.commit();
-
+                                stmtMusician.close();
+                                connection.commit();
+                                connection.close();
+                                System.out.println("Records created successfully");
+                                sendMsg("type|createMusicianComplete");
+                            }
                         } catch (org.postgresql.util.PSQLException e) {
                             sendMsg("type|musicianExists");
                             System.out.println("ERRO: Something went wrong.");
                         }
-                        System.out.println("Records created successfully");
-                        sendMsg("type|createMusicianComplete");
                         break;
                     case "type|createComposer":
+                        connection = initConnection();
                         String[] namePartsComposer = aux[1].split("\\|");
                         String[] descriptionPartsComposer = aux[2].split("\\|");
                         PreparedStatement stmtComposer = null;
                         try {
-                            Composer a = new Composer(namePartsComposer[1],descriptionPartsComposer[1]);
-                            connection.setAutoCommit(false);
-                            System.out.println("Opened database successfully");
+                            if(checkArtistExists(namePartsComposer[1]) == 1){
+                                connection.close();
+                                sendMsg("type|artistExists");
+                                System.out.println("Artist already exists.");
+                            }
+                            else{
+                                Composer a = new Composer(namePartsComposer[1],descriptionPartsComposer[1]);
+                                connection.setAutoCommit(false);
+                                System.out.println("Opened database successfully");
 
-                            stmtComposer = connection.prepareStatement("INSERT INTO artista (id,name,description,musician_ismusician,group_isgroup,songwriter_issongwriter,composer_iscomposer)"
-                                    + "VALUES (DEFAULT,?,?,?,?,?,?);");
-                            stmtComposer.setString(1,a.getName());
-                            stmtComposer.setString(2,a.getDescription());
-                            stmtComposer.setBoolean(3,a.isMusician());
-                            stmtComposer.setBoolean(4,a.isBand());
-                            stmtComposer.setBoolean(5,a.isSongwriter());
-                            stmtComposer.setBoolean(6,a.isComposer());
-                            stmtComposer.executeUpdate();
+                                stmtComposer = connection.prepareStatement("INSERT INTO artista (id,name,description,musician_ismusician,group_isgroup,songwriter_issongwriter,composer_iscomposer)"
+                                        + "VALUES (DEFAULT,?,?,?,?,?,?);");
+                                stmtComposer.setString(1,a.getName());
+                                stmtComposer.setString(2,a.getDescription());
+                                stmtComposer.setBoolean(3,a.isMusician());
+                                stmtComposer.setBoolean(4,a.isBand());
+                                stmtComposer.setBoolean(5,a.isSongwriter());
+                                stmtComposer.setBoolean(6,a.isComposer());
+                                stmtComposer.executeUpdate();
 
-                            stmtComposer.close();
-                            connection.commit();
+                                stmtComposer.close();
+                                connection.commit();
+                                connection.close();
+                                System.out.println("Records created successfully");
+                                sendMsg("type|createComposerComplete");
+                            }
 
                         }catch(org.postgresql.util.PSQLException e) {
                             sendMsg("type|composerExists");
                             System.out.println("ERRO: Composer already exists.");
                         }
-                        System.out.println("Records created successfully");
-                        sendMsg("type|createComposerComplete");
                         break;
                     case "type|createBand":
+                        connection = initConnection();
                         String[] namePartsBand = aux[1].split("\\|");
                         String[] descriptionPartsBand = aux[2].split("\\|");
                         PreparedStatement stmtBand = null;
                         try {
-                            Band a = new Band(namePartsBand[1],descriptionPartsBand[1]);
-                            connection.setAutoCommit(false);
-                            System.out.println("Opened database successfully");
+                            if(checkArtistExists(namePartsBand[1]) == 1){
+                                connection.close();
+                                sendMsg("type|artistExists");
+                                System.out.println("Artist already exists.");
+                            }
+                            else{
+                                Band a = new Band(namePartsBand[1],descriptionPartsBand[1]);
+                                connection.setAutoCommit(false);
+                                System.out.println("Opened database successfully");
 
-                            stmtBand = connection.prepareStatement("INSERT INTO artista (id,name,description,musician_ismusician,band_isband,songwriter_issongwriter,composer_iscomposer)"
-                                    + "VALUES (DEFAULT,?,?,?,?,?,?);");
-                            stmtBand.setString(1,a.getName());
-                            stmtBand.setString(2,a.getDescription());
-                            stmtBand.setBoolean(3,a.isMusician());
-                            stmtBand.setBoolean(4,a.isBand());
-                            stmtBand.setBoolean(5,a.isSongwriter());
-                            stmtBand.setBoolean(6,a.isComposer());
-                            stmtBand.executeUpdate();
+                                stmtBand = connection.prepareStatement("INSERT INTO artista (id,name,description,musician_ismusician,band_isband,songwriter_issongwriter,composer_iscomposer)"
+                                        + "VALUES (DEFAULT,?,?,?,?,?,?);");
+                                stmtBand.setString(1,a.getName());
+                                stmtBand.setString(2,a.getDescription());
+                                stmtBand.setBoolean(3,a.isMusician());
+                                stmtBand.setBoolean(4,a.isBand());
+                                stmtBand.setBoolean(5,a.isSongwriter());
+                                stmtBand.setBoolean(6,a.isComposer());
+                                stmtBand.executeUpdate();
 
-                            stmtBand.close();
-                            connection.commit();
-
+                                stmtBand.close();
+                                connection.commit();
+                                connection.close();
+                                System.out.println("Records created successfully");
+                                sendMsg("type|createBandComplete");
+                            }
                         }catch(org.postgresql.util.PSQLException e) {
                             sendMsg("type|bandExists");
                             System.out.println("ERRO: Band already exists.");
                         }
-                        System.out.println("Records created successfully");
-                        sendMsg("type|createBandComplete");
                         break;
                     case "type|createAlbum":
+                        connection = initConnection();
                         Artist artist = new Musician();
                         String[] namePa = aux[1].split("\\|");
                         String[] gParts = aux[2].split("\\|");
@@ -463,41 +519,47 @@ public class MulticastServer extends Thread implements Serializable {
                         boolean flagAlbum = false;
 
                         try{
-                            connection.setAutoCommit(false);
-                            System.out.println("Open database successfully!");
-                            int publisherId = getPublisherById(pName[1]);
+                            if(checkAlbumExists(namePa[1]) == 1){
+                                connection.close();
+                                sendMsg("type|albumExists");
+                                System.out.println("Album already exists.");
+                            }else{
+                                connection.setAutoCommit(false);
+                                System.out.println("Open database successfully!");
+                                int publisherId = getPublisherById(pName[1]);
 
-                            System.out.println("0");
-                            stmtAlbum = connection.prepareStatement("INSERT INTO album(id,name,genre,description,length,publisher_id)"
-                                                        + "VALUES (DEFAULT,?,?,?,0,?);");
-                            stmtAlbum.setString(1,namePa[1]);
-                            stmtAlbum.setString(2,gParts[1]);
-                            stmtAlbum.setString(3,descripParts[1]);
-                            stmtAlbum.setInt(4,publisherId);
-                            stmtAlbum.executeUpdate();
-                            System.out.println("1");
+                                System.out.println("0");
+                                stmtAlbum = connection.prepareStatement("INSERT INTO album(id,name,genre,description,length,publisher_id)"
+                                        + "VALUES (DEFAULT,?,?,?,0,?);");
+                                stmtAlbum.setString(1,namePa[1]);
+                                stmtAlbum.setString(2,gParts[1]);
+                                stmtAlbum.setString(3,descripParts[1]);
+                                stmtAlbum.setInt(4,publisherId);
+                                stmtAlbum.executeUpdate();
 
-                            int artistId = getArtistIdByName(aName[1]);
-                            int albumId = getAlbumIdByName(namePa[1]);
-                            stmtAlbum = connection.prepareStatement("INSERT INTO artista_album(artista_id, album_id)"
-                            + "VALUES (?,?);");
-                            stmtAlbum.setInt(1,artistId);
-                            stmtAlbum.setInt(2,albumId);
-                            stmtAlbum.executeUpdate();
-                            System.out.println("2");
+                                int artistId = getArtistIdByName(aName[1]);
+                                int albumId = getAlbumIdByName(namePa[1]);
+                                stmtAlbum = connection.prepareStatement("INSERT INTO artista_album(artista_id, album_id)"
+                                        + "VALUES (?,?);");
+                                stmtAlbum.setInt(1,artistId);
+                                stmtAlbum.setInt(2,albumId);
+                                stmtAlbum.executeUpdate();
 
-                            stmtAlbum.close();
-                            connection.commit();
+                                stmtAlbum.close();
+                                connection.commit();
+                                connection.close();
+                                System.out.println("Records created successfully");
+                                sendMsg("type|createAlbumComplete");
+                            }
+
                         }catch(org.postgresql.util.PSQLException e){
                             System.out.println(e.getMessage());
                             sendMsg("type|createAlbumFailed");
                             System.out.println("ERRO: Album creation failed.");
                         }
-                        System.out.println("Records created successfully");
-                        sendMsg("type|createAlbumComplete");
-                        System.out.println("Worked");
                         break;
                     case "type|createConcert":
+                        connection = initConnection();
                         String[] concertLocation = aux[1].split("\\|");
                         String[] concertName = aux[2].split("\\|");
                         String[] concertDescription = aux[3].split("\\|");
@@ -509,22 +571,26 @@ public class MulticastServer extends Thread implements Serializable {
 
                             stmtConcert = connection.prepareStatement("INSERT INTO concert (id,name,description,location)"
                                     + "VALUES (DEFAULT,?,?,?);");
-                            stmtConcert.setString(3,a.getLocation());
-                            stmtConcert.setString(2,concertDescription[1]);
+
+
                             stmtConcert.setString(1,a.getName());
+                            stmtConcert.setString(2,concertDescription[1]);
+                            stmtConcert.setString(3,a.getLocation());
                             stmtConcert.executeUpdate();
 
                             stmtConcert.close();
                             connection.commit();
+                            connection.close();
+                            System.out.println("Records created successfully");
+                            sendMsg("type|createConcertComplete");
 
                         }catch(org.postgresql.util.PSQLException e) {
                             sendMsg("type|createConcertFailed");
                             System.out.println("ERRO: Concert already exists.");
                         }
-                        System.out.println("Records created successfully");
-                        sendMsg("type|createConcertComplete");
                         break;
                     case "type|concertAssociation":
+                        connection = initConnection();
                         String[] concertBandMusician = aux[2].split("\\|");
                         String[] concertN = aux[1].split("\\|");
 
@@ -543,18 +609,25 @@ public class MulticastServer extends Thread implements Serializable {
 
                             stmtConcertA.close();
                             connection.commit();
+                            connection.close();
+                            System.out.println("Records created successfully");
+                            sendMsg("type|createConcertComplete");
 
                         }catch(org.postgresql.util.PSQLException e) {
                             sendMsg("type|concertExists");
                             System.out.println("ERRO: Concert already exists.");
                         }
-                        System.out.println("Records created successfully");
-                        sendMsg("type|createConcertComplete");
                         break;
                     case "type|createPublisher":
+                        connection = initConnection();
                         String[] publisherName = aux[1].split("\\|");
                         PreparedStatement stmtPublisher = null;
                         try {
+                            if(checkPublisherExists(publisherName[1]) == 1){
+                                connection.close();
+                                sendMsg("type|publisherExists");
+                                System.out.println("Publisher already exists.");
+                            }
                             Publisher a = new Publisher(publisherName[1]);
                             connection.setAutoCommit(false);
                             System.out.println("Opened database successfully");
@@ -566,15 +639,17 @@ public class MulticastServer extends Thread implements Serializable {
 
                             stmtPublisher.close();
                             connection.commit();
+                            connection.close();
+                            System.out.println("Records created successfully");
+                            sendMsg("type|createPublisherComplete");
 
                         }catch(org.postgresql.util.PSQLException e){
-                            sendMsg("type|publisherExists");
+                            sendMsg("type|somthingWentWrong");
                             System.out.println("ERRO: Publisher already exists.");
                         }
-                        System.out.println("Records created successfully");
-                        sendMsg("type|createPublisherComplete");
                         break;
                     case "type|createPlaylist":
+                        connection = initConnection();
                         String[] playlistName = aux[1].split("\\|");
                         String[] playlistUser = aux[2].split("\\|");
                         PreparedStatement stmtPlaylist = null, stmtUserConnection=null;
@@ -591,66 +666,330 @@ public class MulticastServer extends Thread implements Serializable {
 
                             stmtPlaylist.close();
                             connection.commit();
+                            connection.close();
+                            System.out.println("Records created successfully");
+                            sendMsg("type|createPlaylistComplete");
                         }catch(org.postgresql.util.PSQLException e) {
                             sendMsg("type|createPlaylistFailed");
                             System.out.println("ERRO: Something went wrong.");
                         }
-                        System.out.println("Records created successfully");
-                        sendMsg("type|createPlaylistComplete");
                         break;
                     case "type|editArtistName":
-                        String[] nameBeforeParts = aux[1].split("\\|");
-                        String[] nameAfterParts = aux[2].split("\\|");
-                        if(!checkArtistExists(nameBeforeParts[1])){
-                            sendMsg("type|nameNotChanged");
-                            System.out.println("ERROR: Artist Not Found -> Name Not Found.");
-                        }
-                        else{
-                            for(Artist a : artistsList){
-                                if(a.getName().equals(nameBeforeParts[1])){
-                                    a.setName(nameAfterParts[1]);
-                                    sendMsg("type|nameChanged");
-                                    System.out.println("SUCCESS: Name Changed.");
+                        connection = initConnection();
+                        connection.setAutoCommit(false);
+                        String[] nameB = aux[1].split("\\|");
+                        String[] nameAfter = aux[2].split("\\|");
+
+                        try{
+                            if(artistDataBaseEmpty() || getArtistIdByName(nameB[1])==0 || getArtistIdByName(nameAfter[1])==1){
+                                if(artistDataBaseEmpty()){
+                                    connection.close();
+                                    sendMsg("type|artistDatabaseEmpty");
+                                    System.out.println("Artist database empty.");
+                                }
+                                else if(getArtistIdByName(nameB[1])==0){
+                                    connection.close();
+                                    sendMsg("type|artistNotFound");
+                                    System.out.println("Artist not found.");
+                                }
+                                else{
+                                    connection.close();
+                                    sendMsg("type|nameAlreadyTaken");
+                                    System.out.println("There's already an artist with that name.");
                                 }
                             }
+                            else{
+                                PreparedStatement stmtEditName = connection.prepareStatement("UPDATE artista SET name = ? WHERE name =?;");
+                                stmtEditName.setString(1,nameAfter[1]);
+                                stmtEditName.setString(2,nameB[1]);
+                                stmtEditName.executeUpdate();
+
+                                connection.commit();
+                                connection.close();
+                                sendMsg("type|nameChanged");
+                                System.out.println("Name changed.");
+                            }
+                        }catch(org.postgresql.util.PSQLException e){
+                            System.out.println("Something went wrong.");
+                            sendMsg("type|somethingWentWrong");
+                        }
+                        break;
+                    case "type|editArtistType":
+                        connection = initConnection();
+                        connection.setAutoCommit(false);
+                        String[] NameP = aux[1].split("\\|");
+                        String[] typePart = aux[2].split("\\|");
+
+                        try{
+                            if(artistDataBaseEmpty() || getArtistIdByName(NameP[1])==0){
+                                if(artistDataBaseEmpty()){
+                                    connection.close();
+                                    sendMsg("type|artistDatabaseEmpty");
+                                    System.out.println("Artist database empty.");
+                                }
+                                else{
+                                    connection.close();
+                                    sendMsg("type|artistNotFound");
+                                    System.out.println("Artist not found.");
+                                }
+                            }
+                            else{
+                                if(typePart[1].equals("songwriter")){
+                                    PreparedStatement stmtEditType = connection.prepareStatement("UPDATE artista SET songwriter_issongwriter = true WHERE name = ?;");
+                                    stmtEditType.setString(1,NameP[1]);
+                                    stmtEditType.executeUpdate();
+                                    System.out.println("Changes applied.");
+                                    sendMsg("type|changesApplied");
+                                }
+                                else if(typePart[1].equals("composer")){
+                                    PreparedStatement stmtEditType = connection.prepareStatement("UPDATE artista SET composer_iscomposer = true WHERE name = ?;");
+                                    stmtEditType.setString(1,NameP[1]);
+                                    stmtEditType.executeUpdate();
+                                    System.out.println("Changes applied.");
+                                    sendMsg("type|changesApplied");
+                                }
+                                else if(typePart[1].equals("both")){
+                                    PreparedStatement stmtEditType = connection.prepareStatement("UPDATE artista SET composer_iscomposer = true WHERE name = ?;");
+                                    stmtEditType.setString(1,NameP[1]);
+                                    stmtEditType.executeUpdate();
+
+                                    stmtEditType = connection.prepareStatement("UPDATE artista SET songwriter_issongwriter = true WHERE name = ?;");
+                                    stmtEditType.setString(1,NameP[1]);
+                                    stmtEditType.executeUpdate();
+
+                                    connection.commit();
+                                    connection.close();
+                                    System.out.println("Changes applied.");
+                                    sendMsg("type|changesApplied");
+                                }
+                            }
+                        }catch(org.postgresql.util.PSQLException e){
+                            System.out.println("Something went wrong.");
+                            sendMsg("type|somethingWentWrong");
                         }
                         break;
                     case "type|editArtistDescription":
+                        connection = initConnection();
+                        connection.setAutoCommit(false);
                         String[] artistNamePartss = aux[1].split("\\|");
                         String[] descriptionAfterParts = aux[2].split("\\|");
-                        if(!checkArtistExists(artistNamePartss[1])){
-                            sendMsg("type|descriptionNotChanged");
-                            System.out.println("ERROR: Artist Not Found -> Description Not Changed.");
-                        }
-                        else{
-                            for(Artist a : artistsList){
-                                if(a.getName().equals(artistNamePartss[1])){
-                                    a.setDescription(descriptionAfterParts[1]);
-                                    sendMsg("type|descriptionChanged");
-                                    System.out.println("SUCCESS: Description Changed.");
+
+                        try{
+                            if(artistDataBaseEmpty() || getArtistIdByName(artistNamePartss[1])==0){
+                                if(artistDataBaseEmpty()){
+                                    connection.close();
+                                    sendMsg("type|artistDatabaseEmpty");
+                                    System.out.println("Artist database empty.");
+                                }
+                                else{
+                                    connection.close();
+                                    sendMsg("type|artistNotFound");
+                                    System.out.println("Artist not found.");
                                 }
                             }
+                            else{
+                                PreparedStatement stmtEditDesc = connection.prepareStatement("UPDATE artista SET description = ? WHERE name = ?;");
+                                stmtEditDesc.setString(1,descriptionAfterParts[1]);
+                                stmtEditDesc.setString(2,artistNamePartss[1]);
+                                stmtEditDesc.executeUpdate();
+
+                                connection.commit();
+                                connection.close();
+
+                                sendMsg("type|descriptionChanged");
+                                System.out.println("Description changed.");
+                            }
+
+                        }catch(org.postgresql.util.PSQLException e){
+                            System.out.println("Something went wrong.");
+                            sendMsg("type|somethingWentWrong");
                         }
                         break;
-                    case "type|deleteArtist":
-                        String[] nameP = aux[1].split("\\|");
-                        String name = nameP[1];
-                        if(!checkArtistExists(nameP[1])){
-                            sendMsg("type|artistNotFound");
-                            System.out.println("ERROR: Artist Not Found.");
-                        }
-                        else{
-                            int i;
-                            for(i=0;i<artistsList.size();i++){
-                                if(artistsList.get(i).getName().equals(name)){
-                                    artistsList.remove(artistsList.get(i));
-                                    sendMsg("type|deleteArtistComplete");
-                                    System.out.println("SUCCESS: Artist deleted.");
+                    case "type|editPublisherName":
+                        connection = initConnection();
+                        connection.setAutoCommit(false);
+                        String[] PNameB = aux[1].split("\\|");
+                        String[] PNameA = aux[2].split("\\|");
+
+                        try{
+                            if(publisherDataBaseEmpty() || getPublisherById(PNameB[1])==0 || getPublisherById(PNameA[1])!=0){
+                                if(publisherDataBaseEmpty()){
+                                    connection.close();
+                                    sendMsg("type|publisherDatabaseEmpty");
+                                    System.out.println("Publisher database empty.");
+                                }
+                                else if(getPublisherById(PNameB[1])==0){
+                                    connection.close();
+                                    sendMsg("type|publisherNotFound");
+                                    System.out.println("Publisher not found.");
+                                }
+                                else{
+                                    connection.close();
+                                    sendMsg("type|nameAlreadyTaken");
+                                    System.out.println("Name already taken by another publisher.");
                                 }
                             }
+                            else{
+                                PreparedStatement stmtEditPub = connection.prepareStatement("UPDATE publisher SET name = ? WHERE name = ?;");
+                                stmtEditPub.setString(1,PNameA[1]);
+                                stmtEditPub.setString(2,PNameB[1]);
+                                stmtEditPub.executeUpdate();
+
+                                connection.commit();
+                                connection.close();
+
+                                sendMsg("type|nameChanged");
+                                System.out.println("Name changed.");
+                            }
+                        }catch(org.postgresql.util.PSQLException e){
+                            System.out.println("Something went wrong.");
+                            sendMsg("type|somethingWentWrong");
                         }
                         break;
+                    case "type|editConcertName":
+                        connection = initConnection();
+                        connection.setAutoCommit(false);
+                        String[] CNameB = aux[1].split("\\|");
+                        String[] CNameA = aux[2].split("\\|");
+
+                        try{
+                            if(publisherDataBaseEmpty() || getConcertIdByName(CNameB[1])==0){
+                                if(concertDataBaseEmpty()){
+                                    connection.close();
+                                    sendMsg("type|concertDatabaseEmpty");
+                                    System.out.println("Concert database empty.");
+                                }
+                                else{
+                                    connection.close();
+                                    sendMsg("type|concertNotFound");
+                                    System.out.println("Concert not found.");
+                                }
+                            }
+                            else{
+                                PreparedStatement stmtEditPub = connection.prepareStatement("UPDATE concert SET name = ? WHERE name = ?;");
+                                stmtEditPub.setString(1,CNameA[1]);
+                                stmtEditPub.setString(2,CNameB[1]);
+                                stmtEditPub.executeUpdate();
+
+                                connection.commit();
+                                connection.close();
+
+                                sendMsg("type|nameChanged");
+                                System.out.println("Name changed.");
+                            }
+                        }catch(org.postgresql.util.PSQLException e){
+                            System.out.println("Something went wrong.");
+                            sendMsg("type|somethingWentWrong");
+                        }
+                        break;
+                    case "type|editConcertLocation":
+                        connection = initConnection();
+                        connection.setAutoCommit(false);
+                        String[] CName = aux[1].split("\\|");
+                        String[] CLocationA = aux[2].split("\\|");
+
+                        try{
+                            if(concertDataBaseEmpty() || getConcertIdByName(CName[1])==0){
+                                if(concertDataBaseEmpty()){
+                                    connection.close();
+                                    sendMsg("type|concertDatabaseEmpty");
+                                    System.out.println("Concert database empty.");
+                                }
+                                else{
+                                    connection.close();
+                                    sendMsg("type|concertNotFound");
+                                    System.out.println("Concert not found.");
+                                }
+                            }
+                            else{
+                                PreparedStatement stmtEditPub = connection.prepareStatement("UPDATE concert SET location = ? WHERE name = ?;");
+                                stmtEditPub.setString(1,CLocationA[1]);
+                                stmtEditPub.setString(2,CName[1]);
+                                stmtEditPub.executeUpdate();
+
+                                connection.commit();
+                                connection.close();
+
+                                sendMsg("type|locationChanged");
+                                System.out.println("Location changed.");
+                            }
+                        }catch(org.postgresql.util.PSQLException e){
+                            System.out.println("Something went wrong.");
+                            sendMsg("type|somethingWentWrong");
+                        }
+                        break;
+                    case "type|editConcertDescription":
+                        connection = initConnection();
+                        connection.setAutoCommit(false);
+                        String[] CN = aux[1].split("\\|");
+                        String[] CDescriptionA = aux[2].split("\\|");
+
+                        try{
+                            if(concertDataBaseEmpty() || getConcertIdByName(CN[1])==0){
+                                if(concertDataBaseEmpty()){
+                                    connection.close();
+                                    sendMsg("type|concertDatabaseEmpty");
+                                    System.out.println("Concert database empty.");
+                                }
+                                else{
+                                    connection.close();
+                                    sendMsg("type|concertNotFound");
+                                    System.out.println("Concert not found.");
+                                }
+                            }
+                            else{
+                                PreparedStatement stmtEditPub = connection.prepareStatement("UPDATE concert SET description = ? WHERE name = ?;");
+                                stmtEditPub.setString(1,CDescriptionA[1]);
+                                stmtEditPub.setString(2,CN[1]);
+                                stmtEditPub.executeUpdate();
+
+                                connection.commit();
+                                connection.close();
+
+                                sendMsg("type|descriptionChanged");
+                                System.out.println("Description changed.");
+                            }
+                        }catch(org.postgresql.util.PSQLException e){
+                            System.out.println("Something went wrong.");
+                            sendMsg("type|somethingWentWrong");
+                        }
+                        break;
+                    /*case "type|deleteArtist":
+                        ArrayList<Integer> AlbumIds = new ArrayList<>();
+                        ArrayList<Music> MusicIds = new ArrayList<>();
+                        ArrayList<Integer> ConcertIds = new ArrayList<>();
+                        connection = initConnection();
+                        connection.setAutoCommit(false);
+                        String[] naa = aux[1].split("\\|");
+                        int ArtistId = getArtistIdByName(naa[1]);
+                        AlbumIds = getArtistAlbumsIdByArtistId(ArtistId);
+                        PreparedStatement stmtDelete;
+
+                        for(int i : AlbumIds) {
+                            stmtDelete = connection.prepareStatement("DELETE FROM album WHERE id = ?;");
+                            stmtDelete.setInt(1, i);
+                            stmtDelete.executeUpdate();
+                            MusicIds = getMusicsByAlbumId(i);
+                        }
+
+                        for(Music m : MusicIds){
+                            stmtDelete = connection.prepareStatement("DELETE FROM music WHERE title = ?;");
+                            stmtDelete.setString(1, m.getTitle());
+                            stmtDelete.executeUpdate();
+                        }
+
+                        stmtDelete = connection.prepareStatement("DELETE FROM artista WHERE name = ?;");
+                        stmtDelete.setString(1,naa[1]);
+                        stmtDelete.executeUpdate();
+
+                        connection.commit();
+                        connection.close();
+                        sendMsg("type|deleteArtistComplete");
+                        System.out.println("Apagou");
+
+                        break;*/
                     case "type|showArtist":
+                        connection = initConnection();
                         String[] nameArtist = aux[1].split("\\|");
                         String n = nameArtist[1];
                         int id1 = 0;
@@ -667,106 +1006,119 @@ public class MulticastServer extends Thread implements Serializable {
 
                         PreparedStatement stmt = null;
                         try {
-                            connection.setAutoCommit(false);
-                            System.out.println("Opened database successfully");
-                            String partialSearch = "%"+n+"%";
-                            stmt = connection.prepareStatement("SELECT * FROM artista WHERE name LIKE ?");
-                            stmt.setString(1,partialSearch);
-                            ResultSet rs = stmt.executeQuery();
-                            while (rs.next()) {
-                                id1 = rs.getInt("id");
-                                name1 = rs.getString("name");
-                                description1 = rs.getString("description");
-                                isMusician = rs.getBoolean("musician_ismusician");
-                                isBand = rs.getBoolean("band_isband");
-                                isSongwriter = rs.getBoolean("songwriter_issongwriter");
-                                isComposer = rs.getBoolean("composer_iscomposer");
-                                if(name1.equals(n)){
-                                    partialS = 1;
-                                }
-                                else{
-                                    partial.add(name1);
-                                }
+                            if(artistDataBaseEmpty()){
+                                connection.close();
+                                sendMsg("type|artistDatabaseEmpty");
+                                System.out.println("Artists database empty.");
                             }
-                            System.out.println(partialS);
-                            if(partialS == 0){
-                                if(partial.isEmpty()){
-                                    sendMsg("type|noMatchesFound");
+                            else{
+                                connection.setAutoCommit(false);
+                                System.out.println("Opened database successfully");
+                                String partialSearch = "%"+n+"%";
+                                stmt = connection.prepareStatement("SELECT * FROM artista WHERE name LIKE ?");
+                                stmt.setString(1,partialSearch);
+                                ResultSet rs = stmt.executeQuery();
+                                while (rs.next()) {
+                                    id1 = rs.getInt("id");
+                                    name1 = rs.getString("name");
+                                    description1 = rs.getString("description");
+                                    isMusician = rs.getBoolean("musician_ismusician");
+                                    isBand = rs.getBoolean("band_isband");
+                                    isSongwriter = rs.getBoolean("songwriter_issongwriter");
+                                    isComposer = rs.getBoolean("composer_iscomposer");
+                                    if(name1.equals(n)){
+                                        partialS = 1;
+                                    }
+                                    else{
+                                        partial.add(name1);
+                                    }
                                 }
-                                else{
-                                    sendMsg("type|partialSearchComplete;Found|"+printAlbuns(partial));
-                                    System.out.println("Partial search returned.");
+                                System.out.println(partialS);
+                                if(partialS == 0){
+                                    if(partial.isEmpty()){
+                                        sendMsg("type|noMatchesFound");
+                                    }
+                                    else{
+                                        sendMsg("type|partialSearchComplete;Found|"+printAlbuns(partial));
+                                        System.out.println("Partial search returned.");
+                                    }
+
                                 }
 
-                            }
-
-                            stmt = connection.prepareStatement("SELECT * FROM artista_album WHERE artista_id = ?;");
-                            stmt.setInt(1,id1);
-                            rs = stmt.executeQuery();
-                            while(rs.next()){
-                                int albid = rs.getInt("album_id");
-                                albIds.add(albid);
-                            }
+                                albIds = getArtistAlbumsIdByArtistId(id1);
 
 
-                            for(Integer ID : albIds){
-                                stmt = connection.prepareStatement("SELECT * FROM album WHERE id = ?;");
-                                stmt.setInt(1, ID);
-                                rs = stmt.executeQuery();
+                                for(Integer ID : albIds){
+                                    stmt = connection.prepareStatement("SELECT * FROM album WHERE id = ?;");
+                                    stmt.setInt(1, ID);
+                                    rs = stmt.executeQuery();
 
-                                while(rs.next()){
-                                    albNames.add(rs.getString("name"));
+                                    while(rs.next()){
+                                        albNames.add(rs.getString("name"));
+                                    }
                                 }
+
+                                rs.close();
+                                stmt.close();
+                                connection.close();
+
+                                System.out.println("Operation done successfully");
+                                sendMsg("type|notPartialSearchComplete;Name|"+name1+";Description|"+description1+";Functions|"+printFunctions(isMusician,isBand,isSongwriter,isComposer)+";Albums|"+printAlbuns(albNames));
                             }
-
-                            rs.close();
-                            stmt.close();
-
-                            System.out.println("Operation done successfully");
-                            sendMsg("type|notPartialSearchComplete;Name|"+name1+";Description|"+description1+";Functions|"+printFunctions(isMusician,isBand,isSongwriter,isComposer)+";Albums|"+printAlbuns(albNames));
                         } catch ( Exception e ) {
                             System.err.println( e.getClass().getName()+": "+ e.getMessage() );
                             System.exit(0);
                         }
                         break;
                     case "type|showArtistAlbums":
+                        connection = initConnection();
                         ArrayList<Integer> album_ids = new ArrayList<>();
                         ArrayList<String> album_names = new ArrayList<>();
                         String[] nameA = aux[1].split("\\|");
                         String nA = nameA[1];
-                        //proteção de db vazia
                         try{
-                            PreparedStatement stmtShowArtistAlbum = connection.prepareStatement("SELECT * FROM artista_album WHERE artista_id = ?;");
-                            stmtShowArtistAlbum.setInt(1,getArtistIdByName(nA));
-
-                            ResultSet res = stmtShowArtistAlbum.executeQuery();
-                            while(res.next()){
-                                album_ids.add(res.getInt("album_id"));
+                            if(artistDataBaseEmpty()){
+                                connection.close();
+                                sendMsg("type|artistDatabaseEmpty");
+                                System.out.println("Artist database empty.");
                             }
+                            else{
+                                PreparedStatement stmtShowArtistAlbum = connection.prepareStatement("SELECT * FROM artista_album WHERE artista_id = ?;");
+                                stmtShowArtistAlbum.setInt(1,getArtistIdByName(nA));
 
-                            for(Integer i : album_ids){
-                                stmtShowArtistAlbum = connection.prepareStatement("SELECT * FROM album WHERE id = ?;");
-                                stmtShowArtistAlbum.setInt(1, i);
-                                res = stmtShowArtistAlbum.executeQuery();
-
+                                ResultSet res = stmtShowArtistAlbum.executeQuery();
                                 while(res.next()){
-                                    album_names.add(res.getString("name"));
+                                    album_ids.add(res.getInt("album_id"));
                                 }
+
+                                for(Integer i : album_ids){
+                                    stmtShowArtistAlbum = connection.prepareStatement("SELECT * FROM album WHERE id = ?;");
+                                    stmtShowArtistAlbum.setInt(1, i);
+                                    res = stmtShowArtistAlbum.executeQuery();
+
+                                    while(res.next()){
+                                        album_names.add(res.getString("name"));
+                                    }
+                                }
+
+                                connection.close();
+                                sendMsg("type|showArtistAlbumsComplete;Albums|"+printAlbuns(album_names));
                             }
-                            sendMsg("type|showArtistAlbumsComplete;Albums|"+printAlbuns(album_names));
                         }
                         catch (org.postgresql.util.PSQLException e){
-                            sendMsg("type|showArtistAlbumsFailed");
+                            sendMsg("type|somethingWentWrong");
                             System.out.println(e.getMessage());
                         }
                         break;
                     case "type|makeCritic":
+                        connection = initConnection();
                         String[] scoreParts = aux[1].split("\\|");
                         String[] textParts = aux[2].split("\\|");
                         String[] albName = aux[3].split("\\|");
                         String[] userId = aux[4].split("\\|");
 
                         if(albumDatabaseEmpty()){
+                            connection.close();
                             sendMsg("type|makeCriticFail");
                             System.out.println("ERROR: No Albuns in the database.");
                         }
@@ -775,6 +1127,16 @@ public class MulticastServer extends Thread implements Serializable {
 
                             try{
                                 int albumId = getAlbumIdByName(albName[1]);
+                                if(albumId == 0 || albumDatabaseEmpty()){
+                                    if(albumId==0){
+                                        sendMsg("type|albumNotFound");
+                                        System.out.println("Album not found.");
+                                    }
+                                    else{
+                                        sendMsg("type|albumDatabaseEmpty");
+                                        System.out.println("Album database empty.");
+                                    }
+                                }
                                 connection.setAutoCommit(false);
                                 stmtCritic = connection.prepareStatement("INSERT INTO critic(id, score, text, album_id, utilizador_id) "
                                                 + "VALUES(DEFAULT,?,?,?,?);");
@@ -785,17 +1147,20 @@ public class MulticastServer extends Thread implements Serializable {
                                 stmtCritic.executeUpdate();
                                 stmtCritic.close();
                                 connection.commit();
+                                connection.close();
                                 sendMsg("type|criticComplete");
                             }catch(org.postgresql.util.PSQLException e){
-                                sendMsg("type|criticFail");
+                                sendMsg("type|somethingWentWrong");
                                 System.out.println("Something went wrong.");
                             }
                         }
                         break;
                     case "type|showAlbum":
+                        connection = initConnection();
                         String[] albuName = aux[1].split("\\|");
                         Album album = new Album();
                         if(albumDatabaseEmpty()){
+                            connection.close();
                             sendMsg("type|showAlbumFailed");
                             System.out.println("ERROR: No albuns on database.");
                         }
@@ -863,14 +1228,15 @@ public class MulticastServer extends Thread implements Serializable {
                                 musicsList = getMusicsByAlbumId(id);
                                 scoreFinal = calculateScore(criticsList);
 
+                                connection.close();
 
+                                sendMsg("type|notPartialSearchAlbumComplete" + ";AlbumName|" + nome +";ArtistName|"+artistName
+                                        + ";Description|"+description+";Length|"+length+";Genre|"+genre+";ScoreFinal|"+scoreFinal
+                                        +";CriticsList|"+printCritics(criticsList)+";MusicsList|"+printMusics(musicsList)+";Publisher|"+publisherN);
                             }catch(org.postgresql.util.PSQLException e){
                                 System.out.println("except");
                                 sendMsg("type|showAlbumFailed");
                             }
-                            sendMsg("type|notPartialSearchAlbumComplete" + ";AlbumName|" + nome +";ArtistName|"+artistName
-                        + ";Description|"+description+";Length|"+length+";Genre|"+genre+";ScoreFinal|"+scoreFinal
-                            +";CriticsList|"+printCritics(criticsList)+";MusicsList|"+printMusics(musicsList)+";Publisher|"+publisherN);
                         }
                         break;
                     default:
@@ -885,12 +1251,129 @@ public class MulticastServer extends Thread implements Serializable {
         }
     }
 
-    private void initConnection() {
+    private ArrayList<Integer> getArtistAlbumsIdByArtistId(int id1) {
+        ArrayList<Integer> albIds = new ArrayList<>();
+        try{
+            PreparedStatement stmt = connection.prepareStatement("SELECT * FROM artista_album WHERE artista_id = ?;");
+            stmt.setInt(1,id1);
+            ResultSet rs = stmt.executeQuery();
+            while(rs.next()){
+                int albid = rs.getInt("album_id");
+                albIds.add(albid);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return albIds;
+    }
+
+    private boolean concertDataBaseEmpty() {
+        try{
+            Statement stmt = connection.createStatement();
+            ResultSet rs = stmt.executeQuery("SELECT * FROM concert");
+            return !rs.next();
+        }
+        catch (org.postgresql.util.PSQLException e){
+            System.out.println(e.getMessage());
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    private boolean publisherDataBaseEmpty() {
+        try{
+            Statement stmt = connection.createStatement();
+            ResultSet rs = stmt.executeQuery("SELECT * FROM publisher");
+            return !rs.next();
+        }
+        catch (org.postgresql.util.PSQLException e){
+            System.out.println(e.getMessage());
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    private boolean artistDataBaseEmpty() {
+        try{
+            Statement stmt = connection.createStatement();
+            ResultSet rs = stmt.executeQuery("SELECT * FROM artista");
+            return !rs.next();
+        }
+        catch (org.postgresql.util.PSQLException e){
+            System.out.println(e.getMessage());
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    private int checkIfSongwriterValid(String sPart) {
+            try{
+                boolean isSongwriter = false;
+                PreparedStatement stmt = connection.prepareStatement("SELECT * FROM artista WHERE name =?;");
+                stmt.setString(1,sPart);
+                ResultSet rs = stmt.executeQuery();
+
+                if(checkArtistExists(sPart)==1){
+                    while(rs.next()){
+                        isSongwriter = rs.getBoolean("songwriter_issongwriter");
+                    }
+
+                    if(isSongwriter){
+                        return 1;
+                    }
+                    else{
+                        return 2;
+                    }
+                }
+                else{
+                    return 0;
+                }
+            } catch (SQLException e) {
+                System.out.println(e.getSQLState());
+            }
+        return -1;
+    }
+
+    private int checkIfComposerValid(String composerPart) {
+        try{
+            boolean isComposer = false;
+            PreparedStatement stmt = connection.prepareStatement("SELECT * FROM artista WHERE name =?;");
+            stmt.setString(1,composerPart);
+            ResultSet rs = stmt.executeQuery();
+
+            if(checkArtistExists(composerPart)==1){
+                while(rs.next()){
+                    isComposer = rs.getBoolean("composer_iscomposer");
+                }
+
+                if(isComposer){
+                    return 1;
+                }
+                else{
+                    return 2;
+                }
+            }
+            else{
+                return 0;
+            }
+        } catch (SQLException e) {
+            System.out.println(e.getSQLState());
+        }
+        return -1;
+    }
+
+    private Connection initConnection() {
         try{
             connection = DriverManager.getConnection("jdbc:postgresql://localhost:5432/BD/SD","postgres", "fabiogc1998");
         } catch (SQLException e) {
             e.printStackTrace();
         }
+
+        return connection;
     }
 
     private int checkDuplicatedUpload(int loggedUser, String title) {
@@ -917,7 +1400,7 @@ public class MulticastServer extends Thread implements Serializable {
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            System.out.println(e.getSQLState());
         }
         return -1;
     }
@@ -1424,6 +1907,7 @@ public class MulticastServer extends Thread implements Serializable {
 
 
     private void makeEditor(String username) throws SQLException {
+        connection = initConnection();
         connection.setAutoCommit(false);
         PreparedStatement stmt = connection.prepareStatement("UPDATE utilizador SET iseditor = true WHERE username = ?");
         stmt.setString(1,username);
@@ -1431,6 +1915,7 @@ public class MulticastServer extends Thread implements Serializable {
 
         stmt.close();
         connection.commit();
+        connection.close();
     }
 
     ////////////// DOWNLOAD E UPLOAD /////////////
@@ -1478,25 +1963,19 @@ public class MulticastServer extends Thread implements Serializable {
 
     private void receiveMusic(Socket socket, String musicName) throws IOException {
         byte[] b= new byte[1024];
-        System.out.println("1");
         InputStream is = socket.getInputStream();
-        System.out.println("2");
         FileOutputStream fOutStream = new FileOutputStream("./musicasServer/" + musicName);
-        System.out.println("3");
         BufferedOutputStream bOutStream = new BufferedOutputStream(fOutStream);
 
         int aux= 0;
         int cont= 0;
-        System.out.println("4");
         while ((aux = is.read(b))!=-1){
             System.out.println(cont++);
             bOutStream.write(b, 0, aux);
-            System.out.println("4.1");
             if(is.available()==0){
                 break;
             }
         }
-        System.out.println("5");
         bOutStream.flush();
         socket.close();
 
@@ -1520,6 +1999,7 @@ public class MulticastServer extends Thread implements Serializable {
     }
     ////////////// FUNÇOES AUXILIAR /////////////
     private boolean userDatabaseEmpty() throws SQLException {
+        connection = initConnection();
         try{
             Statement stmt = connection.createStatement();
             ResultSet rs = stmt.executeQuery("SELECT * FROM utilizador");
@@ -1531,6 +2011,7 @@ public class MulticastServer extends Thread implements Serializable {
     }
 
     private boolean albumDatabaseEmpty() throws SQLException {
+        connection = initConnection();
         try{
             Statement stmt = connection.createStatement();
             ResultSet rs = stmt.executeQuery("SELECT * FROM album");
@@ -1541,25 +2022,8 @@ public class MulticastServer extends Thread implements Serializable {
         }
     }
 
-    private User returnsUser(String username){
-        for(User u : usersList){
-            if(u.getUsername().trim().equals(username)){
-                return u;
-            }
-        }
-        return null;
-    }
-
-    private Artist returnsArtist(String artistName){
-        for(Artist artist : artistsList){
-            if(artist.getName().trim().equals(artistName)){
-                return artist;
-            }
-        }
-        return null;
-    }
-
     public User checkUsernameLogin(String username, String password){
+        connection = initConnection();
         PreparedStatement stmt = null;
         try {
             String userDB="",passDB="";
@@ -1591,6 +2055,7 @@ public class MulticastServer extends Thread implements Serializable {
     }
 
     public int checkUsernameRegister(String username){
+        connection = initConnection();
         try{
             PreparedStatement stmt = connection.prepareStatement("SELECT * FROM utilizador WHERE username = ?;");
             stmt.setString(1,username);
@@ -1607,38 +2072,61 @@ public class MulticastServer extends Thread implements Serializable {
         return 0;
     }
 
-    public boolean checkArtistExists(String name){
-        if(artistsList.isEmpty()){
-            return false;
-        }
-        else {
-            for (Artist artist : artistsList) {
-                if (artist.getName().equals(name)) {
-                    return true;
-                }
+    public int checkArtistExists(String name){
+        connection = initConnection();
+        try{
+            PreparedStatement stmt = connection.prepareStatement("SELECT * FROM artista WHERE name = ?;");
+            stmt.setString(1,name);
+            ResultSet rs = stmt.executeQuery();
+            if(rs.next()){
+                return 1;
             }
+            else{
+                return 0;
+            }
+        } catch (SQLException e) {
+            System.out.println("Something went wrong verifying if exists.");
         }
-        return false;
+        return -1;
     }
 
-    public boolean checkMusicExists(String name,String artistName){
-        if(musicsList.isEmpty()){
-            return false;
-        }
-        else {
-            for (Music music : musicsList) {
-                if (music.getTitle().equals(name)){
-                    /*if(music.getArtist().equals(artistName)){
-                        return true;
-                    }*/
-                }
+    public int checkAlbumExists(String name){
+        connection = initConnection();
+        try{
+            PreparedStatement stmt = connection.prepareStatement("SELECT * FROM album WHERE name = ?;");
+            stmt.setString(1,name);
+            ResultSet rs = stmt.executeQuery();
+
+            if(rs.next()){
+                return 1;
             }
+            else{
+                return 0;
+            }
+
+        } catch (SQLException e) {
+            System.out.println(e.getSQLState());
         }
-        return false;
+        return -1;
     }
 
-    public boolean checkAlbumExists(String name, String artist){
-        //Album a = getAlbumByName();
-        return false;
+    public int checkPublisherExists(String name){
+        connection = initConnection();
+        try{
+            PreparedStatement stmt = connection.prepareStatement("SELECT * FROM publisher WHERE name = ?;");
+            stmt.setString(1,name);
+            ResultSet rs = stmt.executeQuery();
+
+            if(rs.next()){
+                return 1;
+            }
+            else{
+                return 0;
+            }
+
+        } catch (SQLException e) {
+            System.out.println(e.getSQLState());
+        }
+        return -1;
     }
 }
