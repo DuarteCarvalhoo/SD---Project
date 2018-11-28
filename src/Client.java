@@ -632,7 +632,7 @@ public class Client extends UnicastRemoteObject implements ClientHello{
 
             ////////////// MENU DE EDITAR COM AS SUAS FUNÇÕES/////////////
     public static void editMenu(Hello rmi, Scanner reader) throws RemoteException{
-        System.out.println("What do you want to edit: Artist, Music, Album?");
+        System.out.println("What do you want to edit: Artist, Album, Concert, Playlist, Publisher, ?");
         String response = reader.nextLine();
         switch(response.trim()){
             case "/artist":
@@ -650,14 +650,14 @@ public class Client extends UnicastRemoteObject implements ClientHello{
     }
 
     public static void editArtist(Hello rmi,Scanner reader) throws RemoteException{
-        System.out.println("What do you wanna change: Name, Genre, Description");
+        System.out.println("What do you wanna change: Name, Type, Description");
         String text = reader.nextLine();
         switch(text.trim()){
             case "/name":
                 editName(rmi,reader);
                 break;
-            case "/genre":
-                editGenre(rmi,reader);
+            case "/type":
+                editType(rmi,reader);
                 break;
             case "/description":
                 editDescription(rmi,reader);
@@ -697,19 +697,26 @@ public class Client extends UnicastRemoteObject implements ClientHello{
             case "type|nameChanged":
                 System.out.println("Name changed.");
                 break;
-            case "type|nameNotChanged":
-                System.out.println("Name not changed.");
+            case "type|artistDatabaseEmpty":
+                System.out.println("No artists on the database.");
+                break;
+            case "type|artistNotFound":
+                System.out.println("Artist not found.");
+                break;
+            case "type|nameAlreadyTaken":
+                System.out.println("Name already taken by another artist.");
                 break;
             default:
-                //something();
+                System.out.println("Something went wrong.");
+                break;
         }
     }
 
-    public static void editGenre(Hello rmi,Scanner reader) throws RemoteException{
+    public static void editType(Hello rmi,Scanner reader) throws RemoteException{
         System.out.println("Which artist you wanna change? ");
         boolean flagOK = false;
         String artist = "";
-        String genreAfter="";
+        String typeAfter="";
         while(!flagOK) {
             artist = reader.nextLine();
             if (!artist.trim().equals("")){
@@ -719,27 +726,31 @@ public class Client extends UnicastRemoteObject implements ClientHello{
                 System.out.println("Which artist you wanna change? ");
             }
         }
-        System.out.println("To what music genre you wanna change it? ");
+        System.out.println("To what musician type (Songwriter, Composer) you wanna change it? ");//Options -> songwriter, composer and both
         flagOK = false;
         while(!flagOK) {
-            genreAfter = reader.nextLine();
-            if (!genreAfter.trim().equals("")){
+            typeAfter = reader.nextLine();
+            if (typeAfter.trim().equals("songwriter") || typeAfter.trim().equals("composer") || typeAfter.trim().equals("both")){
                 flagOK = true;
             }
             else{
-                System.out.println("To what music genre you wanna change it? ");
+                System.out.println("To what musician type (Songwriter, Composer) you wanna change it? ");//Options -> songwriter, composer and both
             }
         }
-        String response = rmi.editArtistGenre(artist,genreAfter);
+        String response = rmi.editArtistType(artist,typeAfter);
         switch(response.trim()){
-            case "type|genreChanged":
-                System.out.println("Genre changed.");
+            case "type|changesApplied":
+                System.out.println("Type changed.");
                 break;
-            case "type|genreNotChanged":
-                System.out.println("Genre not changed.");
+            case "type|artistDatabaseEmpty":
+                System.out.println("No artists on the database.");
+                break;
+            case "type|artistNotFound":
+                System.out.println("Artist not found.");
                 break;
             default:
-                //something();
+                System.out.println("Something went wrong.");
+                break;
         }
     }
 
@@ -768,20 +779,21 @@ public class Client extends UnicastRemoteObject implements ClientHello{
                 System.out.println("To what description you wanna change it? ");
             }
         }
-        /*System.out.println("Which artist you wanna change? ");
-        String artist = reader.nextLine();
-        System.out.println("To what description you wanna change it? ");
-        String description = reader.nextLine();*/
+
         String response = rmi.editArtistDescription(artist,description);
         switch(response.trim()){
             case "type|descriptionChanged":
                 System.out.println("Description changed.");
                 break;
-            case "type|descriptionNotChanged":
-                System.out.println("Description not changed.");
+            case "type|artistDatabaseEmpty":
+                System.out.println("No artists on the database.");
+                break;
+            case "type|artistNotFound":
+                System.out.println("Artist not found.");
                 break;
             default:
-                //something();
+                System.out.println("Something went wrong.");
+                break;
         }
     }
 

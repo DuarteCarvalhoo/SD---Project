@@ -347,14 +347,14 @@ public class Server implements Hello {
         return null;
     }
 
-    public String editArtistGenre(String name, String newGenre){
+    public String editArtistType(String name, String newGenre){
         MulticastSocket socket = null;
         //envia para o multicast
         try {
             socket = new MulticastSocket();
             InetAddress group = InetAddress.getByName(MULTICAST_ADDRESS);
             socket.joinGroup(group);
-            String aux = "type|editArtistGenre;Name|"+name+";genreAfter|"+newGenre; //protocol
+            String aux = "type|editArtistType;Name|"+name+";typeAfter|"+newGenre; //protocol
             byte[] buffer = aux.getBytes();
             DatagramPacket packet = new DatagramPacket(buffer, buffer.length, group, PORT);
             socket.send(packet);
