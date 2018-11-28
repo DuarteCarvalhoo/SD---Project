@@ -810,9 +810,122 @@ public class Client extends UnicastRemoteObject implements ClientHello{
             case "/concert":
                 editConcert(rmi,reader);
                 break;
+            case "/playlist":
+                editPlaylist(rmi,reader);
             default:
                 //Something;
         }
+    }
+
+    private static void editPlaylist(Hello rmi, Scanner reader) throws RemoteException {
+        System.out.println("What do you want to do: Change name, Add Music, Remove Music");
+        String reposta = reader.nextLine();
+        switch (reposta){
+            case "/name":
+                changePlaylistName(rmi,reader);
+                break;
+            case "/addmusic":
+                playlistAdd(rmi,reader);
+                break;
+            case "/removemusic":
+                break;
+        }
+    }
+
+    private static void playlistAdd(Hello rmi, Scanner reader) throws RemoteException {
+        ArrayList<Music> musicsList = new ArrayList<>();
+        String music ="";
+        String playlist="";
+        boolean flagOK = false;
+        System.out.println("Which music you wanna add?");
+        String response = rmi.getMusicList(loggedUser.getId());
+        String[] rSplit = response.split(";");
+        String[] musicParts = rSplit[1].split("\\|");
+        musicsList = createMusicsList(musicParts[1].split(","));
+        int i = 1;
+        for (Music m : musicsList) {
+            System.out.println(i+". "+m.toString());
+            i++;
+        }
+
+        while(!flagOK){
+            music = reader.nextLine();
+            if(!music.trim().equals("")){
+                flagOK=true;
+            }
+            else{
+                System.out.println("Which music you wanna add?");
+            }
+        }
+
+        flagOK = false;
+        System.out.println("To what playlist you wanna add?");
+        while(!flagOK){
+            playlist = reader.nextLine();
+            if(!playlist.trim().equals("")){
+                flagOK=true;
+            }
+            else{
+                System.out.println("To what playlist you wanna add?");
+            }
+        }
+        String resposta = rmi.addMusicPlaylist(music,playlist,loggedUser.getId());
+        switch (resposta){
+            case "type|musicAddCompleted":
+                System.out.println("Music shared.");
+                break;
+            case "type|invalidMusic":
+                System.out.println("Insert a valid music.");
+                break;
+            case "type|invalidPlaylist":
+                System.out.println("Insert a valid playlist.");
+                break;
+            default:
+                System.out.println("Something went wrong.");
+                break;
+        }
+    }
+
+    private static void changePlaylistName(Hello rmi, Scanner reader) throws RemoteException {
+            System.out.println("Which playlist do you wanna change? ");
+            boolean flagOK = false;
+            String playlist = "";
+            String nameAfter="";
+            while(!flagOK) {
+                playlist = reader.nextLine();
+                if (!playlist.trim().equals("")){
+                    flagOK = true;
+                }
+                else{
+                    System.out.println("Which playlist do you wanna change? ");
+                }
+            }
+            System.out.println("To what name you wanna change it? ");
+            flagOK = false;
+            while(!flagOK) {
+                nameAfter = reader.nextLine();
+                if (!nameAfter.trim().equals("")){
+                    flagOK = true;
+                }
+                else{
+                    System.out.println("To what name you wanna change it? ");
+                }
+            }
+            String response = rmi.editPlaylistName(playlist,nameAfter);
+            switch(response.trim()){
+                case "type|nameChanged":
+                    System.out.println("Name changed.");
+                    break;
+                case "type|playlistDatabaseEmpty":
+                    System.out.println("No playlists on the database.");
+                    break;
+                case "type|playlistNotFound":
+                    System.out.println("Playlist not found.");
+                    break;
+                default:
+                    System.out.println("Something went wrong.");
+                    break;
+            }
     }
 
     private static void editConcert(Hello rmi, Scanner reader) throws RemoteException {
@@ -1185,7 +1298,7 @@ public class Client extends UnicastRemoteObject implements ClientHello{
 
     public static void createArtist(Hello rmi,Scanner reader) throws RemoteException{
         boolean isComposer = false, isSongwriter = false, isBand = false;
-        System.out.println("Is the new artist a Songwriter, a Composer or a Group? (Yes-Yes-Yes means all)");
+        System.out.println("Is the new artist a Musician, Songwriter, a Composer or a Group? (Yes/no camps)");
         String response = reader.nextLine();
         String[] responseSplit = response.split("-");
         if(responseSplit[0].equals("yes")){

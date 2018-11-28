@@ -307,6 +307,7 @@ public class MulticastServer extends Thread implements Serializable {
                         }
                         break;
                     case "type|getMusicsList":
+                        connection = initConnection();
                         String[] userParts = aux[1].split("\\|");
                         ArrayList<Music> UploadedMusics;
 
@@ -846,6 +847,84 @@ public class MulticastServer extends Thread implements Serializable {
                             sendMsg("type|somethingWentWrong");
                         }
                         break;
+                    case "type|addMusicPlaylist":
+                        String[] playlist = aux[1].split("\\|");
+                        String[] music = aux[2].split("\\|");
+                        String[] userIds = aux[3].split("\\|");
+
+                        connection = initConnection();
+                        connection.setAutoCommit(false);
+
+                        try{
+                            if(playlistDataBaseEmpty() || getPlaylistIdByName(playlist[1])==0){
+                                if(playlistDataBaseEmpty()){
+                                    connection.close();
+                                    sendMsg("type|playlistDatabaseEmpty");
+                                    System.out.println("Playlist database empty.");
+                                }
+                                else{
+                                    connection.close();
+                                    sendMsg("type|playlistNotFound");
+                                    System.out.println("Playlist not found.");
+                                }
+                            }
+                            else{
+                                int musicI = getMusicIdByName(music[1]);
+                                int playId = getPlaylistIdByName(playlist[1]);
+
+                                PreparedStatement stmtAddMusic = connection.prepareStatement("INSERT INTO playlist_music(playlist_id, playlist_utilizador_id, music_id)"
+                                        +"VALUES(?,?,?)");
+                                stmtAddMusic.setInt(1,playId);
+                                stmtAddMusic.setInt(2,Integer.parseInt(userIds[1]));
+                                stmtAddMusic.setInt(3,musicI);
+                                stmtAddMusic.executeUpdate();
+
+
+                                connection.commit();
+                                connection.close();
+                                sendMsg("type|musicAddCompleted");
+                            }
+                        }catch(org.postgresql.util.PSQLException e){
+                            System.out.println("Something went wrong.");
+                            sendMsg("type|somethingWentWrong");
+                        }
+                        break;
+                    case "type|editPlaylistName":
+                        connection = initConnection();
+                        connection.setAutoCommit(false);
+                        String[] PlNameB = aux[1].split("\\|");
+                        String[] PlNameA = aux[2].split("\\|");
+
+                        try{
+                            if(playlistDataBaseEmpty() || getPlaylistIdByName(PlNameB[1])==0){
+                                if(playlistDataBaseEmpty()){
+                                    connection.close();
+                                    sendMsg("type|playlistDatabaseEmpty");
+                                    System.out.println("Playlist database empty.");
+                                }
+                                else{
+                                    connection.close();
+                                    sendMsg("type|playlistNotFound");
+                                    System.out.println("Playlist not found.");
+                                }
+                            }
+                            else{
+                                PreparedStatement stmtEditPub = connection.prepareStatement("UPDATE playlist SET name = ? WHERE name = ?;");
+                                stmtEditPub.setString(1,PlNameA[1]);
+                                stmtEditPub.setString(2,PlNameB[1]);
+                                stmtEditPub.executeUpdate();
+
+                                connection.commit();
+                                connection.close();
+
+                                sendMsg("type|nameChanged");
+                                System.out.println("Name changed.");
+                            }
+                        }catch(org.postgresql.util.PSQLException e){
+                            System.out.println("Something went wrong.");
+                            sendMsg("type|somethingWentWrong");
+                        }
+                        break;
                     case "type|editConcertName":
                         connection = initConnection();
                         connection.setAutoCommit(false);
@@ -853,7 +932,7 @@ public class MulticastServer extends Thread implements Serializable {
                         String[] CNameA = aux[2].split("\\|");
 
                         try{
-                            if(publisherDataBaseEmpty() || getConcertIdByName(CNameB[1])==0){
+                            if(concertDataBaseEmpty() || getConcertIdByName(CNameB[1])==0){
                                 if(concertDataBaseEmpty()){
                                     connection.close();
                                     sendMsg("type|concertDatabaseEmpty");
@@ -1416,6 +1495,38 @@ public class MulticastServer extends Thread implements Serializable {
         } finally {
             socket.close();
         }
+    }
+
+    private int getPlaylistIdByName(String s) {
+        try{
+            connection.setAutoCommit(false);
+            PreparedStatement stmt = connection.prepareStatement("SELECT * FROM playlist WHERE name = ?;");
+            stmt.setString(1,s);
+            ResultSet rs = stmt.executeQuery();
+
+            int playListId = 0;
+            while(rs.next()){
+                playListId = rs.getInt("id");
+            }
+            return playListId;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return 0;
+    }
+
+    private boolean playlistDataBaseEmpty() {
+        try{
+            Statement stmt = connection.createStatement();
+            ResultSet rs = stmt.executeQuery("SELECT * FROM playlist");
+            return !rs.next();
+        }
+        catch (org.postgresql.util.PSQLException e){
+            System.out.println(e.getMessage());
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
     }
 
     private String getArtistNameByMusicId(int mId) {
