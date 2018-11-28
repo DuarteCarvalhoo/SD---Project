@@ -147,10 +147,9 @@ public class MulticastServer extends Thread implements Serializable {
                             String[] durationParts = aux[6].split("\\|");
                             String[] albumParts = aux[7].split("\\|");
 
-                            connection.setAutoCommit(false);
+                            connection.setAutoCommit(false); // + " " +
                             PreparedStatement stmtUpload = null;
-                            System.out.println(checkDuplicatedUpload(Integer.parseInt(loggedUserParts[1]),titleParts[1]));
-                            if( checkDuplicatedUpload(Integer.parseInt(loggedUserParts[1]),titleParts[1])!=0 || checkArtistExists(artistParts[1]) != 1 || checkIfSongwriterValid(sParts[1]) != 1 || checkIfComposerValid(composerParts[1]) != 1 || checkAlbumExists(albumParts[1]) != 1){
+                            if( checkDuplicatedUpload(Integer.parseInt(loggedUserParts[1]),titleParts[1])==1 || checkArtistExists(artistParts[1]) != 1 || checkIfSongwriterValid(sParts[1]) != 1 || checkIfComposerValid(composerParts[1]) != 1 || checkAlbumExists(albumParts[1]) != 1){
                                 if(checkDuplicatedUpload(Integer.parseInt(loggedUserParts[1]),titleParts[1]) == 1){
                                     sendMsg("type|duplicatedUpload");
                                     System.out.println("Music already uploaded.");
@@ -186,9 +185,8 @@ public class MulticastServer extends Thread implements Serializable {
                                     System.out.println("Album not found.");
                                 }
                                 else{
-                                    connection.close();
+                                    System.out.println(checkDuplicatedUpload(Integer.parseInt(loggedUserParts[1]),titleParts[1]) + " " + checkArtistExists(artistParts[1]) + " " + checkIfSongwriterValid(sParts[1]) + " " + checkIfComposerValid(composerParts[1]) + " " + checkAlbumExists(albumParts[1]));
                                     sendMsg("type|somethingWentWrong");
-                                    System.out.println("Something went wrong.");
                                 }
                             }
                             else if(checkDuplicatedUpload(Integer.parseInt(loggedUserParts[1]),titleParts[1])==0){
@@ -956,24 +954,40 @@ public class MulticastServer extends Thread implements Serializable {
                             sendMsg("type|somethingWentWrong");
                         }
                         break;
-                    case "type|deleteArtist":
-                        /*String[] nameP = aux[1].split("\\|");
-                        String name = nameP[1];
-                        if(!checkArtistExists(nameP[1])){
-                            sendMsg("type|artistNotFound");
-                            System.out.println("ERROR: Artist Not Found.");
+                    /*case "type|deleteArtist":
+                        ArrayList<Integer> AlbumIds = new ArrayList<>();
+                        ArrayList<Music> MusicIds = new ArrayList<>();
+                        ArrayList<Integer> ConcertIds = new ArrayList<>();
+                        connection = initConnection();
+                        connection.setAutoCommit(false);
+                        String[] naa = aux[1].split("\\|");
+                        int ArtistId = getArtistIdByName(naa[1]);
+                        AlbumIds = getArtistAlbumsIdByArtistId(ArtistId);
+                        PreparedStatement stmtDelete;
+
+                        for(int i : AlbumIds) {
+                            stmtDelete = connection.prepareStatement("DELETE FROM album WHERE id = ?;");
+                            stmtDelete.setInt(1, i);
+                            stmtDelete.executeUpdate();
+                            MusicIds = getMusicsByAlbumId(i);
                         }
-                        else{
-                            int i;
-                            for(i=0;i<artistsList.size();i++){
-                                if(artistsList.get(i).getName().equals(name)){
-                                    artistsList.remove(artistsList.get(i));
-                                    sendMsg("type|deleteArtistComplete");
-                                    System.out.println("SUCCESS: Artist deleted.");
-                                }
-                            }
-                        }*/
-                        break;
+
+                        for(Music m : MusicIds){
+                            stmtDelete = connection.prepareStatement("DELETE FROM music WHERE title = ?;");
+                            stmtDelete.setString(1, m.getTitle());
+                            stmtDelete.executeUpdate();
+                        }
+
+                        stmtDelete = connection.prepareStatement("DELETE FROM artista WHERE name = ?;");
+                        stmtDelete.setString(1,naa[1]);
+                        stmtDelete.executeUpdate();
+
+                        connection.commit();
+                        connection.close();
+                        sendMsg("type|deleteArtistComplete");
+                        System.out.println("Apagou");
+
+                        break;*/
                     case "type|showArtist":
                         connection = initConnection();
                         String[] nameArtist = aux[1].split("\\|");
@@ -1031,13 +1045,7 @@ public class MulticastServer extends Thread implements Serializable {
 
                                 }
 
-                                stmt = connection.prepareStatement("SELECT * FROM artista_album WHERE artista_id = ?;");
-                                stmt.setInt(1,id1);
-                                rs = stmt.executeQuery();
-                                while(rs.next()){
-                                    int albid = rs.getInt("album_id");
-                                    albIds.add(albid);
-                                }
+                                albIds = getArtistAlbumsIdByArtistId(id1);
 
 
                                 for(Integer ID : albIds){
@@ -1243,6 +1251,23 @@ public class MulticastServer extends Thread implements Serializable {
         }
     }
 
+    private ArrayList<Integer> getArtistAlbumsIdByArtistId(int id1) {
+        ArrayList<Integer> albIds = new ArrayList<>();
+        try{
+            PreparedStatement stmt = connection.prepareStatement("SELECT * FROM artista_album WHERE artista_id = ?;");
+            stmt.setInt(1,id1);
+            ResultSet rs = stmt.executeQuery();
+            while(rs.next()){
+                int albid = rs.getInt("album_id");
+                albIds.add(albid);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return albIds;
+    }
+
     private boolean concertDataBaseEmpty() {
         try{
             Statement stmt = connection.createStatement();
@@ -1292,7 +1317,7 @@ public class MulticastServer extends Thread implements Serializable {
                 stmt.setString(1,sPart);
                 ResultSet rs = stmt.executeQuery();
 
-                if(rs.next()){
+                if(checkArtistExists(sPart)==1){
                     while(rs.next()){
                         isSongwriter = rs.getBoolean("songwriter_issongwriter");
                     }
@@ -1320,7 +1345,7 @@ public class MulticastServer extends Thread implements Serializable {
             stmt.setString(1,composerPart);
             ResultSet rs = stmt.executeQuery();
 
-            if(rs.next()){
+            if(checkArtistExists(composerPart)==1){
                 while(rs.next()){
                     isComposer = rs.getBoolean("composer_iscomposer");
                 }

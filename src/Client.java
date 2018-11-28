@@ -1320,7 +1320,7 @@ public class Client extends UnicastRemoteObject implements ClientHello{
     }
 
     public static void deleteArtist(Hello rmi,Scanner reader) throws RemoteException{
-        System.out.print("Insert user's name: ");
+        System.out.print("Insert artist name: ");
         boolean flagK = false;
         String name = "";
         while (!flagK) {
@@ -1328,7 +1328,7 @@ public class Client extends UnicastRemoteObject implements ClientHello{
             if (!name.trim().equals("")) {
                 flagK = true;
             } else {
-                System.out.print("Insert user's name: ");
+                System.out.print("Insert artist name: ");
             }
         }
         String response = rmi.deleteArtist(name);
